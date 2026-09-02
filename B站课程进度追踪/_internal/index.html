@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多视频进度追踪 · B站课程</title>
+<style>
+  :root{
+    --bg:#0b1020; --bg2:#131a33; --card:#161f3d; --card2:#1b2756;
+    --border:#2a3a6b; --txt:#eef2ff; --muted:#9aa6cc; --dim:#6b78a8;
+    --accent:#6ea8ff; --accent2:#8b5cf6; --ok:#34d399; --warn:#fbbf24; --danger:#f87171;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body:focus{outline:none}
+  body{
+    font-family:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    color:var(--txt);
+    background:
+      radial-gradient(1200px 700px at 15% -10%, #1c2a5e 0%, transparent 60%),
+      radial-gradient(1000px 600px at 100% 0%, #3a2a66 0%, transparent 55%),
+      var(--bg);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    min-height:100vh;
+    padding:0;
+    line-height:1.5;
+    overflow-y:auto;
+  }
+  /* 全局滚动条：极细半透明，默认几乎不可见，hover 略明显 */
+  ::-webkit-scrollbar{width:6px; height:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(110,168,255,.18); border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(110,168,255,.42)}
+  *{scrollbar-width:thin; scrollbar-color:rgba(110,168,255,.18) transparent}
+
+  /* 自定义无边框标题栏（pywebview frameless 模式下拖动窗口） */
+  .titlebar{
+    height:38px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 6px 0 16px; position:sticky; top:0; z-index:1000;
+    background:linear-gradient(90deg, rgba(11,16,32,.96), rgba(19,26,51,.96));
+    border-bottom:1px solid rgba(42,58,107,.5); backdrop-filter:blur(6px);
+    user-select:none; flex:0 0 auto;
+  }
+  .titlebar .t-title{
+    font-size:12.5px; font-weight:600; color:var(--muted); letter-spacing:.3px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .titlebar .t-title .t-logo{
+    width:16px; height:16px; border-radius:4px; object-fit:contain;
+    background:#0e1530;
+  }
+  .titlebar .t-btns{display:flex; gap:2px}
+  .tbtn{
+    width:34px; height:30px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; border-radius:6px; font-size:15px; color:var(--muted);
+    transition:background .12s, color .12s; border:none; background:transparent;
+    outline:none; -webkit-focus-ring-color:transparent;
+  }
+  .tbtn:focus, .tbtn:focus-visible{outline:none; box-shadow:none}
+  .tbtn:hover{background:rgba(255,255,255,.08); color:var(--txt)}
+  .tbtn.close:hover{background:#e81123; color:#fff}
+
+  .wrap{max-width:980px; margin:0 auto; padding:16px 22px 26px}
+
+  /* 顶部 Tab 栏 */
+  .tabs{
+    display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; margin-bottom:14px;
+    scrollbar-width:thin; scrollbar-color:var(--border) transparent;
+  }
+  .tabs::-webkit-scrollbar{height:6px}
+  .tabs::-webkit-scrollbar-thumb{background:var(--border); border-radius:3px}
+  .tab{
+    flex:0 0 auto; display:flex; align-items:center; gap:8px; cursor:pointer;
+    background:var(--card); border:1px solid var(--border); border-radius:10px;
+    padding:8px 14px; font-size:13px; max-width:240px; transition:.15s; position:relative;
+  }
+  .tab:hover{border-color:var(--accent)}
+  .tab.active{
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border-color:transparent; color:#0a1024; font-weight:600;
+  }
+  .tab .tname{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px}
+  .tab .timg{width:26px; height:26px; border-radius:6px; object-fit:cover; background:#0e1530; flex:0 0 auto}
+  .tab .tbadge{font-size:10.5px; padding:2px 7px; border-radius:999px; flex:0 0 auto;
+    background:rgba(110,168,255,.14); color:var(--accent)}
+  .tab.active .tbadge{background:rgba(10,16,36,.28); color:#fff}
+  .tab .tclose{
+    width:16px; height:16px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-size:13px; line-height:1; opacity:0; transition:.12s;
+    background:rgba(0,0,0,.25); color:inherit;
+  }
+  .tab:hover .tclose{opacity:.7}
+  .tab .tclose:hover{opacity:1; background:var(--danger); color:#fff}
+  .tab.active .tclose{background:rgba(0,0,0,.2)}
+  .tab-add{
+    flex:0 0 auto; width:38px; height:38px; display:flex; align-items:center;
+    justify-content:center; cursor:pointer; font-size:20px; border-radius:10px;
+    background:var(--card); border:1px dashed var(--border); color:var(--muted); transition:.15s;
+  }
+  .tab-add:hover{border-color:var(--accent); color:var(--accent)}
+  .tab-settings{
+    flex:0 0 auto; width:38px; height:38px; display:flex; align-items:center;
+    justify-content:center; cursor:pointer; font-size:18px; border-radius:10px;
+    background:var(--card); border:1px solid var(--border); color:var(--muted); transition:.15s;
+    margin-left:auto;
+  }
+  .tab-settings:hover{border-color:var(--accent); color:var(--accent)}
+
+  /* 离线横幅 */
+  .offline-bar{
+    display:none; background:rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.4);
+    color:var(--warn); border-radius:10px; padding:8px 14px; font-size:12.5px;
+    margin-bottom:14px; text-align:center;
+  }
+  .offline-bar.show{display:block}
+
+  /* 空状态引导页（无追踪视频时） */
+  .empty-state{display:none; flex-direction:column; align-items:center; text-align:center; padding:9vh 20px 40px}
+  body.empty .empty-state{display:flex}
+  body.empty header, body.empty .panel, body.empty footer{display:none}
+  .empty-state .e-ico{font-size:54px; margin-bottom:16px; opacity:.9}
+  .empty-state h2{font-size:20px; margin-bottom:8px}
+  .empty-state p{color:var(--muted); font-size:13.5px; line-height:1.9; margin-bottom:24px}
+  .empty-state .primary{padding:12px 30px; font-size:14px}
+
+  /* 主题化开关（自动同步） */
+  .tswitch-wrap{position:relative; display:inline-block; width:42px; height:23px; flex:0 0 auto}
+  .tswitch-wrap input{opacity:0; width:0; height:0}
+  .tswitch{position:absolute; cursor:pointer; inset:0; background:#2a3a6b; border-radius:999px; transition:.2s}
+  .tswitch::before{content:''; position:absolute; width:17px; height:17px; left:3px; top:3px;
+    background:#9aa6cc; border-radius:50%; transition:.2s}
+  .tswitch-wrap input:checked + .tswitch{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+  .tswitch-wrap input:checked + .tswitch::before{transform:translateX(19px); background:#fff}
+
+  /* 进度动画（拖动滑块时禁用，避免追赶感） */
+  .ring .bar{transition:stroke-dashoffset .7s cubic-bezier(.22,.9,.35,1)}
+  .bar-fill{transition:width .45s ease}
+  body.scrubbing .ring .bar, body.scrubbing .bar-fill{transition:none}
+
+  /* 通用面板 */
+  .panel{background:linear-gradient(180deg,var(--card),var(--card2));
+    border:1px solid var(--border); border-radius:16px; padding:18px; margin-bottom:18px}
+
+  /* 视频简介（最上面） */
+  header{
+    display:flex; gap:20px; align-items:stretch;
+    background:linear-gradient(135deg, var(--card), var(--card2));
+    border:1px solid var(--border); border-radius:18px; padding:18px 20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35); margin-bottom:18px;
+  }
+  .cover{
+    width:360px; height:203px; border-radius:14px; object-fit:contain;
+    flex:0 0 auto; border:1px solid var(--border); background:#0a1024;
+    box-shadow:0 8px 22px rgba(0,0,0,.45); cursor:pointer; transition:.15s;
+  }
+  .cover:hover{border-color:var(--accent); filter:brightness(1.06)}
+  @media(max-width:860px){ .cover{width:100%; height:auto; aspect-ratio:16/9} header{flex-direction:column} }
+  .h-main{flex:1 1 auto; min-width:0; display:flex; flex-direction:column; justify-content:center}
+  .h-main h1{font-size:20px; line-height:1.4; margin-bottom:8px}
+  .h-main .sub{color:var(--muted); font-size:13px}
+  .h-main .sub a{color:var(--accent); text-decoration:none; word-break:break-all}
+  .h-main .sub a:hover{text-decoration:underline}
+  .h-tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+  .tag{font-size:12.5px; padding:4px 12px; border-radius:999px;
+    background:rgba(110,168,255,.12); border:1px solid rgba(110,168,255,.3); color:#cfe0ff}
+  .tag b{color:#fff}
+  .cover-hint{font-size:11px; color:var(--dim); margin-top:8px}
+
+  /* 进度区（中间） */
+  .progress-panel{display:flex; flex-direction:column; align-items:center; text-align:center}
+  .section-title{align-self:flex-start; font-size:14px; font-weight:600; color:var(--muted);
+    letter-spacing:.5px; margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid var(--border); width:100%; text-align:left}
+  .ring{position:relative; width:240px; height:240px; margin:6px 0 18px}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .track{fill:none; stroke:#243056; stroke-width:14}
+  .ring .bar{fill:none; stroke:url(#g); stroke-width:14; stroke-linecap:round; transition:stroke-dashoffset .25s}
+  .ring .center-txt{position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center}
+  .ring .pct{font-size:44px; font-weight:800; letter-spacing:-1px; line-height:1}
+  .ring .pct small{font-size:19px; font-weight:700; color:var(--accent)}
+  .ring .pct-label{font-size:12.5px; color:var(--muted); margin-top:6px}
+  .ring .played-time{font-size:13.5px; color:#cfe0ff; margin-top:8px; font-variant-numeric:tabular-nums}
+
+  .stats{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; width:100%; max-width:680px; margin-top:6px}
+  .stat{background:rgba(0,0,0,.18); border:1px solid var(--border); border-radius:12px; padding:14px 10px}
+  .stat .k{font-size:12px; color:var(--muted); margin-bottom:6px}
+  .stat .v{font-size:20px; font-weight:700; font-variant-numeric:tabular-nums}
+  .stat .v small{font-size:11px; color:var(--dim); font-weight:500}
+  .stat.ok .v{color:var(--ok)} .stat.warn .v{color:var(--warn)} .stat.accent .v{color:var(--accent)}
+
+  .bar-over{width:100%; max-width:680px; margin-top:18px}
+  .bar-over .top{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px}
+  .bar-track{height:14px; border-radius:999px; background:#243056; overflow:hidden; position:relative}
+  .bar-fill{height:100%; border-radius:999px; background:linear-gradient(90deg,var(--accent),var(--accent2));
+    transition:width .25s}
+  .bar-over .bot{display:flex; justify-content:space-between; font-size:11px; color:var(--dim); margin-top:6px; font-variant-numeric:tabular-nums}
+
+  /* 控制区（最后） */
+  .control-panel{}
+  .refresh-row{margin-bottom:16px}
+  .refresh-row button{width:100%}
+  .refresh-status{font-size:11.5px; color:var(--muted); text-align:center; min-height:16px;
+    line-height:1.5; margin-top:9px; word-break:break-all}
+  .refresh-status.err{color:var(--danger)} .refresh-status.ok{color:var(--ok)}
+  .refresh-status.warn{color:var(--warn)}
+  .refresh-status.spin::before{content:""; display:inline-block; width:10px; height:10px;
+    border:2px solid var(--muted); border-top-color:transparent; border-radius:50%;
+    margin-right:6px; vertical-align:-2px; animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .control-grid{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+  @media(max-width:720px){ .control-grid{grid-template-columns:1fr} }
+  /* 单集视频：隐藏集数相关功能，界面更简洁 */
+  .single-ep .ep-col{display:none}
+  .single-ep .btns{display:none}
+  .single-ep .bar-over{display:none}
+  .single-ep .control-grid{grid-template-columns:1fr}
+  .single-ep .tag-multi{display:none}
+  .label{font-size:12px; color:var(--muted); margin-bottom:7px; letter-spacing:.4px}
+  select{width:100%; appearance:none; -webkit-appearance:none;
+    background:#0e1530 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%239aa6cc' d='M6 8L0 0h12z'/></svg>") no-repeat right 12px center;
+    border:1px solid var(--border); color:var(--txt); border-radius:10px;
+    padding:11px 34px 11px 12px; font-size:13.5px; cursor:pointer}
+  select:focus{outline:1px solid var(--accent); border-color:var(--accent)}
+  select option{background:#0e1530; color:var(--txt)}
+
+  .ep-card{margin-top:12px; padding:12px 14px; border-radius:12px;
+    background:rgba(0,0,0,.18); border:1px solid var(--border)}
+  .ep-card .t{font-size:14px; font-weight:600}
+  .ep-card .m{font-size:12px; color:var(--muted); margin-top:4px; display:flex; gap:14px; flex-wrap:wrap}
+  .ep-card .m span b{color:#fff}
+
+  .pos-row{margin-top:14px}
+  .pos-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px}
+  .pos-head .now{font-size:16px; font-variant-numeric:tabular-nums; font-weight:600}
+  .pos-head .end{font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%; -webkit-appearance:none; appearance:none; height:8px; border-radius:999px;
+    background:linear-gradient(90deg,var(--accent) 0%, var(--accent2) var(--p,0%), #243056 var(--p,0%));
+    outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:18px;height:18px;border-radius:50%;
+    background:#fff; border:3px solid var(--accent); cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.5)}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--accent);cursor:pointer}
+
+  .btns{display:flex; gap:8px; margin-top:14px}
+  button{flex:1; cursor:pointer; border:1px solid var(--border); color:var(--txt);
+    background:#0e1530; border-radius:10px; padding:10px 0; font-size:13px; transition:.15s}
+  button:hover{border-color:var(--accent); background:#152047}
+  button.primary{background:linear-gradient(90deg,var(--accent),var(--accent2)); border-color:transparent; color:#0a1024; font-weight:600}
+  button.primary:hover{filter:brightness(1.08)}
+  button:disabled{opacity:.5; cursor:not-allowed}
+
+  .hint{margin-top:14px; font-size:11.5px; color:var(--dim); line-height:1.6}
+  kbd{background:#0a1024; border:1px solid var(--border); border-bottom-width:2px; border-radius:5px;
+    padding:1px 6px; font-size:11px; color:#cfe0ff}
+
+  /* 跳跃历史 */
+  .jumps-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;
+    padding-bottom:8px; border-bottom:1px solid var(--border)}
+  .jumps-head .t{font-size:14px; font-weight:600}
+  .jumps-head .s{font-size:11px; color:var(--muted)}
+  .jumps-head .s .toggle{cursor:pointer; color:var(--accent); border:1px solid var(--border);
+    border-radius:999px; padding:3px 12px; font-size:11px; margin-left:10px}
+  .jumps-head .s .toggle:hover{background:rgba(110,168,255,.1)}
+  .jumps-list{max-height:280px; overflow-y:auto; padding:2px}
+  .jumps-list:empty::after{content:"暂无跳跃记录（手动大跨度切集或B站同步跳跃均会记录）"; display:block;
+    text-align:center; color:var(--dim); padding:22px; font-size:12.5px}
+  .jump-item{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; cursor:pointer;
+    border:1px solid transparent; transition:.12s; margin-bottom:6px}
+  .jump-item:hover{background:rgba(110,168,255,.08); border-color:var(--border)}
+  .jump-item .jmain{flex:1; min-width:0; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .jump-item .arrow{color:var(--warn); font-weight:700; font-size:13px; white-space:nowrap}
+  .jump-item .jtitle{font-size:12.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:280px}
+  .jump-item .jtime{font-size:11px; color:var(--dim); white-space:nowrap}
+  .jump-item .jbili{flex:0 0 auto; text-decoration:none; color:var(--accent); font-size:12px;
+    border:1px solid var(--border); border-radius:8px; padding:4px 10px; transition:.12s}
+  .jump-item .jbili:hover{background:var(--accent); color:#0a1024; border-color:transparent}
+
+  footer{text-align:center; color:var(--dim); font-size:11px; margin-top:6px}
+
+  /* 添加视频弹窗 */
+  .modal-mask{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none;
+    align-items:center; justify-content:center; z-index:100; padding:20px}
+  .modal-mask.show{display:flex}
+  .modal{background:var(--card); border:1px solid var(--border); border-radius:16px;
+    width:100%; max-width:640px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden}
+  .modal-head{display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid var(--border)}
+  .modal-head .mtitle{flex:1; font-size:15px; font-weight:600}
+  .modal-head .mclose{cursor:pointer; font-size:20px; color:var(--muted); line-height:1; width:28px; height:28px;
+    display:flex; align-items:center; justify-content:center; border-radius:6px}
+  .modal-head .mclose:hover{background:rgba(248,113,113,.2); color:var(--danger)}
+  .modal-search{padding:12px 18px; border-bottom:1px solid var(--border)}
+  .modal-search input{width:100%; background:#0e1530; border:1px solid var(--border); color:var(--txt);
+    border-radius:8px; padding:9px 12px; font-size:13px}
+  .modal-search input:focus{outline:1px solid var(--accent); border-color:var(--accent)}
+  .modal-list{flex:1; overflow-y:auto; padding:8px}
+  .settings-body{flex:1; overflow-y:auto; padding:16px 18px}
+  .set-sec{display:flex; align-items:center; gap:10px; margin:20px 0 12px}
+  .settings-body .set-sec:first-child{margin-top:0}
+  .set-sec .sbar{width:4px; height:14px; border-radius:2px; background:var(--accent); flex:0 0 auto}
+  .set-sec .stxt{font-size:13px; font-weight:700; color:#cfe0ff; letter-spacing:.5px}
+  .set-sec .sline{flex:1; height:1px; background:var(--border)}
+  .modal-item{display:flex; align-items:center; gap:12px; padding:10px; border-radius:10px;
+    border:1px solid transparent; transition:.12s}
+  .modal-item:hover{background:rgba(110,168,255,.08); border-color:var(--border)}
+  .modal-item .mcover{width:96px; height:54px; border-radius:6px; object-fit:cover; flex:0 0 auto;
+    background:#0a1024; border:1px solid var(--border)}
+  .modal-item .minfo{flex:1; min-width:0}
+  .modal-item .mtitle2{font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .modal-item .msub{font-size:11px; color:var(--muted); margin-top:3px}
+  .modal-item .mbtn{flex:0 0 auto; cursor:pointer; border:1px solid var(--accent); color:var(--accent);
+    background:transparent; border-radius:8px; padding:6px 14px; font-size:12px}
+  .modal-item .mbtn:hover{background:var(--accent); color:#0a1024}
+  .modal-item .mbtn:disabled{opacity:.5; cursor:not-allowed; border-color:var(--dim); color:var(--dim)}
+  .modal-status{padding:40px; text-align:center; color:var(--muted); font-size:13px}
+
+  /* toast：底部居中，完整可见，不与顶部标题栏/滚动条/缩放热区冲突 */
+  .toast{position:fixed; bottom:26px; left:50%; background:var(--card); border:1px solid var(--warn);
+    border-left:4px solid var(--warn); color:var(--txt); border-radius:10px; padding:12px 18px;
+    font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,.4); z-index:3001; opacity:0;
+    transform:translate(-50%, 12px); transition:.25s; max-width:min(62vw, 520px); text-align:center}
+  .toast.show{opacity:1; transform:translate(-50%, 0)}
+
+  /* ===== 无边框窗口边缘缩放热区（配合 pywebview api.resize_by） ===== */
+  .rz{position:fixed; z-index:3000; touch-action:none}
+  .rz-n{top:0; left:10px; right:10px; height:5px; cursor:n-resize}
+  .rz-s{bottom:0; left:10px; right:10px; height:5px; cursor:s-resize}
+  .rz-e{right:0; top:10px; bottom:10px; width:5px; cursor:e-resize}
+  .rz-w{left:0; top:10px; bottom:10px; width:5px; cursor:w-resize}
+  .rz-ne{top:0; right:0; width:14px; height:14px; cursor:ne-resize}
+  .rz-nw{top:0; left:0; width:14px; height:14px; cursor:nw-resize}
+  .rz-se{bottom:0; right:0; width:14px; height:14px; cursor:se-resize}
+  .rz-sw{bottom:0; left:0; width:14px; height:14px; cursor:sw-resize}
+
+  /* ===== 自定义悬浮滚动条（原生滚动条占据窗口最右缘，会挡住边缘缩放） ===== */
+  html::-webkit-scrollbar{width:0; height:0}
+  html{scrollbar-width:none}
+  .sb-track{position:fixed; top:44px; bottom:8px; right:7px; width:8px; z-index:2500; display:none}
+  .sb-thumb{position:absolute; top:0; left:1px; right:1px; min-height:30px; border-radius:3px;
+            background:rgba(126,140,180,.35); cursor:default}
+  .sb-thumb:hover{background:rgba(126,140,180,.55)}
+</style>
+</head>
+<body tabindex="-1">
+<!-- 无边框窗口自定义标题栏（pywebview-drag-region 可拖动；按钮加 no-drag 避免误拖） -->
+<div class="titlebar pywebview-drag-region">
+  <div class="t-title pywebview-drag-region">
+    <img class="t-logo pywebview-drag-region" src="/api/icon/file" alt="">
+    <span class="pywebview-drag-region">B站课程进度追踪</span>
+  </div>
+  <div class="t-btns">
+    <button class="tbtn pywebview-no-drag" id="winMin" type="button" tabindex="-1" aria-label="最小化">&#8211;</button>
+    <button class="tbtn close pywebview-no-drag" id="winClose" type="button" tabindex="-1" aria-label="关闭">&#10005;</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- 顶部 Tab 栏 -->
+  <div class="tabs" id="tabs">
+    <div class="tab-add" id="tabAdd" title="从B站历史添加视频">+</div>
+    <div class="tab-settings" id="tabSettings" title="设置 · B站账号（SESSDATA）">⚙</div>
+  </div>
+
+  <!-- 离线横幅 -->
+  <div class="offline-bar" id="offlineBar">⚠ 离线模式：进度同步不可用，显示上次保存的本地数据</div>
+
+  <!-- 空状态引导页（无追踪视频时显示） -->
+  <div class="empty-state" id="emptyState">
+    <div class="e-ico">📚</div>
+    <h2>开始追踪你的第一门课程</h2>
+    <p>从你的B站观看历史中选择视频加入追踪，<br>即可实时同步播放进度、统计总进度并检测集数跳跃。</p>
+    <button class="primary" id="emptyAdd">＋ 从B站历史添加视频</button>
+  </div>
+
+  <!-- 1. 视频简介（最上面） -->
+  <header>
+    <img id="cover" class="cover" alt="点击在B站打开当前集" title="点击在B站打开当前集当前位置">
+    <div class="h-main">
+      <h1 id="title">—</h1>
+      <div class="sub">UP主：<span id="owner"></span> · 数据已保存本地，离线可用</div>
+      <div class="sub" style="margin-top:3px">B站原址：<a id="url" target="_blank" rel="noopener"></a></div>
+      <div class="h-tags">
+        <span class="tag tag-multi">共 <b id="tag-ep"></b> 集</span>
+        <span class="tag">总时长 <b id="tag-dur"></b></span>
+        <span class="tag tag-multi">已看完 <b id="tag-done">0</b> 集</span>
+        <span class="tag" id="tag-sync" title="上次从B站成功同步的时间">同步 —</span>
+      </div>
+      <div class="cover-hint">点击左侧封面图可在B站打开当前集当前位置</div>
+    </div>
+  </header>
+
+  <!-- 2. 进度（中间） -->
+  <section class="panel progress-panel">
+    <div class="section-title">📊 总体播放进度</div>
+    <div class="ring">
+      <svg width="240" height="240" viewBox="0 0 240 240">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#6ea8ff"/>
+            <stop offset="1" stop-color="#8b5cf6"/>
+          </linearGradient>
+        </defs>
+        <circle class="track" cx="120" cy="120" r="105"/>
+        <circle class="bar" id="ringBar" cx="120" cy="120" r="105"
+          stroke-dasharray="659.734" stroke-dashoffset="659.734"/>
+      </svg>
+      <div class="center-txt">
+        <div class="pct" id="bigPct">0<small>%</small></div>
+        <div class="pct-label">总体播放进度</div>
+        <div class="played-time" id="bigPlayed">00:00:00 / 00:00:00</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat ok">
+        <div class="k">已播放时间</div>
+        <div class="v" id="stPlayed">00:00:00</div>
+      </div>
+      <div class="stat warn">
+        <div class="k">剩余播放时间</div>
+        <div class="v" id="stRemain">00:00:00</div>
+      </div>
+    </div>
+
+    <div class="bar-over">
+      <div class="top"><span id="epFrac">第 0 集 / 共 0 集</span><span id="epFracPct">0%</span></div>
+      <div class="bar-track"><div class="bar-fill" id="overFill" style="width:0%"></div></div>
+      <div class="bot"><span id="overStart">00:00:00</span><span id="overEnd">00:00:00</span></div>
+    </div>
+  </section>
+
+  <!-- 3. 其他功能（最后） -->
+  <section class="panel">
+    <div class="section-title">⚙️ 集数与进度控制</div>
+
+    <div class="refresh-row">
+      <button class="primary" id="btnRefresh">🔄 从B站读取当前视频进度</button>
+      <div class="refresh-status" id="refreshStatus">点击从B站读取你真实的观看进度</div>
+    </div>
+
+    <div class="control-grid">
+      <div class="ep-col">
+        <div class="label">现在播放的是哪一集</div>
+        <select id="epSelect"></select>
+        <div class="ep-card">
+          <div class="t" id="epTitle">—</div>
+          <div class="m">
+            <span>本集时长 <b id="epDur">—</b></span>
+            <span>课程位置 <b id="epPos">—</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="label">集内播放位置</div>
+        <div class="pos-row">
+          <div class="pos-head">
+            <span class="now" id="posNow">00:00:00</span>
+            <span class="end" id="posEnd">00:00:00</span>
+          </div>
+          <input type="range" id="posSlider" min="0" max="100" value="0" step="1">
+          <div style="font-size:11px;color:var(--dim);margin-top:6px">拖动滑块设置当前集内的播放位置</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btns">
+      <button id="btnPrev">← 上一集</button>
+      <button id="btnNext">下一集 →</button>
+      <button class="primary" id="btnDone">本集看完，跳下一集</button>
+    </div>
+  </section>
+
+  <!-- 跳跃历史 -->
+  <section class="panel">
+    <div class="jumps-head">
+      <span class="t">📜 跳跃历史（差距较大的进度变化）</span>
+      <span class="s">点击条目恢复到跳跃前位置
+        <span class="toggle" id="jumpsToggle">仅当前视频</span>
+      </span>
+    </div>
+    <div class="jumps-list" id="jumpsList"></div>
+  </section>
+
+  <footer>数据来源：bilibili 官方 API，本地 tracked_videos.json 备份。无网络时加载本地数据。</footer>
+</div>
+
+<!-- 添加视频弹窗 -->
+<div class="modal-mask" id="addModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="mtitle">从B站历史添加追踪视频</span>
+      <span class="mclose" id="modalClose">×</span>
+    </div>
+    <div class="modal-search">
+      <input id="modalSearch" type="text" placeholder="搜索标题过滤…">
+    </div>
+    <div class="modal-list" id="modalList">
+      <div class="modal-status">点击下方按钮加载B站历史…</div>
+    </div>
+  </div>
+</div>
+
+<!-- 设置弹窗 -->
+<div class="modal-mask" id="settingsModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head">
+      <span class="mtitle">设置</span>
+      <span class="mclose" id="settingsClose">×</span>
+    </div>
+    <div class="settings-body">
+      <!-- ===== 分区：B站账号 ===== -->
+      <div class="set-sec"><span class="sbar"></span><span class="stxt">B站账号</span><span class="sline"></span></div>
+      <div style="font-size:12px; color:var(--muted); margin:-4px 0 10px">登录凭据（SESSDATA），用于读取观看进度；约 1 个月过期，失效时应用会提示更新</div>
+      <div style="display:flex; gap:8px">
+        <input id="sessdataInput" type="password" placeholder="粘贴 SESSDATA 的值…"
+          style="flex:1; background:#0e1530; border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:10px 12px; font-size:13px; font-family:monospace">
+        <button id="sessdataToggle" type="button" style="flex:0 0 auto; width:auto; padding:0 14px">👁 显示</button>
+      </div>
+      <div id="sessdataStatus" style="font-size:12px; color:var(--muted); margin-top:8px; min-height:16px"></div>
+      <div class="btns" style="margin-top:10px">
+        <button class="primary" id="sessdataSave">保存</button>
+      </div>
+      <details style="margin-top:12px; padding:10px 14px; background:rgba(0,0,0,.2); border:1px solid var(--border); border-radius:10px">
+        <summary style="cursor:pointer; font-size:12.5px; color:#cfe0ff; font-weight:600; user-select:none">如何获取 SESSDATA？（点击展开）</summary>
+        <div style="margin-top:8px; font-size:12px; color:var(--muted); line-height:1.85">
+          <div style="margin-bottom:4px">① 在浏览器中登录 <b style="color:#cfe0ff">bilibili.com</b>，并保持登录状态。</div>
+          <div style="margin-bottom:4px">② 在当前页面按 <b style="color:#cfe0ff">F12</b> 键，打开浏览器开发者工具。</div>
+          <div style="margin-bottom:4px">③ 在开发者工具顶部切换到 <b style="color:#cfe0ff">应用程序</b>（Application）面板。</div>
+          <div style="margin-bottom:4px">④ 在左侧 <b style="color:#cfe0ff">存储</b>（Storage）栏目中展开 <b style="color:#cfe0ff">Cookies</b>，点击其中的 <b style="color:#cfe0ff">www.bilibili.com</b>。</div>
+          <div style="margin-bottom:4px">⑤ 在右侧 Cookie 列表中找到名称为 <b style="color:#cfe0ff">SESSDATA</b> 的条目，复制其「值」一列的内容。</div>
+          <div style="margin-bottom:8px">⑥ 将复制到的值粘贴到上方输入框，点击「保存」即可完成配置。</div>
+          <div style="padding-top:8px; border-top:1px solid rgba(42,58,107,.4); color:var(--dim); font-size:11.5px">
+            <b style="color:var(--muted)">隐私说明：</b>SESSDATA 是B站用于识别登录身份的凭据，仅保存在本地 <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px">.sessdata.txt</code> 文件中，仅由本程序直接请求B站接口时使用，不会上传至任何第三方服务器。
+          </div>
+        </div>
+      </details>
+
+      <!-- ===== 分区：同步 ===== -->
+      <div class="set-sec"><span class="sbar"></span><span class="stxt">同步</span><span class="sline"></span></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 14px; background:rgba(0,0,0,.2); border:1px solid var(--border); border-radius:10px">
+        <div>
+          <div style="font-size:13px; font-weight:600">自动同步B站进度</div>
+          <div style="font-size:11.5px; color:var(--muted); margin-top:2px">每 5 分钟自动从B站读取一次当前视频进度</div>
+        </div>
+        <label class="tswitch-wrap" title="开启/关闭自动同步">
+          <input type="checkbox" id="autoSyncChk">
+          <span class="tswitch"></span>
+        </label>
+      </div>
+
+      <!-- ===== 分区：外观 ===== -->
+      <div class="set-sec"><span class="sbar"></span><span class="stxt">外观</span><span class="sline"></span></div>
+      <div style="display:flex; gap:14px; align-items:center">
+        <img id="iconPreview" alt="当前图标"
+          src="/api/icon/file" style="width:64px; height:64px; border-radius:14px; background:#0e1530; border:1px solid var(--border); object-fit:contain">
+        <div style="flex:1">
+          <div style="display:flex; gap:8px; flex-wrap:wrap">
+            <button type="button" id="iconPickBtn" style="padding:8px 14px; background:var(--card2); border:1px solid var(--border); color:var(--txt); border-radius:8px; cursor:pointer; font-size:12.5px">选择图片</button>
+            <button type="button" id="iconResetBtn" style="padding:8px 14px; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:8px; cursor:pointer; font-size:12.5px">恢复默认</button>
+          </div>
+          <div id="iconStatus" style="font-size:11.5px; color:var(--muted); margin-top:8px; min-height:14px">支持 PNG/JPG，会自动裁剪为圆角正方形图标</div>
+        </div>
+      </div>
+      <input type="file" id="iconFile" accept="image/png,image/jpeg,image/webp,image/bmp,image/gif" style="display:none">
+    </div>
+  </div>
+</div>
+
+<!-- toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ===== 运行时状态 =====
+  let videos = [];
+  let active = null;
+  let jumps = [];
+  let jumpsShowAll = false;
+  let cur = 1;
+  let pos = 0;
+  let saveTimer = null;
+
+  const $ = id => document.getElementById(id);
+  const fmt = s => { s=Math.max(0,Math.round(s)); const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60;
+    return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); };
+  const esc = s => String(s==null?'':s);
+  // 封面图走本地代理（IPv4 拉取 + 缓存），避免浏览器直连B站图片 IPv6 挂起
+  const imgProxy = url => url ? ('/api/img?u=' + encodeURIComponent(url)) : '';
+  // B站分P跳转 URL：?p=集号&t=秒数
+  const biliUrl = (bvid, page, seconds) => {
+    let u = 'https://www.bilibili.com/video/' + bvid;
+    const params = [];
+    if(page) params.push('p=' + page);
+    if(seconds > 0) params.push('t=' + Math.round(seconds));
+    if(params.length) u += '?' + params.join('&');
+    return u;
+  };
+
+  function showToast(msg, dur=3500){
+    const el = $('toast'); el.textContent = msg; el.classList.add('show');
+    clearTimeout(el._t); el._t = setTimeout(()=> el.classList.remove('show'), dur);
+  }
+  // 跳跃/回看 toast：同集显示时间点，跨集显示集数
+  function jumpToast(j){
+    if((j.to_page||0) === (j.from_page||0)){
+      showToast(`检测到回看：第${j.from_page}集内 ${fmt(j.from_progress||0)} → ${fmt(j.to_progress||0)}`);
+    } else {
+      showToast(`检测到跳跃：第${j.from_page}集 → 第${j.to_page}集`);
+    }
+  }
+
+  // ===== 弹窗打开时锁定主页面滚动：滚轮只作用于弹窗内容，不穿透主界面 =====
+  let _lockScrollY = 0;
+  function updateModalLock(){
+    const open = document.querySelector('.modal-mask.show');
+    const de = document.scrollingElement || document.documentElement;
+    if(open && de.style.overflow !== 'hidden'){
+      _lockScrollY = de.scrollTop;
+      de.style.overflow = 'hidden';
+    } else if(!open && de.style.overflow === 'hidden'){
+      de.style.overflow = '';
+      de.scrollTop = _lockScrollY;
+    }
+  }
+
+  // ===== Tab 栏渲染 =====
+  function updateEmptyState(){
+    document.body.classList.toggle('empty', !videos.length);
+  }
+  function renderTabs(){
+    const wrap = $('tabs');
+    [...wrap.querySelectorAll('.tab')].forEach(n=> n.remove());
+    updateEmptyState();
+    const addBtn = $('tabAdd');
+    videos.forEach(v=>{
+      const t = document.createElement('div');
+      t.className = 'tab' + (active && v.bvid===active.bvid ? ' active' : '');
+      t.dataset.bvid = v.bvid;
+      const img = document.createElement('img');
+      img.className = 'timg';
+      img.src = imgProxy(v.cover);
+      img.loading = 'lazy';
+      img.alt = '';
+      img.onerror = function(){ this.style.visibility = 'hidden'; };
+      const name = document.createElement('span');
+      name.className = 'tname';
+      name.textContent = v.title || v.bvid;
+      name.title = v.title || v.bvid;
+      const badge = document.createElement('span');
+      badge.className = 'tbadge';
+      const lp = v.lastProgress;
+      badge.textContent = (lp && lp.page) ? `${lp.page}/${v.totalEpisodes||'?'}` : '新';
+      const close = document.createElement('span');
+      close.className = 'tclose';
+      close.textContent = '×';
+      close.title = '移除追踪';
+      close.addEventListener('click', async ev=>{
+        ev.stopPropagation();
+        if(!confirm('确定从追踪列表移除该视频？（跳跃记录保留）')) return;
+        await fetch('/api/tracked/remove', {method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({bvid:v.bvid})});
+        await bootstrap();
+      });
+      t.appendChild(img);
+      t.appendChild(name);
+      t.appendChild(badge);
+      t.appendChild(close);
+      t.addEventListener('click', ()=> switchVideo(v.bvid));
+      wrap.insertBefore(t, addBtn);
+    });
+  }
+
+  // ===== header 渲染 =====
+  function renderHeader(){
+    if(!active){ return; }
+    const cv = $('cover');
+    cv.src = imgProxy(active.cover);
+    cv.style.visibility = active.cover ? 'visible' : 'hidden';
+    cv.onerror = function(){ this.style.visibility='hidden'; };
+    // 点击封面 → B站打开当前集当前位置
+    cv.onclick = ()=>{
+      if(!active) return;
+      window.open(biliUrl(active.bvid, cur, pos), '_blank', 'noopener');
+    };
+    $('title').textContent = active.title || active.bvid;
+    $('owner').textContent = active.owner || '—';
+    const urlEl = $('url'); urlEl.href = active.url; urlEl.textContent = active.url;
+    $('tag-ep').textContent = active.totalEpisodes;
+    $('tag-dur').textContent = active.totalDurationText;
+    const sa = active.lastProgress && active.lastProgress.synced_at;
+    $('tag-sync').textContent = sa ? ('同步 ' + new Date(sa*1000).toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})) : '同步 —';
+    document.title = (active.title||'多视频追踪').slice(0,40) + ' · 进度追踪';
+  }
+
+  // ===== 集下拉 + 时间线 重建 =====
+  function renderEpSelect(){
+    const sel = $('epSelect');
+    sel.innerHTML = '';
+    (active.episodes||[]).forEach(e=>{
+      const o = document.createElement('option');
+      o.value = e.page;
+      o.textContent = `第 ${e.page} 集 · ${e.title} (${e.durationText})`;
+      sel.appendChild(o);
+    });
+  }
+  function selectEp(page, keepPos){
+    const eps = active.episodes || [];
+    if(!eps.length){ return; }
+    cur = Math.max(1, Math.min(active.totalEpisodes, page|0));
+    $('epSelect').value = cur;
+    const e = eps[cur-1];
+    if(!keepPos) pos = 0;
+    pos = Math.min(pos, e.duration);
+    $('epTitle').textContent = e.title;
+    $('epDur').textContent = e.durationText;
+    $('epPos').textContent = `第 ${cur}/${active.totalEpisodes} 集`;
+    const sl = $('posSlider');
+    sl.min = 0; sl.max = e.duration; sl.value = Math.round(pos);
+    sl.style.setProperty('--p', (pos/e.duration*100)+'%');
+    $('posEnd').textContent = e.durationText;
+    render();
+  }
+
+  function render(){
+    if(!active){ return; }
+    const eps = active.episodes || [];
+    const e = eps[cur-1];
+    if(!e){ return; }
+    const TOTAL = active.totalDuration;
+    pos = Math.min(pos, e.duration);
+    const played = (e.cumulativeStart||0) + pos;
+    const remain = Math.max(0, TOTAL - played);
+    const pct = TOTAL ? (played/TOTAL*100) : 0;
+    const doneCount = (cur-1) + (pos >= e.duration ? 1 : 0);
+
+    $('bigPct').innerHTML = pct.toFixed(1)+'<small>%</small>';
+    $('bigPlayed').textContent = fmt(played)+' / '+fmt(TOTAL);
+    const C = 2*Math.PI*105;
+    $('ringBar').setAttribute('stroke-dashoffset', (C*(1-pct/100)).toFixed(2));
+
+    $('stPlayed').textContent = fmt(played);
+    $('stRemain').textContent = fmt(remain);
+    $('posNow').textContent = fmt(pos);
+
+    $('epFrac').textContent = `第 ${cur} 集 / 共 ${active.totalEpisodes} 集（看到第 ${cur} 集）`;
+    $('epFracPct').textContent = (cur/active.totalEpisodes*100).toFixed(1)+'%';
+    $('overFill').style.width = Math.min(100, (cur/active.totalEpisodes*100))+'%';
+    $('overStart').textContent = '第 1 集';
+    $('overEnd').textContent = `第 ${active.totalEpisodes} 集`;
+    $('tag-done').textContent = doneCount;
+  }
+
+  function renderAll(){
+    renderHeader();
+    renderEpSelect();
+    // 单集视频：隐藏集数相关功能，界面更简洁
+    document.body.classList.toggle('single-ep', (active.totalEpisodes||1) <= 1);
+    const lp = active.lastProgress;
+    if(lp && lp.page){
+      cur = Math.max(1, Math.min(active.totalEpisodes, lp.page|0));
+      pos = (typeof lp.progress==='number') ? Math.max(0, lp.progress) : 0;
+    } else {
+      cur = 1; pos = 0;
+    }
+    selectEp(cur, true);
+    renderJumps();
+  }
+
+  // ===== 跳跃历史面板 =====
+  function renderJumps(){
+    const list = $('jumpsList');
+    list.innerHTML = '';
+    const filterBvid = jumpsShowAll ? null : (active && active.bvid);
+    const items = jumps.filter(j => !filterBvid || j.bvid===filterBvid).slice().reverse();
+    items.forEach(j=>{
+      const it = document.createElement('div');
+      it.className = 'jump-item';
+      const jmain = document.createElement('div');
+      jmain.className = 'jmain';
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      // 同集时间回看 vs 跨集跳跃，文案区分
+      const sameEp = (j.to_page||0) === (j.from_page||0);
+      arrow.textContent = sameEp
+        ? `第${j.from_page}集 ${fmt(j.from_progress||0)} → ${fmt(j.to_progress||0)}`
+        : `第${j.from_page}集 → 第${j.to_page}集`;
+      const title = document.createElement('span');
+      title.className = 'jtitle';
+      title.textContent = j.title || j.bvid;
+      title.title = title.textContent;
+      const tm = document.createElement('span');
+      tm.className = 'jtime';
+      const t = j.view_at ? new Date(j.view_at*1000) : (j.detected_at ? new Date(j.detected_at*1000) : null);
+      tm.textContent = t ? t.toLocaleString('zh-CN') : '';
+      jmain.appendChild(arrow);
+      jmain.appendChild(title);
+      jmain.appendChild(tm);
+      // 主体点击 → 恢复到跳跃前位置（from_page + from_progress）
+      it.addEventListener('click', async ()=>{
+        if(active && active.bvid===j.bvid){
+          selectEp(j.from_page, false);
+          const e = (active.episodes||[])[(j.from_page||1)-1];
+          if(e){ pos = Math.max(0, Math.min(j.from_progress||0, e.duration));
+            $('posSlider').value=Math.round(pos);
+            $('posSlider').style.setProperty('--p',(pos/e.duration*100)+'%'); render(); }
+          scheduleSave();
+        } else {
+          await switchVideo(j.bvid);
+          selectEp(j.from_page, false);
+          const e = (active.episodes||[])[(j.from_page||1)-1];
+          if(e){ pos = Math.max(0, Math.min(j.from_progress||0, e.duration));
+            $('posSlider').value=Math.round(pos);
+            $('posSlider').style.setProperty('--p',(pos/e.duration*100)+'%'); render(); }
+          scheduleSave();
+        }
+      });
+      // ↗B站 链接 → 跳到跳跃前位置在B站打开
+      const bili = document.createElement('a');
+      bili.className = 'jbili';
+      bili.textContent = '↗B站';
+      bili.target = '_blank';
+      bili.rel = 'noopener';
+      bili.href = biliUrl(j.bvid, j.from_page, j.from_progress||0);
+      bili.title = `在B站打开第${j.from_page}集 ${(j.from_progress||0)}秒`;
+      bili.addEventListener('click', ev=> ev.stopPropagation());
+      it.appendChild(jmain);
+      it.appendChild(bili);
+      list.appendChild(it);
+    });
+  }
+
+  // ===== 手动进度保存（debounce）+ 处理跳跃响应 =====
+  function scheduleSave(){
+    if(!active) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(doSave, 800);
+  }
+  async function doSave(){
+    if(!active) return;
+    try{
+      const r = await fetch('/api/progress/save', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({bvid:active.bvid, page:cur, progress:pos})});
+      const j = await r.json();
+      if(j.jump){
+        jumps.push(j.jump);
+        renderJumps();
+        showToast(`检测到跳跃：第${j.jump.from_page}集 → 第${j.jump.to_page}集`);
+      }
+    }catch(e){}
+  }
+  async function saveCurrentProgressNow(){
+    if(!active) return;
+    clearTimeout(saveTimer);
+    try{
+      const r = await fetch('/api/progress/save', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({bvid:active.bvid, page:cur, progress:pos})});
+      const j = await r.json();
+      if(j.jump){
+        jumps.push(j.jump); renderJumps();
+        jumpToast(j.jump);
+      }
+    }catch(e){}
+  }
+
+  // ===== 切换视频 =====
+  async function switchVideo(bvid){
+    if(active && active.bvid===bvid) return;
+    await saveCurrentProgressNow();
+    try{
+      await fetch('/api/tracked/active', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({bvid:bvid})});
+    }catch(e){}
+    await loadActiveDetail(bvid);
+    renderTabs();
+    renderAll();
+    fetchProgress(true);
+  }
+
+  async function loadActiveDetail(bvid){
+    try{
+      const r = await fetch('/api/tracked?detail=1&bvid=' + encodeURIComponent(bvid), {cache:'no-store'});
+      const j = await r.json();
+      if(j.ok && j.video){
+        active = j.video;
+      } else {
+        showToast('加载视频数据失败：' + (j.message||'未知'));
+      }
+    }catch(e){
+      showToast('加载视频数据失败：' + e.message);
+    }
+  }
+
+  // ===== 从B站同步当前视频进度 =====
+  function setRefresh(text, cls){
+    const el = $('refreshStatus');
+    el.textContent = text;
+    el.className = 'refresh-status' + (cls ? ' '+cls : '');
+  }
+  // 同步失败自动重试：开机时网络可能尚未就绪（如 WiFi 未连），成功后清除离线横幅
+  let syncRetryTimer = 0, syncRetryCount = 0;
+  function stopSyncRetry(){
+    clearTimeout(syncRetryTimer); syncRetryTimer = 0; syncRetryCount = 0;
+  }
+  function scheduleSyncRetry(){
+    if(syncRetryTimer || !active) return;
+    if(syncRetryCount >= 5){
+      setRefresh('多次重试后仍无法连接B站：请确认电脑已联网后手动点击刷新', 'err');
+      return;
+    }
+    const delay = [5000, 15000, 30000, 30000, 30000][syncRetryCount];
+    syncRetryCount++;
+    setRefresh(`网络可能未就绪，${Math.round(delay/1000)} 秒后自动重试（${syncRetryCount}/5）…`, 'spin');
+    syncRetryTimer = setTimeout(()=>{ syncRetryTimer = 0; if(active) fetchProgress(true); }, delay);
+  }
+  // 系统网络恢复（如开机后 WiFi 连上）时立即重试
+  window.addEventListener('online', ()=>{
+    if(!active) return;
+    clearTimeout(syncRetryTimer); syncRetryTimer = 0;
+    fetchProgress(true);
+  });
+
+  // ===== 自动同步（每 5 分钟，设置面板可开关，localStorage 记忆） =====
+  const AUTO_SYNC_MS = 5*60*1000;
+  let autoSyncTimer = 0;
+  const isAutoSyncOn = ()=>{
+    try{ return localStorage.getItem('autoSync') !== '0'; }catch(e){ return true; }
+  };
+  function resetAutoSync(){
+    clearTimeout(autoSyncTimer);
+    if(!isAutoSyncOn() || !active) return;
+    autoSyncTimer = setTimeout(()=>{ autoSyncTimer = 0; if(active) fetchProgress(true); }, AUTO_SYNC_MS);
+  }
+  async function fetchProgress(silent){
+    if(!active){ setRefresh('请先选择一个追踪视频','err'); return; }
+    if(!silent) setRefresh('正在从B站读取…', 'spin');
+    const slow = setTimeout(()=> setRefresh('仍在读取B站历史记录…（记录较多或网络慢时可能需要数十秒，请看终端日志）', 'spin'), 8000);
+    const ctrl = new AbortController();
+    const tmo = setTimeout(()=> ctrl.abort(), 45000);
+    try{
+      const r = await fetch('/api/progress?bvid=' + encodeURIComponent(active.bvid), {cache:'no-store', signal: ctrl.signal});
+      const j = await r.json();
+      if(j.ok){
+        stopSyncRetry();
+        $('offlineBar').classList.remove('show');
+        const page = j.page || 1;
+        selectEp(page, false);
+        // 更新 header 同步时间 + Tab 徽章 + 列表缓存
+        $('tag-sync').textContent = '同步 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
+        const v0 = videos.find(x=>x.bvid===active.bvid);
+        if(v0){ v0.lastProgress = {page:page, progress:j.progress||0, view_at:j.view_at, synced_at:Date.now()/1000|0}; }
+        const tb = document.querySelector(`.tab[data-bvid="${CSS.escape(active.bvid)}"] .tbadge`);
+        if(tb){ tb.textContent = `${page}/${active.totalEpisodes||'?'}`; }
+        const e = (active.episodes||[])[cur-1];
+        if(typeof j.progress === 'number' && e){
+          const p = j.progress < 0 ? e.duration : Math.min(j.progress, e.duration);
+          pos = Math.max(0, p);
+          $('posSlider').value = Math.round(pos);
+          $('posSlider').style.setProperty('--p', (pos/e.duration*100)+'%');
+          render();
+        }
+        active.lastProgress = {page:page, progress:j.progress||0, view_at:j.view_at, synced_at:Date.now()/1000|0};
+        const t = j.view_at ? new Date(j.view_at*1000).toLocaleString('zh-CN') : '未知';
+        setRefresh(`已同步：第 ${page} 集 · 集内 ${fmt(pos)}（观看时间 ${t}）`, 'ok');
+        if(j.jump){
+          jumps.push(j.jump);
+          renderJumps();
+          jumpToast(j.jump);
+        }
+      } else if(j.needSessdata){
+        $('offlineBar').classList.add('show');
+        setRefresh(j.message || 'SESSDATA 未配置或已失效：请在右上角 ⚙ 设置中重新配置', 'err');
+      } else {
+        if(active.lastProgress && active.lastProgress.page){
+          selectEp(active.lastProgress.page, false);
+          const e = (active.episodes||[])[cur-1];
+          if(e && typeof active.lastProgress.progress==='number'){
+            pos = Math.max(0, Math.min(active.lastProgress.progress, e.duration));
+            $('posSlider').value = Math.round(pos);
+            $('posSlider').style.setProperty('--p',(pos/e.duration*100)+'%');
+            render();
+          }
+          $('offlineBar').classList.add('show');
+        }
+        setRefresh(j.message || '读取失败', 'warn');
+      }
+      if(silent && !j.ok && !j.needSessdata) scheduleSyncRetry();
+    }catch(e){
+      const msg = e.name === 'AbortError'
+        ? '请求超时（B站响应过慢或未找到）。可在终端查看日志，或先用手动选择集数'
+        : ('请求失败：' + e.message + '（请确认服务在运行）');
+      if(active.lastProgress && active.lastProgress.page){
+        selectEp(active.lastProgress.page, false);
+        const e2 = (active.episodes||[])[cur-1];
+        if(e2 && typeof active.lastProgress.progress==='number'){
+          pos = Math.max(0, Math.min(active.lastProgress.progress, e2.duration));
+          $('posSlider').value = Math.round(pos);
+          $('posSlider').style.setProperty('--p',(pos/e2.duration*100)+'%');
+          render();
+        }
+        $('offlineBar').classList.add('show');
+      }
+      setRefresh(msg, 'err');
+      if(silent) scheduleSyncRetry();
+    }finally{
+      clearTimeout(slow); clearTimeout(tmo);
+      resetAutoSync();
+    }
+  }
+
+  // ===== 添加视频弹窗 =====
+  let historyCache = null;
+  async function openAddModal(){
+    $('addModal').classList.add('show');
+    updateModalLock();
+    const list = $('modalList');
+    list.innerHTML = '<div class="modal-status">正在从B站拉取历史记录…</div>';
+    $('modalSearch').value = '';
+    if(!historyCache){
+      try{
+        const r = await fetch('/api/history?max=50', {cache:'no-store'});
+        const j = await r.json();
+        if(j.ok){
+          historyCache = j.items || [];
+        } else if(j.needSessdata){
+          list.innerHTML = '<div class="modal-status">未配置 SESSDATA，无法拉取历史。请在 .sessdata.txt 填入后重启服务。</div>';
+          return;
+        } else {
+          list.innerHTML = '<div class="modal-status">'+(j.message||'拉取失败')+'</div>';
+          return;
+        }
+      }catch(e){
+        list.innerHTML = '<div class="modal-status">网络请求失败：'+e.message+'<br>（无网络时无法添加新视频，但可使用已追踪视频）</div>';
+        return;
+      }
+    }
+    renderModalList('');
+  }
+  function renderModalList(q){
+    const list = $('modalList');
+    list.innerHTML = '';
+    const trackedSet = new Set(videos.map(v=>v.bvid));
+    const items = historyCache.filter(it => !q || (it.title||'').toLowerCase().includes(q.toLowerCase()));
+    if(!items.length){
+      list.innerHTML = '<div class="modal-status">无匹配项</div>';
+      return;
+    }
+    items.forEach(it=>{
+      const row = document.createElement('div');
+      row.className = 'modal-item';
+      const img = document.createElement('img');
+      img.className = 'mcover'; img.src = imgProxy(it.cover); img.alt='';
+      img.onerror = function(){ this.style.opacity='.25'; };
+      const info = document.createElement('div');
+      info.className = 'minfo';
+      const t = document.createElement('div'); t.className = 'mtitle2'; t.textContent = it.title||it.bvid;
+      t.title = it.title||'';
+      const s = document.createElement('div'); s.className = 'msub';
+      const tp = it.total_pages ? `共${it.total_pages}集 · ` : '';
+      const pg = it.page ? `看到第${it.page}集` : '未记录集数';
+      const tm = it.view_at ? new Date(it.view_at*1000).toLocaleString('zh-CN') : '';
+      s.textContent = `${tp}UP: ${it.owner||'—'} · ${pg} · ${tm}`;
+      info.appendChild(t); info.appendChild(s);
+      const btn = document.createElement('button');
+      btn.className = 'mbtn';
+      if(trackedSet.has(it.bvid)){
+        btn.textContent = '已追踪'; btn.disabled = true;
+      } else {
+        btn.textContent = '追踪';
+        btn.addEventListener('click', async ()=>{
+          btn.disabled = true; btn.textContent = '添加中…';
+          try{
+            const r = await fetch('/api/tracked/add', {method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({bvid:it.bvid})});
+            const j = await r.json();
+            if(j.ok){
+              showToast('已添加：' + (j.video.title||it.bvid).slice(0,30));
+              $('addModal').classList.remove('show');
+              updateModalLock();
+              await bootstrap();
+              await switchVideo(it.bvid);
+            } else {
+              btn.disabled = false; btn.textContent = '追踪';
+              showToast(j.message || '添加失败');
+            }
+          }catch(e){
+            btn.disabled = false; btn.textContent = '追踪';
+            showToast('添加失败：'+e.message);
+          }
+        });
+      }
+      row.appendChild(img); row.appendChild(info); row.appendChild(btn);
+      list.appendChild(row);
+    });
+  }
+
+  // ===== 初始化 bootstrap =====
+  async function bootstrap(){
+    try{
+      const r = await fetch('/api/tracked', {cache:'no-store'});
+      const j = await r.json();
+      if(j.ok){
+        videos = j.videos || [];
+        jumps = j.jumps || [];
+        renderTabs();
+        renderJumps();
+        const activeBvid = j.active_bvid || (videos[0] && videos[0].bvid);
+        if(activeBvid){
+          await loadActiveDetail(activeBvid);
+          renderTabs();
+          renderAll();
+        } else {
+          $('refreshStatus').textContent = '暂无追踪视频，点右上角 + 从B站历史添加';
+        }
+      } else {
+        showToast('加载追踪列表失败：' + (j.message||''));
+      }
+    }catch(e){
+      showToast('加载失败：' + e.message + '（请确认服务在运行）');
+    }
+  }
+
+  // ===== 事件绑定 =====
+  $('epSelect').addEventListener('change', ()=>{ selectEp(+$('epSelect').value, false); scheduleSave(); });
+  $('posSlider').addEventListener('input', ev=>{
+    document.body.classList.add('scrubbing');
+    pos = +ev.target.value; render();
+    ev.target.style.setProperty('--p', (pos/((active.episodes||[])[cur-1]||{duration:1}).duration*100)+'%');
+    scheduleSave();
+  });
+  $('posSlider').addEventListener('change', ()=> document.body.classList.remove('scrubbing'));
+  $('posSlider').addEventListener('pointerup', ()=> document.body.classList.remove('scrubbing'));
+  $('btnPrev').addEventListener('click', ()=>{ selectEp(cur-1, false); scheduleSave(); });
+  $('btnNext').addEventListener('click', ()=>{ selectEp(cur+1, false); scheduleSave(); });
+  $('btnDone').addEventListener('click', ()=>{ pos = ((active.episodes||[])[cur-1]||{}).duration||0; render();
+    scheduleSave(); setTimeout(()=> selectEp(cur+1, false), 250); });
+  $('btnRefresh').addEventListener('click', ()=> fetchProgress(false));
+
+  // 空状态引导按钮
+  $('emptyAdd').addEventListener('click', ()=>{ historyCache = null; openAddModal(); });
+
+  // 自动同步开关
+  $('autoSyncChk').checked = isAutoSyncOn();
+  $('autoSyncChk').addEventListener('change', ev=>{
+    try{ localStorage.setItem('autoSync', ev.target.checked ? '1' : '0'); }catch(e){}
+    showToast(ev.target.checked ? '已开启自动同步：每 5 分钟自动读取一次进度' : '已关闭自动同步');
+    resetAutoSync();
+  });
+
+  // 键盘快捷键：← 上一集，→ 下一集（输入框/弹窗打开时忽略）
+  document.addEventListener('keydown', ev=>{
+    const tag = (ev.target.tagName||'').toUpperCase();
+    if(tag==='INPUT' || tag==='SELECT' || tag==='TEXTAREA') return;
+    if($('addModal').classList.contains('show') || $('settingsModal').classList.contains('show')) return;
+    if(!active || !(active.episodes||[]).length) return;
+    if(ev.key==='ArrowLeft'){ ev.preventDefault(); selectEp(cur-1, false); scheduleSave(); }
+    else if(ev.key==='ArrowRight'){ ev.preventDefault(); selectEp(cur+1, false); scheduleSave(); }
+  });
+
+  $('tabAdd').addEventListener('click', ()=>{ historyCache = null; openAddModal(); });
+  // Tab 栏：鼠标悬停时用滚轮左右滚动（纵向滚轮转为横向）
+  const tabsEl = $('tabs');
+  tabsEl.addEventListener('wheel', ev=>{
+    if(Math.abs(ev.deltaY) > Math.abs(ev.deltaX)){
+      ev.preventDefault();
+      tabsEl.scrollLeft += ev.deltaY;
+    }
+  }, {passive:false});
+  $('modalClose').addEventListener('click', ()=>{ $('addModal').classList.remove('show'); updateModalLock(); });
+  $('addModal').addEventListener('click', ev=>{ if(ev.target.id==='addModal'){ $('addModal').classList.remove('show'); updateModalLock(); } });
+  $('modalSearch').addEventListener('input', ev=> renderModalList(ev.target.value.trim()));
+
+  $('jumpsToggle').addEventListener('click', ()=>{
+    jumpsShowAll = !jumpsShowAll;
+    $('jumpsToggle').textContent = jumpsShowAll ? '仅当前视频' : '显示全部';
+    renderJumps();
+  });
+
+  // ===== 设置弹窗（SESSDATA） =====
+  async function openSettings(){
+    $('settingsModal').classList.add('show');
+    updateModalLock();
+    const st = $('sessdataStatus');
+    st.textContent = '检查中…'; st.style.color = 'var(--muted)';
+    try{
+      const r = await fetch('/api/sessdata', {cache:'no-store'});
+      const j = await r.json();
+      if(j.configured){
+        st.textContent = '✓ 已配置 SESSDATA（可在下方重新粘贴覆盖）';
+        st.style.color = 'var(--ok)';
+      } else {
+        st.textContent = '尚未配置，请按下方步骤获取并粘贴';
+        st.style.color = 'var(--warn)';
+      }
+    }catch(e){
+      st.textContent = '检查失败：'+e.message; st.style.color = 'var(--danger)';
+    }
+    $('sessdataInput').value = '';
+    $('sessdataInput').type = 'password';
+    $('sessdataToggle').textContent = '👁 显示';
+  }
+  function closeSettings(){ $('settingsModal').classList.remove('show'); updateModalLock(); }
+  $('tabSettings').addEventListener('click', openSettings);
+  $('settingsClose').addEventListener('click', closeSettings);
+  $('settingsModal').addEventListener('click', ev=>{ if(ev.target.id==='settingsModal') closeSettings(); });
+  $('sessdataToggle').addEventListener('click', ()=>{
+    const inp = $('sessdataInput');
+    if(inp.type==='password'){ inp.type='text'; $('sessdataToggle').textContent='👁 隐藏'; }
+    else { inp.type='password'; $('sessdataToggle').textContent='👁 显示'; }
+  });
+  $('sessdataSave').addEventListener('click', async ()=>{
+    const v = $('sessdataInput').value.trim();
+    const st = $('sessdataStatus');
+    if(!v){ st.textContent='请先粘贴 SESSDATA'; st.style.color='var(--warn)'; return; }
+    $('sessdataSave').disabled = true;
+    const oldTxt = $('sessdataSave').textContent; $('sessdataSave').textContent = '保存中…';
+    try{
+      const r = await fetch('/api/sessdata', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({sessdata:v})});
+      const j = await r.json();
+      if(j.ok){
+        showToast('SESSDATA 已保存，正在同步进度…');
+        closeSettings();
+        $('offlineBar').classList.remove('show');
+        if(active){ fetchProgress(true); }
+        else { openAddModal(); }
+      } else {
+        st.textContent = '保存失败：'+(j.message||''); st.style.color='var(--danger)';
+      }
+    }catch(e){
+      st.textContent='保存失败：'+e.message; st.style.color='var(--danger)';
+    }finally{
+      $('sessdataSave').disabled = false; $('sessdataSave').textContent = oldTxt;
+    }
+  });
+
+  // ===== 应用图标自定义 =====
+  function iconBusy(busy, btn){
+    if(!btn) return;
+    btn.disabled = !!busy;
+    if(busy){ btn.dataset.old = btn.textContent; btn.textContent = '处理中…'; }
+    else if(btn.dataset.old){ btn.textContent = btn.dataset.old; delete btn.dataset.old; }
+  }
+  function refreshIconPreview(){
+    const img = $('iconPreview');
+    img.src = '/api/icon/file?_t=' + Date.now();
+  }
+  async function uploadIconImage(file){
+    const st = $('iconStatus');
+    const btn = $('iconPickBtn');
+    if(!file){ return; }
+    if(file.size > 8*1024*1024){
+      st.textContent='图片过大（>8MB），请换一张'; st.style.color='var(--warn)'; return;
+    }
+    iconBusy(true, btn);
+    st.textContent='正在生成图标…'; st.style.color='var(--muted)';
+    try{
+      const dataUrl = await new Promise((res, rej)=>{
+        const fr = new FileReader();
+        fr.onload = ()=>res(fr.result);
+        fr.onerror = ()=>rej(new Error('读取文件失败'));
+        fr.readAsDataURL(file);
+      });
+      const r = await fetch('/api/icon', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({image:dataUrl})});
+      const j = await r.json();
+      if(j.ok){
+        st.textContent = j.message || '图标已应用'; st.style.color='var(--ok)';
+        refreshIconPreview();
+        showToast('应用图标已更新（桌面快捷方式可能需重启应用生效）');
+      } else {
+        st.textContent='失败：'+(j.message||'未知错误'); st.style.color='var(--danger)';
+      }
+    }catch(e){
+      st.textContent='失败：'+e.message; st.style.color='var(--danger)';
+    }finally{
+      iconBusy(false, btn);
+      $('iconFile').value='';
+    }
+  }
+  $('iconPickBtn').addEventListener('click', ()=> $('iconFile').click());
+  $('iconFile').addEventListener('change', ev=>{
+    const f = ev.target.files && ev.target.files[0];
+    if(f){ uploadIconImage(f); }
+  });
+  $('iconResetBtn').addEventListener('click', async ()=>{
+    const st = $('iconStatus');
+    const btn = $('iconResetBtn');
+    iconBusy(true, btn);
+    st.textContent='正在恢复默认图标…'; st.style.color='var(--muted)';
+    try{
+      const r = await fetch('/api/icon', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({action:'reset'})});
+      const j = await r.json();
+      if(j.ok){
+        st.textContent = j.message || '已恢复默认'; st.style.color='var(--ok)';
+        refreshIconPreview();
+        showToast('已恢复默认图标');
+      } else {
+        st.textContent='失败：'+(j.message||'未知错误'); st.style.color='var(--danger)';
+      }
+    }catch(e){
+      st.textContent='失败：'+e.message; st.style.color='var(--danger)';
+    }finally{
+      iconBusy(false, btn);
+    }
+  });
+
+  // ===== 无边框窗口控制（最小化/关闭） =====
+  // 启动时 WebView2 会把初始焦点交给页面里第一个可聚焦元素（标题栏按钮/视频栏，
+  // 出现焦点白框甚至 tooltip），统一把焦点锁回 body（body 无焦点轮廓）
+  const focusBody = ()=>{ try{ if(document.activeElement!==document.body) document.body.focus(); }catch(e){} };
+  setTimeout(focusBody, 0);
+  setTimeout(focusBody, 300);
+  window.addEventListener('focus', focusBody);
+  $('winClose').addEventListener('click', async ()=>{
+    // 先立即隐藏原生窗口与界面（视觉秒关），再请求服务端退出进程
+    try{
+      if(window.pywebview && window.pywebview.api && window.pywebview.api.hide_window){
+        window.pywebview.api.hide_window();
+      }
+    }catch(e){}
+    document.body.style.visibility = 'hidden';
+    try{ await fetch('/api/quit', {method:'POST'}); }catch(e){}
+    // 服务端退出后页面会失效，兜底尝试 window.close
+    setTimeout(()=>{ try{ window.close(); }catch(e){} }, 200);
+  });
+  $('winMin').addEventListener('click', ()=>{
+    // pywebview 注入的窗口对象；浏览器模式下静默失败
+    try{
+      if(window.pywebview && window.pywebview.api && window.pywebview.api.minimize){
+        window.pywebview.api.minimize();
+      } else {
+        document.body.classList.toggle('minimized-hint');
+      }
+    }catch(e){}
+  });
+
+  // ===== 无边框窗口八向边缘缩放：JS 只报方向，Python 端让边缘贴合鼠标 =====
+  (function initResize(){
+    const zones = [
+      ['n','rz rz-n'], ['s','rz rz-s'], ['e','rz rz-e'], ['w','rz rz-w'],
+      ['ne','rz rz-ne'], ['nw','rz rz-nw'], ['se','rz rz-se'], ['sw','rz rz-sw'],
+    ];
+    zones.forEach(([dir, cls])=>{
+      const d = document.createElement('div');
+      d.className = cls;
+      d.addEventListener('pointerdown', ev=>{
+        if(ev.button !== 0) return;
+        const api = window.pywebview && window.pywebview.api;
+        if(!api || !api.resize_edge) return;  // 浏览器模式无窗口可缩放
+        ev.preventDefault();
+        d.setPointerCapture(ev.pointerId);  // 拖出窗口也持续收到事件
+        let inFlight = false, again = false;
+        const send = ()=>{
+          if(inFlight){ again = true; return; }
+          inFlight = true;
+          Promise.resolve(api.resize_edge(dir)).catch(()=>{}).finally(()=>{
+            inFlight = false;
+            if(again){ again = false; send(); }  // 补发：Python 端取实时鼠标位置
+          });
+        };
+        const onMove = ()=> send();
+        const onUp = ()=>{
+          d.removeEventListener('pointermove', onMove);
+          d.removeEventListener('pointerup', onUp);
+          d.removeEventListener('pointercancel', onUp);
+        };
+        d.addEventListener('pointermove', onMove);
+        d.addEventListener('pointerup', onUp);
+        d.addEventListener('pointercancel', onUp);
+        send();
+      });
+      document.body.appendChild(d);
+    });
+  })();
+
+  // ===== 自定义悬浮滚动条（离窗口右缘 7px，不与边缘缩放热区冲突） =====
+  (function initScrollbar(){
+    const de = document.scrollingElement || document.documentElement;
+    const track = document.createElement('div');
+    track.className = 'sb-track';
+    const thumb = document.createElement('div');
+    thumb.className = 'sb-thumb';
+    track.appendChild(thumb);
+    document.body.appendChild(track);
+
+    function sync(){
+      const sh = de.scrollHeight, vh = de.clientHeight;
+      if(sh <= vh + 1){ track.style.display = 'none'; return; }
+      track.style.display = 'block';
+      const trackH = track.clientHeight;
+      const th = Math.max(30, Math.round(vh / sh * trackH));
+      const maxT = trackH - th;
+      const y = maxT > 0 ? de.scrollTop / (sh - vh) * maxT : 0;
+      thumb.style.height = th + 'px';
+      thumb.style.transform = 'translateY(' + y + 'px)';
+    }
+    document.addEventListener('scroll', sync, {passive:true});
+    window.addEventListener('resize', sync);
+    document.addEventListener('load', sync, true);  // 封面等资源加载后高度会变
+
+    // 拖拽滑块
+    thumb.addEventListener('pointerdown', e=>{
+      e.preventDefault();
+      thumb.setPointerCapture(e.pointerId);
+      const startY = e.clientY, startTop = de.scrollTop;
+      const move = ev=>{
+        const maxT = track.clientHeight - thumb.offsetHeight;
+        if(maxT <= 0) return;
+        de.scrollTop = startTop + (ev.clientY - startY) / maxT * (de.scrollHeight - de.clientHeight);
+      };
+      const up = ()=>{
+        thumb.removeEventListener('pointermove', move);
+        thumb.removeEventListener('pointerup', up);
+        thumb.removeEventListener('pointercancel', up);
+      };
+      thumb.addEventListener('pointermove', move);
+      thumb.addEventListener('pointerup', up);
+      thumb.addEventListener('pointercancel', up);
+    });
+    sync();
+  })();
+
+  // 启动
+  (async ()=>{
+    await bootstrap();
+    if(active){
+      fetchProgress(true);
+    }
+    // 启动时检查 SESSDATA 是否配置，未配置则引导设置
+    try{
+      const r = await fetch('/api/sessdata', {cache:'no-store'});
+      const j = await r.json();
+      if(!j.configured){
+        openSettings();
+        showToast('请先在右上角设置中配置 B站账号 SESSDATA');
+      }
+    }catch(e){}
+  })();
+})();
+</script>
+</body>
+</html>

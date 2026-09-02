@@ -1,0 +1,3 @@
+# Bilibili SESSDATA（从浏览器 Cookie 获取，仅本地使用，不上传）
+# 获取：登录 bilibili.com -> F12 -> Application/应用 -> Cookies -> 复制 SESSDATA 的值
+3e735841%2C1803810224%2Cf0164%2A92CjBKpus__UR4a5sEqITIas6yn4mIr5ojgNFUU9uJUP8IIg_-EUYrrLJxqy3e18boFZASVm1MM2V3R2FtbE05QllsSHZYeVptVDliczVoZUt1OUdKVnNFNlI0Y25GU2NxRVVxeVVhbGV6cHQyNG9oYUdGNjBwM1NEYjRmUHdMbWExOUNFOThXTkF3IIEC

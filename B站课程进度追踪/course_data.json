@@ -1,0 +1,1047 @@
+{
+  "bvid": "BV1nz6KBHEc9",
+  "url": "https://www.bilibili.com/video/BV1nz6KBHEc9",
+  "title": "黑马程序员零基础具身智能机械臂实战项目开发全套视频课程，涵盖OpenCV、YOLO、DeepSeek等，从机械臂硬件、核心算法到人工智能完整技术栈",
+  "owner": "黑马程序员",
+  "cover": "http://i2.hdslb.com/bfs/archive/64c8018da4d39adadb9e0e63fc9ff8e28444f140.jpg",
+  "totalEpisodes": 115,
+  "totalDuration": 111912,
+  "totalDurationText": "31:05:12",
+  "episodes": [
+    {
+      "page": 1,
+      "cid": "35708666882",
+      "title": "01_具身智能课程介绍",
+      "duration": 289,
+      "durationText": "00:04:49",
+      "cumulativeStart": 0,
+      "cumulativeEnd": 289
+    },
+    {
+      "page": 2,
+      "cid": "35636055947",
+      "title": "02_什么是具身智能",
+      "duration": 637,
+      "durationText": "00:10:37",
+      "cumulativeStart": 289,
+      "cumulativeEnd": 926
+    },
+    {
+      "page": 3,
+      "cid": "35636118576",
+      "title": "03_具身智能的技术架构",
+      "duration": 391,
+      "durationText": "00:06:31",
+      "cumulativeStart": 926,
+      "cumulativeEnd": 1317
+    },
+    {
+      "page": 4,
+      "cid": "35636119023",
+      "title": "04_具身智能的挑战",
+      "duration": 511,
+      "durationText": "00:08:31",
+      "cumulativeStart": 1317,
+      "cumulativeEnd": 1828
+    },
+    {
+      "page": 5,
+      "cid": "35636380724",
+      "title": "05_大语言模型与具身智能",
+      "duration": 558,
+      "durationText": "00:09:18",
+      "cumulativeStart": 1828,
+      "cumulativeEnd": 2386
+    },
+    {
+      "page": 6,
+      "cid": "35636382232",
+      "title": "06_具身智能的执行单元",
+      "duration": 669,
+      "durationText": "00:11:09",
+      "cumulativeStart": 2386,
+      "cumulativeEnd": 3055
+    },
+    {
+      "page": 7,
+      "cid": "35636512640",
+      "title": "07_具身智能案例分析",
+      "duration": 671,
+      "durationText": "00:11:11",
+      "cumulativeStart": 3055,
+      "cumulativeEnd": 3726
+    },
+    {
+      "page": 8,
+      "cid": "35636578218",
+      "title": "08_步进电机介绍",
+      "duration": 531,
+      "durationText": "00:08:51",
+      "cumulativeStart": 3726,
+      "cumulativeEnd": 4257
+    },
+    {
+      "page": 9,
+      "cid": "35636578598",
+      "title": "09_无刷电机介绍",
+      "duration": 562,
+      "durationText": "00:09:22",
+      "cumulativeStart": 4257,
+      "cumulativeEnd": 4819
+    },
+    {
+      "page": 10,
+      "cid": "35636642205",
+      "title": "10_电机选型指南",
+      "duration": 331,
+      "durationText": "00:05:31",
+      "cumulativeStart": 4819,
+      "cumulativeEnd": 5150
+    },
+    {
+      "page": 11,
+      "cid": "35636642350",
+      "title": "11_四两拨千斤的秘密",
+      "duration": 497,
+      "durationText": "00:08:17",
+      "cumulativeStart": 5150,
+      "cumulativeEnd": 5647
+    },
+    {
+      "page": 12,
+      "cid": "35636707348",
+      "title": "12_ 减速箱的阿喀琉斯之踵",
+      "duration": 523,
+      "durationText": "00:08:43",
+      "cumulativeStart": 5647,
+      "cumulativeEnd": 6170
+    },
+    {
+      "page": 13,
+      "cid": "35636709663",
+      "title": "13_位置采集的原理",
+      "duration": 752,
+      "durationText": "00:12:32",
+      "cumulativeStart": 6170,
+      "cumulativeEnd": 6922
+    },
+    {
+      "page": 14,
+      "cid": "35636774229",
+      "title": "14_位置编码器的实物和选型方法",
+      "duration": 509,
+      "durationText": "00:08:29",
+      "cumulativeStart": 6922,
+      "cumulativeEnd": 7431
+    },
+    {
+      "page": 15,
+      "cid": "35636776613",
+      "title": "15_Sim2Real的高薪密码",
+      "duration": 782,
+      "durationText": "00:13:02",
+      "cumulativeStart": 7431,
+      "cumulativeEnd": 8213
+    },
+    {
+      "page": 16,
+      "cid": "35636839513",
+      "title": "16_urdf入门",
+      "duration": 801,
+      "durationText": "00:13:21",
+      "cumulativeStart": 8213,
+      "cumulativeEnd": 9014
+    },
+    {
+      "page": 17,
+      "cid": "35636842224",
+      "title": "17_urdf环境搭建",
+      "duration": 876,
+      "durationText": "00:14:36",
+      "cumulativeStart": 9014,
+      "cumulativeEnd": 9890
+    },
+    {
+      "page": 18,
+      "cid": "35636906575",
+      "title": "18_构建机械臂的基座模型",
+      "duration": 1003,
+      "durationText": "00:16:43",
+      "cumulativeStart": 9890,
+      "cumulativeEnd": 10893
+    },
+    {
+      "page": 19,
+      "cid": "35636908030",
+      "title": "19_构建机械臂的第一个大臂",
+      "duration": 705,
+      "durationText": "00:11:45",
+      "cumulativeStart": 10893,
+      "cumulativeEnd": 11598
+    },
+    {
+      "page": 20,
+      "cid": "35636970915",
+      "title": "20_构建机械臂的其他关节",
+      "duration": 1118,
+      "durationText": "00:18:38",
+      "cumulativeStart": 11598,
+      "cumulativeEnd": 12716
+    },
+    {
+      "page": 21,
+      "cid": "35637037789",
+      "title": "21_遥操作",
+      "duration": 1406,
+      "durationText": "00:23:26",
+      "cumulativeStart": 12716,
+      "cumulativeEnd": 14122
+    },
+    {
+      "page": 22,
+      "cid": "35637102753",
+      "title": "22_教师端结构的搭建",
+      "duration": 1370,
+      "durationText": "00:22:50",
+      "cumulativeStart": 14122,
+      "cumulativeEnd": 15492
+    },
+    {
+      "page": 23,
+      "cid": "35637234630",
+      "title": "23_搭建自己的编码器舵机",
+      "duration": 1034,
+      "durationText": "00:17:14",
+      "cumulativeStart": 15492,
+      "cumulativeEnd": 16526
+    },
+    {
+      "page": 24,
+      "cid": "35637363312",
+      "title": "24_验证官方的sdk",
+      "duration": 1251,
+      "durationText": "00:20:51",
+      "cumulativeStart": 16526,
+      "cumulativeEnd": 17777
+    },
+    {
+      "page": 25,
+      "cid": "35637429431",
+      "title": "25_聊聊vibe coding",
+      "duration": 1589,
+      "durationText": "00:26:29",
+      "cumulativeStart": 17777,
+      "cumulativeEnd": 19366
+    },
+    {
+      "page": 26,
+      "cid": "35637432020",
+      "title": "26_vibe coding初体验",
+      "duration": 1789,
+      "durationText": "00:29:49",
+      "cumulativeStart": 19366,
+      "cumulativeEnd": 21155
+    },
+    {
+      "page": 27,
+      "cid": "35637496859",
+      "title": "27_读取教师端6个编码器舵机的角度",
+      "duration": 849,
+      "durationText": "00:14:09",
+      "cumulativeStart": 21155,
+      "cumulativeEnd": 22004
+    },
+    {
+      "page": 28,
+      "cid": "35637560422",
+      "title": "28_增加前端机械臂角度控制的代码",
+      "duration": 1883,
+      "durationText": "00:31:23",
+      "cumulativeStart": 22004,
+      "cumulativeEnd": 23887
+    },
+    {
+      "page": 29,
+      "cid": "35637625730",
+      "title": "29_随机更新角度信息发给前端展示",
+      "duration": 1346,
+      "durationText": "00:22:26",
+      "cumulativeStart": 23887,
+      "cumulativeEnd": 25233
+    },
+    {
+      "page": 30,
+      "cid": "35637628459",
+      "title": "30_同构遥操作案例的完成",
+      "duration": 1550,
+      "durationText": "00:25:50",
+      "cumulativeStart": 25233,
+      "cumulativeEnd": 26783
+    },
+    {
+      "page": 31,
+      "cid": "35637756443",
+      "title": "31_机械臂运动学数学速成",
+      "duration": 1189,
+      "durationText": "00:19:49",
+      "cumulativeStart": 26783,
+      "cumulativeEnd": 27972
+    },
+    {
+      "page": 32,
+      "cid": "35637758020",
+      "title": "32_机械臂运动学正解",
+      "duration": 1049,
+      "durationText": "00:17:29",
+      "cumulativeStart": 27972,
+      "cumulativeEnd": 29021
+    },
+    {
+      "page": 33,
+      "cid": "35637759782",
+      "title": "33_旋转平移的矩阵表达",
+      "duration": 1162,
+      "durationText": "00:19:22",
+      "cumulativeStart": 29021,
+      "cumulativeEnd": 30183
+    },
+    {
+      "page": 34,
+      "cid": "35637822548",
+      "title": "34_机械臂正解的代码实现",
+      "duration": 1151,
+      "durationText": "00:19:11",
+      "cumulativeStart": 30183,
+      "cumulativeEnd": 31334
+    },
+    {
+      "page": 35,
+      "cid": "35637824887",
+      "title": "35_运动学逆解介绍",
+      "duration": 890,
+      "durationText": "00:14:50",
+      "cumulativeStart": 31334,
+      "cumulativeEnd": 32224
+    },
+    {
+      "page": 36,
+      "cid": "35637887685",
+      "title": "36_运动学逆解求解思路",
+      "duration": 917,
+      "durationText": "00:15:17",
+      "cumulativeStart": 32224,
+      "cumulativeEnd": 33141
+    },
+    {
+      "page": 37,
+      "cid": "35637888961",
+      "title": "37_机械臂末端坐标的计算与展示",
+      "duration": 965,
+      "durationText": "00:16:05",
+      "cumulativeStart": 33141,
+      "cumulativeEnd": 34106
+    },
+    {
+      "page": 38,
+      "cid": "35637890886",
+      "title": "38_机械臂示教器的完成",
+      "duration": 673,
+      "durationText": "00:11:13",
+      "cumulativeStart": 34106,
+      "cumulativeEnd": 34779
+    },
+    {
+      "page": 39,
+      "cid": "35637953470",
+      "title": "39_学生端机械臂的安装",
+      "duration": 1672,
+      "durationText": "00:27:52",
+      "cumulativeStart": 34779,
+      "cumulativeEnd": 36451
+    },
+    {
+      "page": 40,
+      "cid": "35638020393",
+      "title": "40_学生端机械臂的配置与标定",
+      "duration": 1172,
+      "durationText": "00:19:32",
+      "cumulativeStart": 36451,
+      "cumulativeEnd": 37623
+    },
+    {
+      "page": 41,
+      "cid": "35638215551",
+      "title": "41_为什么机械臂会出现帕金森",
+      "duration": 1139,
+      "durationText": "00:18:59",
+      "cumulativeStart": 37623,
+      "cumulativeEnd": 38762
+    },
+    {
+      "page": 42,
+      "cid": "35638217316",
+      "title": "42_机械臂PID的配置",
+      "duration": 752,
+      "durationText": "00:12:32",
+      "cumulativeStart": 38762,
+      "cumulativeEnd": 39514
+    },
+    {
+      "page": 43,
+      "cid": "35638280346",
+      "title": "43_机械臂同步遥操作的实现",
+      "duration": 1428,
+      "durationText": "00:23:48",
+      "cumulativeStart": 39514,
+      "cumulativeEnd": 40942
+    },
+    {
+      "page": 44,
+      "cid": "35638283201",
+      "title": "44_机械臂同步优化的策略",
+      "duration": 614,
+      "durationText": "00:10:14",
+      "cumulativeStart": 40942,
+      "cumulativeEnd": 41556
+    },
+    {
+      "page": 45,
+      "cid": "35638346233",
+      "title": "45_计算机视觉介绍",
+      "duration": 946,
+      "durationText": "00:15:46",
+      "cumulativeStart": 41556,
+      "cumulativeEnd": 42502
+    },
+    {
+      "page": 46,
+      "cid": "35638348123",
+      "title": "46_计算机存储图像的原理",
+      "duration": 1207,
+      "durationText": "00:20:07",
+      "cumulativeStart": 42502,
+      "cumulativeEnd": 43709
+    },
+    {
+      "page": 47,
+      "cid": "35638412759",
+      "title": "47_摄像头画面抖动的原因",
+      "duration": 779,
+      "durationText": "00:12:59",
+      "cumulativeStart": 43709,
+      "cumulativeEnd": 44488
+    },
+    {
+      "page": 48,
+      "cid": "35638479608",
+      "title": "48_opencv入门",
+      "duration": 1189,
+      "durationText": "00:19:49",
+      "cumulativeStart": 44488,
+      "cumulativeEnd": 45677
+    },
+    {
+      "page": 49,
+      "cid": "35638542928",
+      "title": "49_opencv的ROI选取",
+      "duration": 1071,
+      "durationText": "00:17:51",
+      "cumulativeStart": 45677,
+      "cumulativeEnd": 46748
+    },
+    {
+      "page": 50,
+      "cid": "35638544814",
+      "title": "50_opencv颜色识别",
+      "duration": 1578,
+      "durationText": "00:26:18",
+      "cumulativeStart": 46748,
+      "cumulativeEnd": 48326
+    },
+    {
+      "page": 51,
+      "cid": "35638609592",
+      "title": "51_opencv超参数调整技巧",
+      "duration": 903,
+      "durationText": "00:15:03",
+      "cumulativeStart": 48326,
+      "cumulativeEnd": 49229
+    },
+    {
+      "page": 52,
+      "cid": "35638674294",
+      "title": "52_高级案例白色瓶盖计数",
+      "duration": 1392,
+      "durationText": "00:23:12",
+      "cumulativeStart": 49229,
+      "cumulativeEnd": 50621
+    },
+    {
+      "page": 53,
+      "cid": "35638804897",
+      "title": "53_眼在手上眼在手外",
+      "duration": 883,
+      "durationText": "00:14:43",
+      "cumulativeStart": 50621,
+      "cumulativeEnd": 51504
+    },
+    {
+      "page": 54,
+      "cid": "35639659543",
+      "title": "54_机器视觉物体宽高测量",
+      "duration": 824,
+      "durationText": "00:13:44",
+      "cumulativeStart": 51504,
+      "cumulativeEnd": 52328
+    },
+    {
+      "page": 55,
+      "cid": "35639723201",
+      "title": "55_手眼标定和差值计算",
+      "duration": 1063,
+      "durationText": "00:17:43",
+      "cumulativeStart": 52328,
+      "cumulativeEnd": 53391
+    },
+    {
+      "page": 56,
+      "cid": "35639788754",
+      "title": "56_opencv形状识别和优化",
+      "duration": 1011,
+      "durationText": "00:16:51",
+      "cumulativeStart": 53391,
+      "cumulativeEnd": 54402
+    },
+    {
+      "page": 57,
+      "cid": "35639791420",
+      "title": "57_opencv目标追踪",
+      "duration": 843,
+      "durationText": "00:14:03",
+      "cumulativeStart": 54402,
+      "cumulativeEnd": 55245
+    },
+    {
+      "page": 58,
+      "cid": "35639855928",
+      "title": "58_opencv仿射变换上帝视角",
+      "duration": 1002,
+      "durationText": "00:16:42",
+      "cumulativeStart": 55245,
+      "cumulativeEnd": 56247
+    },
+    {
+      "page": 59,
+      "cid": "35639921000",
+      "title": "59_opencv旋转角和中心点识别案例分析",
+      "duration": 432,
+      "durationText": "00:07:12",
+      "cumulativeStart": 56247,
+      "cumulativeEnd": 56679
+    },
+    {
+      "page": 60,
+      "cid": "35639984153",
+      "title": "60_中心点和旋转角代码实现",
+      "duration": 509,
+      "durationText": "00:08:29",
+      "cumulativeStart": 56679,
+      "cumulativeEnd": 57188
+    },
+    {
+      "page": 61,
+      "cid": "35639985492",
+      "title": "61_opencv二维码识别",
+      "duration": 351,
+      "durationText": "00:05:51",
+      "cumulativeStart": 57188,
+      "cumulativeEnd": 57539
+    },
+    {
+      "page": 62,
+      "cid": "35639986284",
+      "title": "62_opencv人脸识别",
+      "duration": 304,
+      "durationText": "00:05:04",
+      "cumulativeStart": 57539,
+      "cumulativeEnd": 57843
+    },
+    {
+      "page": 63,
+      "cid": "35639987178",
+      "title": "63_opencv的局限性",
+      "duration": 1115,
+      "durationText": "00:18:35",
+      "cumulativeStart": 57843,
+      "cumulativeEnd": 58958
+    },
+    {
+      "page": 64,
+      "cid": "35640052000",
+      "title": "64_机器学习概念入门",
+      "duration": 765,
+      "durationText": "00:12:45",
+      "cumulativeStart": 58958,
+      "cumulativeEnd": 59723
+    },
+    {
+      "page": 65,
+      "cid": "35640053029",
+      "title": "65_端到端学习的概念",
+      "duration": 937,
+      "durationText": "00:15:37",
+      "cumulativeStart": 59723,
+      "cumulativeEnd": 60660
+    },
+    {
+      "page": 66,
+      "cid": "35640116690",
+      "title": "66_ai推理机器学习三要素",
+      "duration": 977,
+      "durationText": "00:16:17",
+      "cumulativeStart": 60660,
+      "cumulativeEnd": 61637
+    },
+    {
+      "page": 67,
+      "cid": "35640118705",
+      "title": "67_机器学习流程总结",
+      "duration": 974,
+      "durationText": "00:16:14",
+      "cumulativeStart": 61637,
+      "cumulativeEnd": 62611
+    },
+    {
+      "page": 68,
+      "cid": "35640181231",
+      "title": "68_误差函数和sklearn框架安装",
+      "duration": 773,
+      "durationText": "00:12:53",
+      "cumulativeStart": 62611,
+      "cumulativeEnd": 63384
+    },
+    {
+      "page": 69,
+      "cid": "35640182626",
+      "title": "69_梯度下降和神经元结构原理",
+      "duration": 902,
+      "durationText": "00:15:02",
+      "cumulativeStart": 63384,
+      "cumulativeEnd": 64286
+    },
+    {
+      "page": 70,
+      "cid": "35640184089",
+      "title": "70_图像数据收集和特征工程",
+      "duration": 1812,
+      "durationText": "00:30:12",
+      "cumulativeStart": 64286,
+      "cumulativeEnd": 66098
+    },
+    {
+      "page": 71,
+      "cid": "35640250207",
+      "title": "71_模型训练",
+      "duration": 994,
+      "durationText": "00:16:34",
+      "cumulativeStart": 66098,
+      "cumulativeEnd": 67092
+    },
+    {
+      "page": 72,
+      "cid": "35640313766",
+      "title": "72_模型文件的解析和推理",
+      "duration": 1744,
+      "durationText": "00:29:04",
+      "cumulativeStart": 67092,
+      "cumulativeEnd": 68836
+    },
+    {
+      "page": 73,
+      "cid": "35640443732",
+      "title": "73_混淆矩阵和交叉熵",
+      "duration": 1598,
+      "durationText": "00:26:38",
+      "cumulativeStart": 68836,
+      "cumulativeEnd": 70434
+    },
+    {
+      "page": 74,
+      "cid": "35640445948",
+      "title": "74_yolo快速入门",
+      "duration": 1796,
+      "durationText": "00:29:56",
+      "cumulativeStart": 70434,
+      "cumulativeEnd": 72230
+    },
+    {
+      "page": 75,
+      "cid": "35640574665",
+      "title": "75_数据标注",
+      "duration": 3011,
+      "durationText": "00:50:11",
+      "cumulativeStart": 72230,
+      "cumulativeEnd": 75241
+    },
+    {
+      "page": 76,
+      "cid": "35640706806",
+      "title": "76_标注数据的格式转化",
+      "duration": 544,
+      "durationText": "00:09:04",
+      "cumulativeStart": 75241,
+      "cumulativeEnd": 75785
+    },
+    {
+      "page": 77,
+      "cid": "35640708188",
+      "title": "77_训练和结果展示",
+      "duration": 1924,
+      "durationText": "00:32:04",
+      "cumulativeStart": 75785,
+      "cumulativeEnd": 77709
+    },
+    {
+      "page": 78,
+      "cid": "35640837271",
+      "title": "78_卷积神经网络",
+      "duration": 777,
+      "durationText": "00:12:57",
+      "cumulativeStart": 77709,
+      "cumulativeEnd": 78486
+    },
+    {
+      "page": 79,
+      "cid": "35640838433",
+      "title": "79_卷积核与特征提取器",
+      "duration": 910,
+      "durationText": "00:15:10",
+      "cumulativeStart": 78486,
+      "cumulativeEnd": 79396
+    },
+    {
+      "page": 80,
+      "cid": "35640839879",
+      "title": "80_卷积神经网络与应用",
+      "duration": 691,
+      "durationText": "00:11:31",
+      "cumulativeStart": 79396,
+      "cumulativeEnd": 80087
+    },
+    {
+      "page": 81,
+      "cid": "35640904064",
+      "title": "81_图像合成与标注原理分析",
+      "duration": 556,
+      "durationText": "00:09:16",
+      "cumulativeStart": 80087,
+      "cumulativeEnd": 80643
+    },
+    {
+      "page": 82,
+      "cid": "35640968242",
+      "title": "82_合成带有标注信息的图片",
+      "duration": 1271,
+      "durationText": "00:21:11",
+      "cumulativeStart": 80643,
+      "cumulativeEnd": 81914
+    },
+    {
+      "page": 83,
+      "cid": "35640970792",
+      "title": "83_数据合成训练效果展示",
+      "duration": 1339,
+      "durationText": "00:22:19",
+      "cumulativeStart": 81914,
+      "cumulativeEnd": 83253
+    },
+    {
+      "page": 84,
+      "cid": "35641099230",
+      "title": "84_离线语音识别",
+      "duration": 1081,
+      "durationText": "00:18:01",
+      "cumulativeStart": 83253,
+      "cumulativeEnd": 84334
+    },
+    {
+      "page": 85,
+      "cid": "35641100986",
+      "title": "85_在线语音模型和模型的获取方法",
+      "duration": 719,
+      "durationText": "00:11:59",
+      "cumulativeStart": 84334,
+      "cumulativeEnd": 85053
+    },
+    {
+      "page": 86,
+      "cid": "35641164068",
+      "title": "86_音频合成",
+      "duration": 1177,
+      "durationText": "00:19:37",
+      "cumulativeStart": 85053,
+      "cumulativeEnd": 86230
+    },
+    {
+      "page": 87,
+      "cid": "35641166711",
+      "title": "87_传统模式匹配代码的解析",
+      "duration": 847,
+      "durationText": "00:14:07",
+      "cumulativeStart": 86230,
+      "cumulativeEnd": 87077
+    },
+    {
+      "page": 88,
+      "cid": "35641231425",
+      "title": "88_基于规则的传统语音聊天机器人的实现",
+      "duration": 874,
+      "durationText": "00:14:34",
+      "cumulativeStart": 87077,
+      "cumulativeEnd": 87951
+    },
+    {
+      "page": 89,
+      "cid": "35641295781",
+      "title": "89_接入deepseek实现智能对话",
+      "duration": 2044,
+      "durationText": "00:34:04",
+      "cumulativeStart": 87951,
+      "cumulativeEnd": 89995
+    },
+    {
+      "page": 90,
+      "cid": "35641363699",
+      "title": "90_ai智能体的开发",
+      "duration": 1406,
+      "durationText": "00:23:26",
+      "cumulativeStart": 89995,
+      "cumulativeEnd": 91401
+    },
+    {
+      "page": 91,
+      "cid": "35641494194",
+      "title": "91_大模型的本地化部署",
+      "duration": 1110,
+      "durationText": "00:18:30",
+      "cumulativeStart": 91401,
+      "cumulativeEnd": 92511
+    },
+    {
+      "page": 92,
+      "cid": "35641559186",
+      "title": "92_本地大模型的python调用",
+      "duration": 1400,
+      "durationText": "00:23:20",
+      "cumulativeStart": 92511,
+      "cumulativeEnd": 93911
+    },
+    {
+      "page": 93,
+      "cid": "35641625126",
+      "title": "93_使用streamlit搭建一个本地的大模型聊天软件",
+      "duration": 434,
+      "durationText": "00:07:14",
+      "cumulativeStart": 93911,
+      "cumulativeEnd": 94345
+    },
+    {
+      "page": 94,
+      "cid": "35641626098",
+      "title": "94_mcp协议概念入门",
+      "duration": 735,
+      "durationText": "00:12:15",
+      "cumulativeStart": 94345,
+      "cumulativeEnd": 95080
+    },
+    {
+      "page": 95,
+      "cid": "35641690447",
+      "title": "95_大语言模型的幻觉问题",
+      "duration": 382,
+      "durationText": "00:06:22",
+      "cumulativeStart": 95080,
+      "cumulativeEnd": 95462
+    },
+    {
+      "page": 96,
+      "cid": "35641691608",
+      "title": "96_mcp客户端和服务器端交互流程",
+      "duration": 424,
+      "durationText": "00:07:04",
+      "cumulativeStart": 95462,
+      "cumulativeEnd": 95886
+    },
+    {
+      "page": 97,
+      "cid": "35641754155",
+      "title": "97_大模型识别工具并调用的原理分析",
+      "duration": 646,
+      "durationText": "00:10:46",
+      "cumulativeStart": 95886,
+      "cumulativeEnd": 96532
+    },
+    {
+      "page": 98,
+      "cid": "35641756338",
+      "title": "98_大语言模型聊天交互调用mcp服务器",
+      "duration": 629,
+      "durationText": "00:10:29",
+      "cumulativeStart": 96532,
+      "cumulativeEnd": 97161
+    },
+    {
+      "page": 99,
+      "cid": "35641757662",
+      "title": "99_mcp服务器集成本地文件搜索",
+      "duration": 831,
+      "durationText": "00:13:51",
+      "cumulativeStart": 97161,
+      "cumulativeEnd": 97992
+    },
+    {
+      "page": 100,
+      "cid": "35641821411",
+      "title": "100_mcp操作真实机械臂",
+      "duration": 797,
+      "durationText": "00:13:17",
+      "cumulativeStart": 97992,
+      "cumulativeEnd": 98789
+    },
+    {
+      "page": 101,
+      "cid": "35641886230",
+      "title": "101_mcp语音播报流程展示",
+      "duration": 717,
+      "durationText": "00:11:57",
+      "cumulativeStart": 98789,
+      "cumulativeEnd": 99506
+    },
+    {
+      "page": 102,
+      "cid": "35641887985",
+      "title": "102_conda环境的安装",
+      "duration": 1446,
+      "durationText": "00:24:06",
+      "cumulativeStart": 99506,
+      "cumulativeEnd": 100952
+    },
+    {
+      "page": 103,
+      "cid": "35641952403",
+      "title": "103_自制python解析器（扩展）",
+      "duration": 2596,
+      "durationText": "00:43:16",
+      "cumulativeStart": 100952,
+      "cumulativeEnd": 103548
+    },
+    {
+      "page": 104,
+      "cid": "35642081461",
+      "title": "104_强化学习最终效果展示",
+      "duration": 1090,
+      "durationText": "00:18:10",
+      "cumulativeStart": 103548,
+      "cumulativeEnd": 104638
+    },
+    {
+      "page": 105,
+      "cid": "35642150694",
+      "title": "105_端到端神经网络概念介绍",
+      "duration": 772,
+      "durationText": "00:12:52",
+      "cumulativeStart": 104638,
+      "cumulativeEnd": 105410
+    },
+    {
+      "page": 106,
+      "cid": "35642214309",
+      "title": "106_lerobot项目和环境搭建",
+      "duration": 1094,
+      "durationText": "00:18:14",
+      "cumulativeStart": 105410,
+      "cumulativeEnd": 106504
+    },
+    {
+      "page": 107,
+      "cid": "35642279709",
+      "title": "107_教师端和学生端的标定",
+      "duration": 568,
+      "durationText": "00:09:28",
+      "cumulativeStart": 106504,
+      "cumulativeEnd": 107072
+    },
+    {
+      "page": 108,
+      "cid": "35642343729",
+      "title": "108_准备行为克隆的摄像头",
+      "duration": 595,
+      "durationText": "00:09:55",
+      "cumulativeStart": 107072,
+      "cumulativeEnd": 107667
+    },
+    {
+      "page": 109,
+      "cid": "35642345261",
+      "title": "109_数据采集展示",
+      "duration": 358,
+      "durationText": "00:05:58",
+      "cumulativeStart": 107667,
+      "cumulativeEnd": 108025
+    },
+    {
+      "page": 110,
+      "cid": "35642347318",
+      "title": "110_最终训练好效果展示",
+      "duration": 86,
+      "durationText": "00:01:26",
+      "cumulativeStart": 108025,
+      "cumulativeEnd": 108111
+    },
+    {
+      "page": 111,
+      "cid": "35642409735",
+      "title": "111_数据集的录制和查看",
+      "duration": 920,
+      "durationText": "00:15:20",
+      "cumulativeStart": 108111,
+      "cumulativeEnd": 109031
+    },
+    {
+      "page": 112,
+      "cid": "35642475218",
+      "title": "112_录制动作的回放",
+      "duration": 600,
+      "durationText": "00:10:00",
+      "cumulativeStart": 109031,
+      "cumulativeEnd": 109631
+    },
+    {
+      "page": 113,
+      "cid": "35642477658",
+      "title": "113_数据采集注意事项",
+      "duration": 100,
+      "durationText": "00:01:40",
+      "cumulativeStart": 109631,
+      "cumulativeEnd": 109731
+    },
+    {
+      "page": 114,
+      "cid": "35642478512",
+      "title": "114_本地电脑训练流程",
+      "duration": 477,
+      "durationText": "00:07:57",
+      "cumulativeStart": 109731,
+      "cumulativeEnd": 110208
+    },
+    {
+      "page": 115,
+      "cid": "35642541352",
+      "title": "115_云服务器训练的流程",
+      "duration": 1704,
+      "durationText": "00:28:24",
+      "cumulativeStart": 110208,
+      "cumulativeEnd": 111912
+    }
+  ]
+}

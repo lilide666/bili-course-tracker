@@ -1,0 +1,2932 @@
+{
+  "videos": [
+    {
+      "bvid": "BV1nz6KBHEc9",
+      "url": "https://www.bilibili.com/video/BV1nz6KBHEc9",
+      "title": "黑马程序员零基础具身智能机械臂实战项目开发全套视频课程，涵盖OpenCV、YOLO、DeepSeek等，从机械臂硬件、核心算法到人工智能完整技术栈",
+      "owner": "黑马程序员",
+      "cover": "http://i2.hdslb.com/bfs/archive/64c8018da4d39adadb9e0e63fc9ff8e28444f140.jpg",
+      "totalEpisodes": 115,
+      "totalDuration": 111912,
+      "totalDurationText": "31:05:12",
+      "episodes": [
+        {
+          "page": 1,
+          "cid": "35708666882",
+          "title": "01_具身智能课程介绍",
+          "duration": 289,
+          "durationText": "00:04:49",
+          "cumulativeStart": 0,
+          "cumulativeEnd": 289
+        },
+        {
+          "page": 2,
+          "cid": "35636055947",
+          "title": "02_什么是具身智能",
+          "duration": 637,
+          "durationText": "00:10:37",
+          "cumulativeStart": 289,
+          "cumulativeEnd": 926
+        },
+        {
+          "page": 3,
+          "cid": "35636118576",
+          "title": "03_具身智能的技术架构",
+          "duration": 391,
+          "durationText": "00:06:31",
+          "cumulativeStart": 926,
+          "cumulativeEnd": 1317
+        },
+        {
+          "page": 4,
+          "cid": "35636119023",
+          "title": "04_具身智能的挑战",
+          "duration": 511,
+          "durationText": "00:08:31",
+          "cumulativeStart": 1317,
+          "cumulativeEnd": 1828
+        },
+        {
+          "page": 5,
+          "cid": "35636380724",
+          "title": "05_大语言模型与具身智能",
+          "duration": 558,
+          "durationText": "00:09:18",
+          "cumulativeStart": 1828,
+          "cumulativeEnd": 2386
+        },
+        {
+          "page": 6,
+          "cid": "35636382232",
+          "title": "06_具身智能的执行单元",
+          "duration": 669,
+          "durationText": "00:11:09",
+          "cumulativeStart": 2386,
+          "cumulativeEnd": 3055
+        },
+        {
+          "page": 7,
+          "cid": "35636512640",
+          "title": "07_具身智能案例分析",
+          "duration": 671,
+          "durationText": "00:11:11",
+          "cumulativeStart": 3055,
+          "cumulativeEnd": 3726
+        },
+        {
+          "page": 8,
+          "cid": "35636578218",
+          "title": "08_步进电机介绍",
+          "duration": 531,
+          "durationText": "00:08:51",
+          "cumulativeStart": 3726,
+          "cumulativeEnd": 4257
+        },
+        {
+          "page": 9,
+          "cid": "35636578598",
+          "title": "09_无刷电机介绍",
+          "duration": 562,
+          "durationText": "00:09:22",
+          "cumulativeStart": 4257,
+          "cumulativeEnd": 4819
+        },
+        {
+          "page": 10,
+          "cid": "35636642205",
+          "title": "10_电机选型指南",
+          "duration": 331,
+          "durationText": "00:05:31",
+          "cumulativeStart": 4819,
+          "cumulativeEnd": 5150
+        },
+        {
+          "page": 11,
+          "cid": "35636642350",
+          "title": "11_四两拨千斤的秘密",
+          "duration": 497,
+          "durationText": "00:08:17",
+          "cumulativeStart": 5150,
+          "cumulativeEnd": 5647
+        },
+        {
+          "page": 12,
+          "cid": "35636707348",
+          "title": "12_ 减速箱的阿喀琉斯之踵",
+          "duration": 523,
+          "durationText": "00:08:43",
+          "cumulativeStart": 5647,
+          "cumulativeEnd": 6170
+        },
+        {
+          "page": 13,
+          "cid": "35636709663",
+          "title": "13_位置采集的原理",
+          "duration": 752,
+          "durationText": "00:12:32",
+          "cumulativeStart": 6170,
+          "cumulativeEnd": 6922
+        },
+        {
+          "page": 14,
+          "cid": "35636774229",
+          "title": "14_位置编码器的实物和选型方法",
+          "duration": 509,
+          "durationText": "00:08:29",
+          "cumulativeStart": 6922,
+          "cumulativeEnd": 7431
+        },
+        {
+          "page": 15,
+          "cid": "35636776613",
+          "title": "15_Sim2Real的高薪密码",
+          "duration": 782,
+          "durationText": "00:13:02",
+          "cumulativeStart": 7431,
+          "cumulativeEnd": 8213
+        },
+        {
+          "page": 16,
+          "cid": "35636839513",
+          "title": "16_urdf入门",
+          "duration": 801,
+          "durationText": "00:13:21",
+          "cumulativeStart": 8213,
+          "cumulativeEnd": 9014
+        },
+        {
+          "page": 17,
+          "cid": "35636842224",
+          "title": "17_urdf环境搭建",
+          "duration": 876,
+          "durationText": "00:14:36",
+          "cumulativeStart": 9014,
+          "cumulativeEnd": 9890
+        },
+        {
+          "page": 18,
+          "cid": "35636906575",
+          "title": "18_构建机械臂的基座模型",
+          "duration": 1003,
+          "durationText": "00:16:43",
+          "cumulativeStart": 9890,
+          "cumulativeEnd": 10893
+        },
+        {
+          "page": 19,
+          "cid": "35636908030",
+          "title": "19_构建机械臂的第一个大臂",
+          "duration": 705,
+          "durationText": "00:11:45",
+          "cumulativeStart": 10893,
+          "cumulativeEnd": 11598
+        },
+        {
+          "page": 20,
+          "cid": "35636970915",
+          "title": "20_构建机械臂的其他关节",
+          "duration": 1118,
+          "durationText": "00:18:38",
+          "cumulativeStart": 11598,
+          "cumulativeEnd": 12716
+        },
+        {
+          "page": 21,
+          "cid": "35637037789",
+          "title": "21_遥操作",
+          "duration": 1406,
+          "durationText": "00:23:26",
+          "cumulativeStart": 12716,
+          "cumulativeEnd": 14122
+        },
+        {
+          "page": 22,
+          "cid": "35637102753",
+          "title": "22_教师端结构的搭建",
+          "duration": 1370,
+          "durationText": "00:22:50",
+          "cumulativeStart": 14122,
+          "cumulativeEnd": 15492
+        },
+        {
+          "page": 23,
+          "cid": "35637234630",
+          "title": "23_搭建自己的编码器舵机",
+          "duration": 1034,
+          "durationText": "00:17:14",
+          "cumulativeStart": 15492,
+          "cumulativeEnd": 16526
+        },
+        {
+          "page": 24,
+          "cid": "35637363312",
+          "title": "24_验证官方的sdk",
+          "duration": 1251,
+          "durationText": "00:20:51",
+          "cumulativeStart": 16526,
+          "cumulativeEnd": 17777
+        },
+        {
+          "page": 25,
+          "cid": "35637429431",
+          "title": "25_聊聊vibe coding",
+          "duration": 1589,
+          "durationText": "00:26:29",
+          "cumulativeStart": 17777,
+          "cumulativeEnd": 19366
+        },
+        {
+          "page": 26,
+          "cid": "35637432020",
+          "title": "26_vibe coding初体验",
+          "duration": 1789,
+          "durationText": "00:29:49",
+          "cumulativeStart": 19366,
+          "cumulativeEnd": 21155
+        },
+        {
+          "page": 27,
+          "cid": "35637496859",
+          "title": "27_读取教师端6个编码器舵机的角度",
+          "duration": 849,
+          "durationText": "00:14:09",
+          "cumulativeStart": 21155,
+          "cumulativeEnd": 22004
+        },
+        {
+          "page": 28,
+          "cid": "35637560422",
+          "title": "28_增加前端机械臂角度控制的代码",
+          "duration": 1883,
+          "durationText": "00:31:23",
+          "cumulativeStart": 22004,
+          "cumulativeEnd": 23887
+        },
+        {
+          "page": 29,
+          "cid": "35637625730",
+          "title": "29_随机更新角度信息发给前端展示",
+          "duration": 1346,
+          "durationText": "00:22:26",
+          "cumulativeStart": 23887,
+          "cumulativeEnd": 25233
+        },
+        {
+          "page": 30,
+          "cid": "35637628459",
+          "title": "30_同构遥操作案例的完成",
+          "duration": 1550,
+          "durationText": "00:25:50",
+          "cumulativeStart": 25233,
+          "cumulativeEnd": 26783
+        },
+        {
+          "page": 31,
+          "cid": "35637756443",
+          "title": "31_机械臂运动学数学速成",
+          "duration": 1189,
+          "durationText": "00:19:49",
+          "cumulativeStart": 26783,
+          "cumulativeEnd": 27972
+        },
+        {
+          "page": 32,
+          "cid": "35637758020",
+          "title": "32_机械臂运动学正解",
+          "duration": 1049,
+          "durationText": "00:17:29",
+          "cumulativeStart": 27972,
+          "cumulativeEnd": 29021
+        },
+        {
+          "page": 33,
+          "cid": "35637759782",
+          "title": "33_旋转平移的矩阵表达",
+          "duration": 1162,
+          "durationText": "00:19:22",
+          "cumulativeStart": 29021,
+          "cumulativeEnd": 30183
+        },
+        {
+          "page": 34,
+          "cid": "35637822548",
+          "title": "34_机械臂正解的代码实现",
+          "duration": 1151,
+          "durationText": "00:19:11",
+          "cumulativeStart": 30183,
+          "cumulativeEnd": 31334
+        },
+        {
+          "page": 35,
+          "cid": "35637824887",
+          "title": "35_运动学逆解介绍",
+          "duration": 890,
+          "durationText": "00:14:50",
+          "cumulativeStart": 31334,
+          "cumulativeEnd": 32224
+        },
+        {
+          "page": 36,
+          "cid": "35637887685",
+          "title": "36_运动学逆解求解思路",
+          "duration": 917,
+          "durationText": "00:15:17",
+          "cumulativeStart": 32224,
+          "cumulativeEnd": 33141
+        },
+        {
+          "page": 37,
+          "cid": "35637888961",
+          "title": "37_机械臂末端坐标的计算与展示",
+          "duration": 965,
+          "durationText": "00:16:05",
+          "cumulativeStart": 33141,
+          "cumulativeEnd": 34106
+        },
+        {
+          "page": 38,
+          "cid": "35637890886",
+          "title": "38_机械臂示教器的完成",
+          "duration": 673,
+          "durationText": "00:11:13",
+          "cumulativeStart": 34106,
+          "cumulativeEnd": 34779
+        },
+        {
+          "page": 39,
+          "cid": "35637953470",
+          "title": "39_学生端机械臂的安装",
+          "duration": 1672,
+          "durationText": "00:27:52",
+          "cumulativeStart": 34779,
+          "cumulativeEnd": 36451
+        },
+        {
+          "page": 40,
+          "cid": "35638020393",
+          "title": "40_学生端机械臂的配置与标定",
+          "duration": 1172,
+          "durationText": "00:19:32",
+          "cumulativeStart": 36451,
+          "cumulativeEnd": 37623
+        },
+        {
+          "page": 41,
+          "cid": "35638215551",
+          "title": "41_为什么机械臂会出现帕金森",
+          "duration": 1139,
+          "durationText": "00:18:59",
+          "cumulativeStart": 37623,
+          "cumulativeEnd": 38762
+        },
+        {
+          "page": 42,
+          "cid": "35638217316",
+          "title": "42_机械臂PID的配置",
+          "duration": 752,
+          "durationText": "00:12:32",
+          "cumulativeStart": 38762,
+          "cumulativeEnd": 39514
+        },
+        {
+          "page": 43,
+          "cid": "35638280346",
+          "title": "43_机械臂同步遥操作的实现",
+          "duration": 1428,
+          "durationText": "00:23:48",
+          "cumulativeStart": 39514,
+          "cumulativeEnd": 40942
+        },
+        {
+          "page": 44,
+          "cid": "35638283201",
+          "title": "44_机械臂同步优化的策略",
+          "duration": 614,
+          "durationText": "00:10:14",
+          "cumulativeStart": 40942,
+          "cumulativeEnd": 41556
+        },
+        {
+          "page": 45,
+          "cid": "35638346233",
+          "title": "45_计算机视觉介绍",
+          "duration": 946,
+          "durationText": "00:15:46",
+          "cumulativeStart": 41556,
+          "cumulativeEnd": 42502
+        },
+        {
+          "page": 46,
+          "cid": "35638348123",
+          "title": "46_计算机存储图像的原理",
+          "duration": 1207,
+          "durationText": "00:20:07",
+          "cumulativeStart": 42502,
+          "cumulativeEnd": 43709
+        },
+        {
+          "page": 47,
+          "cid": "35638412759",
+          "title": "47_摄像头画面抖动的原因",
+          "duration": 779,
+          "durationText": "00:12:59",
+          "cumulativeStart": 43709,
+          "cumulativeEnd": 44488
+        },
+        {
+          "page": 48,
+          "cid": "35638479608",
+          "title": "48_opencv入门",
+          "duration": 1189,
+          "durationText": "00:19:49",
+          "cumulativeStart": 44488,
+          "cumulativeEnd": 45677
+        },
+        {
+          "page": 49,
+          "cid": "35638542928",
+          "title": "49_opencv的ROI选取",
+          "duration": 1071,
+          "durationText": "00:17:51",
+          "cumulativeStart": 45677,
+          "cumulativeEnd": 46748
+        },
+        {
+          "page": 50,
+          "cid": "35638544814",
+          "title": "50_opencv颜色识别",
+          "duration": 1578,
+          "durationText": "00:26:18",
+          "cumulativeStart": 46748,
+          "cumulativeEnd": 48326
+        },
+        {
+          "page": 51,
+          "cid": "35638609592",
+          "title": "51_opencv超参数调整技巧",
+          "duration": 903,
+          "durationText": "00:15:03",
+          "cumulativeStart": 48326,
+          "cumulativeEnd": 49229
+        },
+        {
+          "page": 52,
+          "cid": "35638674294",
+          "title": "52_高级案例白色瓶盖计数",
+          "duration": 1392,
+          "durationText": "00:23:12",
+          "cumulativeStart": 49229,
+          "cumulativeEnd": 50621
+        },
+        {
+          "page": 53,
+          "cid": "35638804897",
+          "title": "53_眼在手上眼在手外",
+          "duration": 883,
+          "durationText": "00:14:43",
+          "cumulativeStart": 50621,
+          "cumulativeEnd": 51504
+        },
+        {
+          "page": 54,
+          "cid": "35639659543",
+          "title": "54_机器视觉物体宽高测量",
+          "duration": 824,
+          "durationText": "00:13:44",
+          "cumulativeStart": 51504,
+          "cumulativeEnd": 52328
+        },
+        {
+          "page": 55,
+          "cid": "35639723201",
+          "title": "55_手眼标定和差值计算",
+          "duration": 1063,
+          "durationText": "00:17:43",
+          "cumulativeStart": 52328,
+          "cumulativeEnd": 53391
+        },
+        {
+          "page": 56,
+          "cid": "35639788754",
+          "title": "56_opencv形状识别和优化",
+          "duration": 1011,
+          "durationText": "00:16:51",
+          "cumulativeStart": 53391,
+          "cumulativeEnd": 54402
+        },
+        {
+          "page": 57,
+          "cid": "35639791420",
+          "title": "57_opencv目标追踪",
+          "duration": 843,
+          "durationText": "00:14:03",
+          "cumulativeStart": 54402,
+          "cumulativeEnd": 55245
+        },
+        {
+          "page": 58,
+          "cid": "35639855928",
+          "title": "58_opencv仿射变换上帝视角",
+          "duration": 1002,
+          "durationText": "00:16:42",
+          "cumulativeStart": 55245,
+          "cumulativeEnd": 56247
+        },
+        {
+          "page": 59,
+          "cid": "35639921000",
+          "title": "59_opencv旋转角和中心点识别案例分析",
+          "duration": 432,
+          "durationText": "00:07:12",
+          "cumulativeStart": 56247,
+          "cumulativeEnd": 56679
+        },
+        {
+          "page": 60,
+          "cid": "35639984153",
+          "title": "60_中心点和旋转角代码实现",
+          "duration": 509,
+          "durationText": "00:08:29",
+          "cumulativeStart": 56679,
+          "cumulativeEnd": 57188
+        },
+        {
+          "page": 61,
+          "cid": "35639985492",
+          "title": "61_opencv二维码识别",
+          "duration": 351,
+          "durationText": "00:05:51",
+          "cumulativeStart": 57188,
+          "cumulativeEnd": 57539
+        },
+        {
+          "page": 62,
+          "cid": "35639986284",
+          "title": "62_opencv人脸识别",
+          "duration": 304,
+          "durationText": "00:05:04",
+          "cumulativeStart": 57539,
+          "cumulativeEnd": 57843
+        },
+        {
+          "page": 63,
+          "cid": "35639987178",
+          "title": "63_opencv的局限性",
+          "duration": 1115,
+          "durationText": "00:18:35",
+          "cumulativeStart": 57843,
+          "cumulativeEnd": 58958
+        },
+        {
+          "page": 64,
+          "cid": "35640052000",
+          "title": "64_机器学习概念入门",
+          "duration": 765,
+          "durationText": "00:12:45",
+          "cumulativeStart": 58958,
+          "cumulativeEnd": 59723
+        },
+        {
+          "page": 65,
+          "cid": "35640053029",
+          "title": "65_端到端学习的概念",
+          "duration": 937,
+          "durationText": "00:15:37",
+          "cumulativeStart": 59723,
+          "cumulativeEnd": 60660
+        },
+        {
+          "page": 66,
+          "cid": "35640116690",
+          "title": "66_ai推理机器学习三要素",
+          "duration": 977,
+          "durationText": "00:16:17",
+          "cumulativeStart": 60660,
+          "cumulativeEnd": 61637
+        },
+        {
+          "page": 67,
+          "cid": "35640118705",
+          "title": "67_机器学习流程总结",
+          "duration": 974,
+          "durationText": "00:16:14",
+          "cumulativeStart": 61637,
+          "cumulativeEnd": 62611
+        },
+        {
+          "page": 68,
+          "cid": "35640181231",
+          "title": "68_误差函数和sklearn框架安装",
+          "duration": 773,
+          "durationText": "00:12:53",
+          "cumulativeStart": 62611,
+          "cumulativeEnd": 63384
+        },
+        {
+          "page": 69,
+          "cid": "35640182626",
+          "title": "69_梯度下降和神经元结构原理",
+          "duration": 902,
+          "durationText": "00:15:02",
+          "cumulativeStart": 63384,
+          "cumulativeEnd": 64286
+        },
+        {
+          "page": 70,
+          "cid": "35640184089",
+          "title": "70_图像数据收集和特征工程",
+          "duration": 1812,
+          "durationText": "00:30:12",
+          "cumulativeStart": 64286,
+          "cumulativeEnd": 66098
+        },
+        {
+          "page": 71,
+          "cid": "35640250207",
+          "title": "71_模型训练",
+          "duration": 994,
+          "durationText": "00:16:34",
+          "cumulativeStart": 66098,
+          "cumulativeEnd": 67092
+        },
+        {
+          "page": 72,
+          "cid": "35640313766",
+          "title": "72_模型文件的解析和推理",
+          "duration": 1744,
+          "durationText": "00:29:04",
+          "cumulativeStart": 67092,
+          "cumulativeEnd": 68836
+        },
+        {
+          "page": 73,
+          "cid": "35640443732",
+          "title": "73_混淆矩阵和交叉熵",
+          "duration": 1598,
+          "durationText": "00:26:38",
+          "cumulativeStart": 68836,
+          "cumulativeEnd": 70434
+        },
+        {
+          "page": 74,
+          "cid": "35640445948",
+          "title": "74_yolo快速入门",
+          "duration": 1796,
+          "durationText": "00:29:56",
+          "cumulativeStart": 70434,
+          "cumulativeEnd": 72230
+        },
+        {
+          "page": 75,
+          "cid": "35640574665",
+          "title": "75_数据标注",
+          "duration": 3011,
+          "durationText": "00:50:11",
+          "cumulativeStart": 72230,
+          "cumulativeEnd": 75241
+        },
+        {
+          "page": 76,
+          "cid": "35640706806",
+          "title": "76_标注数据的格式转化",
+          "duration": 544,
+          "durationText": "00:09:04",
+          "cumulativeStart": 75241,
+          "cumulativeEnd": 75785
+        },
+        {
+          "page": 77,
+          "cid": "35640708188",
+          "title": "77_训练和结果展示",
+          "duration": 1924,
+          "durationText": "00:32:04",
+          "cumulativeStart": 75785,
+          "cumulativeEnd": 77709
+        },
+        {
+          "page": 78,
+          "cid": "35640837271",
+          "title": "78_卷积神经网络",
+          "duration": 777,
+          "durationText": "00:12:57",
+          "cumulativeStart": 77709,
+          "cumulativeEnd": 78486
+        },
+        {
+          "page": 79,
+          "cid": "35640838433",
+          "title": "79_卷积核与特征提取器",
+          "duration": 910,
+          "durationText": "00:15:10",
+          "cumulativeStart": 78486,
+          "cumulativeEnd": 79396
+        },
+        {
+          "page": 80,
+          "cid": "35640839879",
+          "title": "80_卷积神经网络与应用",
+          "duration": 691,
+          "durationText": "00:11:31",
+          "cumulativeStart": 79396,
+          "cumulativeEnd": 80087
+        },
+        {
+          "page": 81,
+          "cid": "35640904064",
+          "title": "81_图像合成与标注原理分析",
+          "duration": 556,
+          "durationText": "00:09:16",
+          "cumulativeStart": 80087,
+          "cumulativeEnd": 80643
+        },
+        {
+          "page": 82,
+          "cid": "35640968242",
+          "title": "82_合成带有标注信息的图片",
+          "duration": 1271,
+          "durationText": "00:21:11",
+          "cumulativeStart": 80643,
+          "cumulativeEnd": 81914
+        },
+        {
+          "page": 83,
+          "cid": "35640970792",
+          "title": "83_数据合成训练效果展示",
+          "duration": 1339,
+          "durationText": "00:22:19",
+          "cumulativeStart": 81914,
+          "cumulativeEnd": 83253
+        },
+        {
+          "page": 84,
+          "cid": "35641099230",
+          "title": "84_离线语音识别",
+          "duration": 1081,
+          "durationText": "00:18:01",
+          "cumulativeStart": 83253,
+          "cumulativeEnd": 84334
+        },
+        {
+          "page": 85,
+          "cid": "35641100986",
+          "title": "85_在线语音模型和模型的获取方法",
+          "duration": 719,
+          "durationText": "00:11:59",
+          "cumulativeStart": 84334,
+          "cumulativeEnd": 85053
+        },
+        {
+          "page": 86,
+          "cid": "35641164068",
+          "title": "86_音频合成",
+          "duration": 1177,
+          "durationText": "00:19:37",
+          "cumulativeStart": 85053,
+          "cumulativeEnd": 86230
+        },
+        {
+          "page": 87,
+          "cid": "35641166711",
+          "title": "87_传统模式匹配代码的解析",
+          "duration": 847,
+          "durationText": "00:14:07",
+          "cumulativeStart": 86230,
+          "cumulativeEnd": 87077
+        },
+        {
+          "page": 88,
+          "cid": "35641231425",
+          "title": "88_基于规则的传统语音聊天机器人的实现",
+          "duration": 874,
+          "durationText": "00:14:34",
+          "cumulativeStart": 87077,
+          "cumulativeEnd": 87951
+        },
+        {
+          "page": 89,
+          "cid": "35641295781",
+          "title": "89_接入deepseek实现智能对话",
+          "duration": 2044,
+          "durationText": "00:34:04",
+          "cumulativeStart": 87951,
+          "cumulativeEnd": 89995
+        },
+        {
+          "page": 90,
+          "cid": "35641363699",
+          "title": "90_ai智能体的开发",
+          "duration": 1406,
+          "durationText": "00:23:26",
+          "cumulativeStart": 89995,
+          "cumulativeEnd": 91401
+        },
+        {
+          "page": 91,
+          "cid": "35641494194",
+          "title": "91_大模型的本地化部署",
+          "duration": 1110,
+          "durationText": "00:18:30",
+          "cumulativeStart": 91401,
+          "cumulativeEnd": 92511
+        },
+        {
+          "page": 92,
+          "cid": "35641559186",
+          "title": "92_本地大模型的python调用",
+          "duration": 1400,
+          "durationText": "00:23:20",
+          "cumulativeStart": 92511,
+          "cumulativeEnd": 93911
+        },
+        {
+          "page": 93,
+          "cid": "35641625126",
+          "title": "93_使用streamlit搭建一个本地的大模型聊天软件",
+          "duration": 434,
+          "durationText": "00:07:14",
+          "cumulativeStart": 93911,
+          "cumulativeEnd": 94345
+        },
+        {
+          "page": 94,
+          "cid": "35641626098",
+          "title": "94_mcp协议概念入门",
+          "duration": 735,
+          "durationText": "00:12:15",
+          "cumulativeStart": 94345,
+          "cumulativeEnd": 95080
+        },
+        {
+          "page": 95,
+          "cid": "35641690447",
+          "title": "95_大语言模型的幻觉问题",
+          "duration": 382,
+          "durationText": "00:06:22",
+          "cumulativeStart": 95080,
+          "cumulativeEnd": 95462
+        },
+        {
+          "page": 96,
+          "cid": "35641691608",
+          "title": "96_mcp客户端和服务器端交互流程",
+          "duration": 424,
+          "durationText": "00:07:04",
+          "cumulativeStart": 95462,
+          "cumulativeEnd": 95886
+        },
+        {
+          "page": 97,
+          "cid": "35641754155",
+          "title": "97_大模型识别工具并调用的原理分析",
+          "duration": 646,
+          "durationText": "00:10:46",
+          "cumulativeStart": 95886,
+          "cumulativeEnd": 96532
+        },
+        {
+          "page": 98,
+          "cid": "35641756338",
+          "title": "98_大语言模型聊天交互调用mcp服务器",
+          "duration": 629,
+          "durationText": "00:10:29",
+          "cumulativeStart": 96532,
+          "cumulativeEnd": 97161
+        },
+        {
+          "page": 99,
+          "cid": "35641757662",
+          "title": "99_mcp服务器集成本地文件搜索",
+          "duration": 831,
+          "durationText": "00:13:51",
+          "cumulativeStart": 97161,
+          "cumulativeEnd": 97992
+        },
+        {
+          "page": 100,
+          "cid": "35641821411",
+          "title": "100_mcp操作真实机械臂",
+          "duration": 797,
+          "durationText": "00:13:17",
+          "cumulativeStart": 97992,
+          "cumulativeEnd": 98789
+        },
+        {
+          "page": 101,
+          "cid": "35641886230",
+          "title": "101_mcp语音播报流程展示",
+          "duration": 717,
+          "durationText": "00:11:57",
+          "cumulativeStart": 98789,
+          "cumulativeEnd": 99506
+        },
+        {
+          "page": 102,
+          "cid": "35641887985",
+          "title": "102_conda环境的安装",
+          "duration": 1446,
+          "durationText": "00:24:06",
+          "cumulativeStart": 99506,
+          "cumulativeEnd": 100952
+        },
+        {
+          "page": 103,
+          "cid": "35641952403",
+          "title": "103_自制python解析器（扩展）",
+          "duration": 2596,
+          "durationText": "00:43:16",
+          "cumulativeStart": 100952,
+          "cumulativeEnd": 103548
+        },
+        {
+          "page": 104,
+          "cid": "35642081461",
+          "title": "104_强化学习最终效果展示",
+          "duration": 1090,
+          "durationText": "00:18:10",
+          "cumulativeStart": 103548,
+          "cumulativeEnd": 104638
+        },
+        {
+          "page": 105,
+          "cid": "35642150694",
+          "title": "105_端到端神经网络概念介绍",
+          "duration": 772,
+          "durationText": "00:12:52",
+          "cumulativeStart": 104638,
+          "cumulativeEnd": 105410
+        },
+        {
+          "page": 106,
+          "cid": "35642214309",
+          "title": "106_lerobot项目和环境搭建",
+          "duration": 1094,
+          "durationText": "00:18:14",
+          "cumulativeStart": 105410,
+          "cumulativeEnd": 106504
+        },
+        {
+          "page": 107,
+          "cid": "35642279709",
+          "title": "107_教师端和学生端的标定",
+          "duration": 568,
+          "durationText": "00:09:28",
+          "cumulativeStart": 106504,
+          "cumulativeEnd": 107072
+        },
+        {
+          "page": 108,
+          "cid": "35642343729",
+          "title": "108_准备行为克隆的摄像头",
+          "duration": 595,
+          "durationText": "00:09:55",
+          "cumulativeStart": 107072,
+          "cumulativeEnd": 107667
+        },
+        {
+          "page": 109,
+          "cid": "35642345261",
+          "title": "109_数据采集展示",
+          "duration": 358,
+          "durationText": "00:05:58",
+          "cumulativeStart": 107667,
+          "cumulativeEnd": 108025
+        },
+        {
+          "page": 110,
+          "cid": "35642347318",
+          "title": "110_最终训练好效果展示",
+          "duration": 86,
+          "durationText": "00:01:26",
+          "cumulativeStart": 108025,
+          "cumulativeEnd": 108111
+        },
+        {
+          "page": 111,
+          "cid": "35642409735",
+          "title": "111_数据集的录制和查看",
+          "duration": 920,
+          "durationText": "00:15:20",
+          "cumulativeStart": 108111,
+          "cumulativeEnd": 109031
+        },
+        {
+          "page": 112,
+          "cid": "35642475218",
+          "title": "112_录制动作的回放",
+          "duration": 600,
+          "durationText": "00:10:00",
+          "cumulativeStart": 109031,
+          "cumulativeEnd": 109631
+        },
+        {
+          "page": 113,
+          "cid": "35642477658",
+          "title": "113_数据采集注意事项",
+          "duration": 100,
+          "durationText": "00:01:40",
+          "cumulativeStart": 109631,
+          "cumulativeEnd": 109731
+        },
+        {
+          "page": 114,
+          "cid": "35642478512",
+          "title": "114_本地电脑训练流程",
+          "duration": 477,
+          "durationText": "00:07:57",
+          "cumulativeStart": 109731,
+          "cumulativeEnd": 110208
+        },
+        {
+          "page": 115,
+          "cid": "35642541352",
+          "title": "115_云服务器训练的流程",
+          "duration": 1704,
+          "durationText": "00:28:24",
+          "cumulativeStart": 110208,
+          "cumulativeEnd": 111912
+        }
+      ],
+      "lastProgress": {
+        "page": 29,
+        "progress": 1,
+        "view_at": 1788330486,
+        "synced_at": 1788333150
+      },
+      "added_at": 1788264076
+    },
+    {
+      "bvid": "BV1Dh4y1m7Vh",
+      "url": "https://www.bilibili.com/video/BV1Dh4y1m7Vh",
+      "title": "邱关源《电路》第六版课后习题详解1-8章||全程精讲解读||电气考研||专业课电路||邱关源电路讲解",
+      "owner": "水木珞研电气考研",
+      "cover": "http://i0.hdslb.com/bfs/archive/80c0a0d31cb96b2ceca58143681270b1dfa12060.jpg",
+      "totalEpisodes": 168,
+      "totalDuration": 132074,
+      "totalDurationText": "36:41:14",
+      "episodes": [
+        {
+          "page": 1,
+          "cid": "1257240075",
+          "title": "引言",
+          "duration": 192,
+          "durationText": "00:03:12",
+          "cumulativeStart": 0,
+          "cumulativeEnd": 192
+        },
+        {
+          "page": 2,
+          "cid": "1257245122",
+          "title": "1-0",
+          "duration": 83,
+          "durationText": "00:01:23",
+          "cumulativeStart": 192,
+          "cumulativeEnd": 275
+        },
+        {
+          "page": 3,
+          "cid": "1257245204",
+          "title": "1-1",
+          "duration": 630,
+          "durationText": "00:10:30",
+          "cumulativeStart": 275,
+          "cumulativeEnd": 905
+        },
+        {
+          "page": 4,
+          "cid": "1257285863",
+          "title": "1-2",
+          "duration": 181,
+          "durationText": "00:03:01",
+          "cumulativeStart": 905,
+          "cumulativeEnd": 1086
+        },
+        {
+          "page": 5,
+          "cid": "1257285992",
+          "title": "1-3",
+          "duration": 529,
+          "durationText": "00:08:49",
+          "cumulativeStart": 1086,
+          "cumulativeEnd": 1615
+        },
+        {
+          "page": 6,
+          "cid": "1257285896",
+          "title": "1-4",
+          "duration": 447,
+          "durationText": "00:07:27",
+          "cumulativeStart": 1615,
+          "cumulativeEnd": 2062
+        },
+        {
+          "page": 7,
+          "cid": "1257286115",
+          "title": "1-5",
+          "duration": 609,
+          "durationText": "00:10:09",
+          "cumulativeStart": 2062,
+          "cumulativeEnd": 2671
+        },
+        {
+          "page": 8,
+          "cid": "1257286122",
+          "title": "1-6",
+          "duration": 548,
+          "durationText": "00:09:08",
+          "cumulativeStart": 2671,
+          "cumulativeEnd": 3219
+        },
+        {
+          "page": 9,
+          "cid": "1257286312",
+          "title": "1-7",
+          "duration": 352,
+          "durationText": "00:05:52",
+          "cumulativeStart": 3219,
+          "cumulativeEnd": 3571
+        },
+        {
+          "page": 10,
+          "cid": "1257286148",
+          "title": "1-8",
+          "duration": 583,
+          "durationText": "00:09:43",
+          "cumulativeStart": 3571,
+          "cumulativeEnd": 4154
+        },
+        {
+          "page": 11,
+          "cid": "1257286272",
+          "title": "1-9",
+          "duration": 498,
+          "durationText": "00:08:18",
+          "cumulativeStart": 4154,
+          "cumulativeEnd": 4652
+        },
+        {
+          "page": 12,
+          "cid": "1257286354",
+          "title": "1-10",
+          "duration": 491,
+          "durationText": "00:08:11",
+          "cumulativeStart": 4652,
+          "cumulativeEnd": 5143
+        },
+        {
+          "page": 13,
+          "cid": "1257286403",
+          "title": "1-11",
+          "duration": 390,
+          "durationText": "00:06:30",
+          "cumulativeStart": 5143,
+          "cumulativeEnd": 5533
+        },
+        {
+          "page": 14,
+          "cid": "1257286370",
+          "title": "1-12",
+          "duration": 562,
+          "durationText": "00:09:22",
+          "cumulativeStart": 5533,
+          "cumulativeEnd": 6095
+        },
+        {
+          "page": 15,
+          "cid": "1257286605",
+          "title": "1-13",
+          "duration": 699,
+          "durationText": "00:11:39",
+          "cumulativeStart": 6095,
+          "cumulativeEnd": 6794
+        },
+        {
+          "page": 16,
+          "cid": "1257286539",
+          "title": "1-14",
+          "duration": 668,
+          "durationText": "00:11:08",
+          "cumulativeStart": 6794,
+          "cumulativeEnd": 7462
+        },
+        {
+          "page": 17,
+          "cid": "1257286485",
+          "title": "1-15",
+          "duration": 416,
+          "durationText": "00:06:56",
+          "cumulativeStart": 7462,
+          "cumulativeEnd": 7878
+        },
+        {
+          "page": 18,
+          "cid": "1257286639",
+          "title": "1-16",
+          "duration": 319,
+          "durationText": "00:05:19",
+          "cumulativeStart": 7878,
+          "cumulativeEnd": 8197
+        },
+        {
+          "page": 19,
+          "cid": "1257286651",
+          "title": "1-17",
+          "duration": 151,
+          "durationText": "00:02:31",
+          "cumulativeStart": 8197,
+          "cumulativeEnd": 8348
+        },
+        {
+          "page": 20,
+          "cid": "1257287072",
+          "title": "1-18",
+          "duration": 722,
+          "durationText": "00:12:02",
+          "cumulativeStart": 8348,
+          "cumulativeEnd": 9070
+        },
+        {
+          "page": 21,
+          "cid": "1257286719",
+          "title": "1-20",
+          "duration": 160,
+          "durationText": "00:02:40",
+          "cumulativeStart": 9070,
+          "cumulativeEnd": 9230
+        },
+        {
+          "page": 22,
+          "cid": "1257287302",
+          "title": "1-21",
+          "duration": 310,
+          "durationText": "00:05:10",
+          "cumulativeStart": 9230,
+          "cumulativeEnd": 9540
+        },
+        {
+          "page": 23,
+          "cid": "1257425414",
+          "title": "2-0",
+          "duration": 172,
+          "durationText": "00:02:52",
+          "cumulativeStart": 9540,
+          "cumulativeEnd": 9712
+        },
+        {
+          "page": 24,
+          "cid": "1258922994",
+          "title": "2-1",
+          "duration": 579,
+          "durationText": "00:09:39",
+          "cumulativeStart": 9712,
+          "cumulativeEnd": 10291
+        },
+        {
+          "page": 25,
+          "cid": "1260343698",
+          "title": "2-2",
+          "duration": 1458,
+          "durationText": "00:24:18",
+          "cumulativeStart": 10291,
+          "cumulativeEnd": 11749
+        },
+        {
+          "page": 26,
+          "cid": "1260343891",
+          "title": "2-3",
+          "duration": 468,
+          "durationText": "00:07:48",
+          "cumulativeStart": 11749,
+          "cumulativeEnd": 12217
+        },
+        {
+          "page": 27,
+          "cid": "1262036216",
+          "title": "2-4",
+          "duration": 1819,
+          "durationText": "00:30:19",
+          "cumulativeStart": 12217,
+          "cumulativeEnd": 14036
+        },
+        {
+          "page": 28,
+          "cid": "1262036516",
+          "title": "2-5",
+          "duration": 953,
+          "durationText": "00:15:53",
+          "cumulativeStart": 14036,
+          "cumulativeEnd": 14989
+        },
+        {
+          "page": 29,
+          "cid": "1265505486",
+          "title": "2-6",
+          "duration": 1268,
+          "durationText": "00:21:08",
+          "cumulativeStart": 14989,
+          "cumulativeEnd": 16257
+        },
+        {
+          "page": 30,
+          "cid": "1265505596",
+          "title": "2-7",
+          "duration": 1492,
+          "durationText": "00:24:52",
+          "cumulativeStart": 16257,
+          "cumulativeEnd": 17749
+        },
+        {
+          "page": 31,
+          "cid": "1265506001",
+          "title": "2-8",
+          "duration": 808,
+          "durationText": "00:13:28",
+          "cumulativeStart": 17749,
+          "cumulativeEnd": 18557
+        },
+        {
+          "page": 32,
+          "cid": "1269106839",
+          "title": "2-9",
+          "duration": 1207,
+          "durationText": "00:20:07",
+          "cumulativeStart": 18557,
+          "cumulativeEnd": 19764
+        },
+        {
+          "page": 33,
+          "cid": "1269107522",
+          "title": "2-10",
+          "duration": 1075,
+          "durationText": "00:17:55",
+          "cumulativeStart": 19764,
+          "cumulativeEnd": 20839
+        },
+        {
+          "page": 34,
+          "cid": "1269107445",
+          "title": "2-11",
+          "duration": 618,
+          "durationText": "00:10:18",
+          "cumulativeStart": 20839,
+          "cumulativeEnd": 21457
+        },
+        {
+          "page": 35,
+          "cid": "1269107585",
+          "title": "2-12",
+          "duration": 786,
+          "durationText": "00:13:06",
+          "cumulativeStart": 21457,
+          "cumulativeEnd": 22243
+        },
+        {
+          "page": 36,
+          "cid": "1269107723",
+          "title": "2-13",
+          "duration": 357,
+          "durationText": "00:05:57",
+          "cumulativeStart": 22243,
+          "cumulativeEnd": 22600
+        },
+        {
+          "page": 37,
+          "cid": "1269107808",
+          "title": "2-14",
+          "duration": 797,
+          "durationText": "00:13:17",
+          "cumulativeStart": 22600,
+          "cumulativeEnd": 23397
+        },
+        {
+          "page": 38,
+          "cid": "1269107794",
+          "title": "2-15",
+          "duration": 548,
+          "durationText": "00:09:08",
+          "cumulativeStart": 23397,
+          "cumulativeEnd": 23945
+        },
+        {
+          "page": 39,
+          "cid": "1269107932",
+          "title": "2-16",
+          "duration": 1166,
+          "durationText": "00:19:26",
+          "cumulativeStart": 23945,
+          "cumulativeEnd": 25111
+        },
+        {
+          "page": 40,
+          "cid": "1269108048",
+          "title": "2-17",
+          "duration": 761,
+          "durationText": "00:12:41",
+          "cumulativeStart": 25111,
+          "cumulativeEnd": 25872
+        },
+        {
+          "page": 41,
+          "cid": "1269108090",
+          "title": "2-18",
+          "duration": 253,
+          "durationText": "00:04:13",
+          "cumulativeStart": 25872,
+          "cumulativeEnd": 26125
+        },
+        {
+          "page": 42,
+          "cid": "1274438409",
+          "title": "3-0",
+          "duration": 210,
+          "durationText": "00:03:30",
+          "cumulativeStart": 26125,
+          "cumulativeEnd": 26335
+        },
+        {
+          "page": 43,
+          "cid": "1274438464",
+          "title": "3-1",
+          "duration": 1132,
+          "durationText": "00:18:52",
+          "cumulativeStart": 26335,
+          "cumulativeEnd": 27467
+        },
+        {
+          "page": 44,
+          "cid": "1274438492",
+          "title": "3-2",
+          "duration": 716,
+          "durationText": "00:11:56",
+          "cumulativeStart": 27467,
+          "cumulativeEnd": 28183
+        },
+        {
+          "page": 45,
+          "cid": "1277504866",
+          "title": "3-3",
+          "duration": 219,
+          "durationText": "00:03:39",
+          "cumulativeStart": 28183,
+          "cumulativeEnd": 28402
+        },
+        {
+          "page": 46,
+          "cid": "1277504888",
+          "title": "3-4",
+          "duration": 345,
+          "durationText": "00:05:45",
+          "cumulativeStart": 28402,
+          "cumulativeEnd": 28747
+        },
+        {
+          "page": 47,
+          "cid": "1277554835",
+          "title": "3-5",
+          "duration": 1075,
+          "durationText": "00:17:55",
+          "cumulativeStart": 28747,
+          "cumulativeEnd": 29822
+        },
+        {
+          "page": 48,
+          "cid": "1277554982",
+          "title": "3-6",
+          "duration": 427,
+          "durationText": "00:07:07",
+          "cumulativeStart": 29822,
+          "cumulativeEnd": 30249
+        },
+        {
+          "page": 49,
+          "cid": "1277555048",
+          "title": "3-7",
+          "duration": 640,
+          "durationText": "00:10:40",
+          "cumulativeStart": 30249,
+          "cumulativeEnd": 30889
+        },
+        {
+          "page": 50,
+          "cid": "1277555074",
+          "title": "3-8",
+          "duration": 1264,
+          "durationText": "00:21:04",
+          "cumulativeStart": 30889,
+          "cumulativeEnd": 32153
+        },
+        {
+          "page": 51,
+          "cid": "1277556460",
+          "title": "3-9",
+          "duration": 1337,
+          "durationText": "00:22:17",
+          "cumulativeStart": 32153,
+          "cumulativeEnd": 33490
+        },
+        {
+          "page": 52,
+          "cid": "1277556651",
+          "title": "3-10",
+          "duration": 561,
+          "durationText": "00:09:21",
+          "cumulativeStart": 33490,
+          "cumulativeEnd": 34051
+        },
+        {
+          "page": 53,
+          "cid": "1277556901",
+          "title": "3-11",
+          "duration": 559,
+          "durationText": "00:09:19",
+          "cumulativeStart": 34051,
+          "cumulativeEnd": 34610
+        },
+        {
+          "page": 54,
+          "cid": "1277556789",
+          "title": "3-12",
+          "duration": 663,
+          "durationText": "00:11:03",
+          "cumulativeStart": 34610,
+          "cumulativeEnd": 35273
+        },
+        {
+          "page": 55,
+          "cid": "1277573134",
+          "title": "3-13",
+          "duration": 4280,
+          "durationText": "01:11:20",
+          "cumulativeStart": 35273,
+          "cumulativeEnd": 39553
+        },
+        {
+          "page": 56,
+          "cid": "1277573223",
+          "title": "3-14",
+          "duration": 794,
+          "durationText": "00:13:14",
+          "cumulativeStart": 39553,
+          "cumulativeEnd": 40347
+        },
+        {
+          "page": 57,
+          "cid": "1279817448",
+          "title": "3-15",
+          "duration": 1910,
+          "durationText": "00:31:50",
+          "cumulativeStart": 40347,
+          "cumulativeEnd": 42257
+        },
+        {
+          "page": 58,
+          "cid": "1279817474",
+          "title": "3-16",
+          "duration": 536,
+          "durationText": "00:08:56",
+          "cumulativeStart": 42257,
+          "cumulativeEnd": 42793
+        },
+        {
+          "page": 59,
+          "cid": "1279817829",
+          "title": "3-17",
+          "duration": 111,
+          "durationText": "00:01:51",
+          "cumulativeStart": 42793,
+          "cumulativeEnd": 42904
+        },
+        {
+          "page": 60,
+          "cid": "1279817937",
+          "title": "3-18",
+          "duration": 833,
+          "durationText": "00:13:53",
+          "cumulativeStart": 42904,
+          "cumulativeEnd": 43737
+        },
+        {
+          "page": 61,
+          "cid": "1279817758",
+          "title": "3-19",
+          "duration": 636,
+          "durationText": "00:10:36",
+          "cumulativeStart": 43737,
+          "cumulativeEnd": 44373
+        },
+        {
+          "page": 62,
+          "cid": "1279818111",
+          "title": "3-20",
+          "duration": 2355,
+          "durationText": "00:39:15",
+          "cumulativeStart": 44373,
+          "cumulativeEnd": 46728
+        },
+        {
+          "page": 63,
+          "cid": "1282357396",
+          "title": "3-21",
+          "duration": 232,
+          "durationText": "00:03:52",
+          "cumulativeStart": 46728,
+          "cumulativeEnd": 46960
+        },
+        {
+          "page": 64,
+          "cid": "1282357480",
+          "title": "3-22",
+          "duration": 1299,
+          "durationText": "00:21:39",
+          "cumulativeStart": 46960,
+          "cumulativeEnd": 48259
+        },
+        {
+          "page": 65,
+          "cid": "1282357566",
+          "title": "3-23",
+          "duration": 644,
+          "durationText": "00:10:44",
+          "cumulativeStart": 48259,
+          "cumulativeEnd": 48903
+        },
+        {
+          "page": 66,
+          "cid": "1282357599",
+          "title": "3-24",
+          "duration": 710,
+          "durationText": "00:11:50",
+          "cumulativeStart": 48903,
+          "cumulativeEnd": 49613
+        },
+        {
+          "page": 67,
+          "cid": "1282357724",
+          "title": "3-25",
+          "duration": 977,
+          "durationText": "00:16:17",
+          "cumulativeStart": 49613,
+          "cumulativeEnd": 50590
+        },
+        {
+          "page": 68,
+          "cid": "1282357928",
+          "title": "3-26",
+          "duration": 1085,
+          "durationText": "00:18:05",
+          "cumulativeStart": 50590,
+          "cumulativeEnd": 51675
+        },
+        {
+          "page": 69,
+          "cid": "1282357945",
+          "title": "3-27",
+          "duration": 1470,
+          "durationText": "00:24:30",
+          "cumulativeStart": 51675,
+          "cumulativeEnd": 53145
+        },
+        {
+          "page": 70,
+          "cid": "1298326874",
+          "title": "4-0",
+          "duration": 101,
+          "durationText": "00:01:41",
+          "cumulativeStart": 53145,
+          "cumulativeEnd": 53246
+        },
+        {
+          "page": 71,
+          "cid": "1298350566",
+          "title": "4-1",
+          "duration": 1149,
+          "durationText": "00:19:09",
+          "cumulativeStart": 53246,
+          "cumulativeEnd": 54395
+        },
+        {
+          "page": 72,
+          "cid": "1298350740",
+          "title": "4-2",
+          "duration": 879,
+          "durationText": "00:14:39",
+          "cumulativeStart": 54395,
+          "cumulativeEnd": 55274
+        },
+        {
+          "page": 73,
+          "cid": "1298350768",
+          "title": "4-3",
+          "duration": 413,
+          "durationText": "00:06:53",
+          "cumulativeStart": 55274,
+          "cumulativeEnd": 55687
+        },
+        {
+          "page": 74,
+          "cid": "1298358765",
+          "title": "4-4",
+          "duration": 2400,
+          "durationText": "00:40:00",
+          "cumulativeStart": 55687,
+          "cumulativeEnd": 58087
+        },
+        {
+          "page": 75,
+          "cid": "1298358908",
+          "title": "4-5",
+          "duration": 347,
+          "durationText": "00:05:47",
+          "cumulativeStart": 58087,
+          "cumulativeEnd": 58434
+        },
+        {
+          "page": 76,
+          "cid": "1308980634",
+          "title": "4-6",
+          "duration": 1376,
+          "durationText": "00:22:56",
+          "cumulativeStart": 58434,
+          "cumulativeEnd": 59810
+        },
+        {
+          "page": 77,
+          "cid": "1308980655",
+          "title": "4-7",
+          "duration": 493,
+          "durationText": "00:08:13",
+          "cumulativeStart": 59810,
+          "cumulativeEnd": 60303
+        },
+        {
+          "page": 78,
+          "cid": "1308980754",
+          "title": "4-8",
+          "duration": 510,
+          "durationText": "00:08:30",
+          "cumulativeStart": 60303,
+          "cumulativeEnd": 60813
+        },
+        {
+          "page": 79,
+          "cid": "1309120317",
+          "title": "4-9",
+          "duration": 2961,
+          "durationText": "00:49:21",
+          "cumulativeStart": 60813,
+          "cumulativeEnd": 63774
+        },
+        {
+          "page": 80,
+          "cid": "1309120166",
+          "title": "4-10",
+          "duration": 1492,
+          "durationText": "00:24:52",
+          "cumulativeStart": 63774,
+          "cumulativeEnd": 65266
+        },
+        {
+          "page": 81,
+          "cid": "1309120358",
+          "title": "4-11",
+          "duration": 430,
+          "durationText": "00:07:10",
+          "cumulativeStart": 65266,
+          "cumulativeEnd": 65696
+        },
+        {
+          "page": 82,
+          "cid": "1315345102",
+          "title": "4-12",
+          "duration": 3081,
+          "durationText": "00:51:21",
+          "cumulativeStart": 65696,
+          "cumulativeEnd": 68777
+        },
+        {
+          "page": 83,
+          "cid": "1315345048",
+          "title": "4-13",
+          "duration": 2513,
+          "durationText": "00:41:53",
+          "cumulativeStart": 68777,
+          "cumulativeEnd": 71290
+        },
+        {
+          "page": 84,
+          "cid": "1315345167",
+          "title": "4-14",
+          "duration": 1458,
+          "durationText": "00:24:18",
+          "cumulativeStart": 71290,
+          "cumulativeEnd": 72748
+        },
+        {
+          "page": 85,
+          "cid": "1315345084",
+          "title": "4-15",
+          "duration": 854,
+          "durationText": "00:14:14",
+          "cumulativeStart": 72748,
+          "cumulativeEnd": 73602
+        },
+        {
+          "page": 86,
+          "cid": "1332745700",
+          "title": "4-16",
+          "duration": 1949,
+          "durationText": "00:32:29",
+          "cumulativeStart": 73602,
+          "cumulativeEnd": 75551
+        },
+        {
+          "page": 87,
+          "cid": "1332745908",
+          "title": "4-17",
+          "duration": 239,
+          "durationText": "00:03:59",
+          "cumulativeStart": 75551,
+          "cumulativeEnd": 75790
+        },
+        {
+          "page": 88,
+          "cid": "1332745874",
+          "title": "4-18",
+          "duration": 2495,
+          "durationText": "00:41:35",
+          "cumulativeStart": 75790,
+          "cumulativeEnd": 78285
+        },
+        {
+          "page": 89,
+          "cid": "1332745935",
+          "title": "4-19",
+          "duration": 3402,
+          "durationText": "00:56:42",
+          "cumulativeStart": 78285,
+          "cumulativeEnd": 81687
+        },
+        {
+          "page": 90,
+          "cid": "1332746263",
+          "title": "4-20",
+          "duration": 1151,
+          "durationText": "00:19:11",
+          "cumulativeStart": 81687,
+          "cumulativeEnd": 82838
+        },
+        {
+          "page": 91,
+          "cid": "1332746319",
+          "title": "4-21",
+          "duration": 520,
+          "durationText": "00:08:40",
+          "cumulativeStart": 82838,
+          "cumulativeEnd": 83358
+        },
+        {
+          "page": 92,
+          "cid": "1332746434",
+          "title": "4-22",
+          "duration": 446,
+          "durationText": "00:07:26",
+          "cumulativeStart": 83358,
+          "cumulativeEnd": 83804
+        },
+        {
+          "page": 93,
+          "cid": "1333357805",
+          "title": "4-23",
+          "duration": 235,
+          "durationText": "00:03:55",
+          "cumulativeStart": 83804,
+          "cumulativeEnd": 84039
+        },
+        {
+          "page": 94,
+          "cid": "1333740160",
+          "title": "5-0",
+          "duration": 171,
+          "durationText": "00:02:51",
+          "cumulativeStart": 84039,
+          "cumulativeEnd": 84210
+        },
+        {
+          "page": 95,
+          "cid": "1333740333",
+          "title": "5-1",
+          "duration": 1073,
+          "durationText": "00:17:53",
+          "cumulativeStart": 84210,
+          "cumulativeEnd": 85283
+        },
+        {
+          "page": 96,
+          "cid": "1333740435",
+          "title": "5-2",
+          "duration": 275,
+          "durationText": "00:04:35",
+          "cumulativeStart": 85283,
+          "cumulativeEnd": 85558
+        },
+        {
+          "page": 97,
+          "cid": "1333740454",
+          "title": "5-3",
+          "duration": 746,
+          "durationText": "00:12:26",
+          "cumulativeStart": 85558,
+          "cumulativeEnd": 86304
+        },
+        {
+          "page": 98,
+          "cid": "1333740606",
+          "title": "5-4",
+          "duration": 391,
+          "durationText": "00:06:31",
+          "cumulativeStart": 86304,
+          "cumulativeEnd": 86695
+        },
+        {
+          "page": 99,
+          "cid": "1333740488",
+          "title": "5-5",
+          "duration": 283,
+          "durationText": "00:04:43",
+          "cumulativeStart": 86695,
+          "cumulativeEnd": 86978
+        },
+        {
+          "page": 100,
+          "cid": "1333744335",
+          "title": "5-6",
+          "duration": 556,
+          "durationText": "00:09:16",
+          "cumulativeStart": 86978,
+          "cumulativeEnd": 87534
+        },
+        {
+          "page": 101,
+          "cid": "1333745876",
+          "title": "5-7",
+          "duration": 575,
+          "durationText": "00:09:35",
+          "cumulativeStart": 87534,
+          "cumulativeEnd": 88109
+        },
+        {
+          "page": 102,
+          "cid": "1333740670",
+          "title": "6-0",
+          "duration": 24,
+          "durationText": "00:00:24",
+          "cumulativeStart": 88109,
+          "cumulativeEnd": 88133
+        },
+        {
+          "page": 103,
+          "cid": "1333740686",
+          "title": "6-1",
+          "duration": 463,
+          "durationText": "00:07:43",
+          "cumulativeStart": 88133,
+          "cumulativeEnd": 88596
+        },
+        {
+          "page": 104,
+          "cid": "1333740907",
+          "title": "6-2",
+          "duration": 577,
+          "durationText": "00:09:37",
+          "cumulativeStart": 88596,
+          "cumulativeEnd": 89173
+        },
+        {
+          "page": 105,
+          "cid": "1333740834",
+          "title": "6-3",
+          "duration": 298,
+          "durationText": "00:04:58",
+          "cumulativeStart": 89173,
+          "cumulativeEnd": 89471
+        },
+        {
+          "page": 106,
+          "cid": "1333740800",
+          "title": "6-4",
+          "duration": 296,
+          "durationText": "00:04:56",
+          "cumulativeStart": 89471,
+          "cumulativeEnd": 89767
+        },
+        {
+          "page": 107,
+          "cid": "1334822054",
+          "title": "6-5",
+          "duration": 236,
+          "durationText": "00:03:56",
+          "cumulativeStart": 89767,
+          "cumulativeEnd": 90003
+        },
+        {
+          "page": 108,
+          "cid": "1334785504",
+          "title": "6-6",
+          "duration": 925,
+          "durationText": "00:15:25",
+          "cumulativeStart": 90003,
+          "cumulativeEnd": 90928
+        },
+        {
+          "page": 109,
+          "cid": "1334785526",
+          "title": "6-7",
+          "duration": 565,
+          "durationText": "00:09:25",
+          "cumulativeStart": 90928,
+          "cumulativeEnd": 91493
+        },
+        {
+          "page": 110,
+          "cid": "1334785363",
+          "title": "6-8",
+          "duration": 204,
+          "durationText": "00:03:24",
+          "cumulativeStart": 91493,
+          "cumulativeEnd": 91697
+        },
+        {
+          "page": 111,
+          "cid": "1334785569",
+          "title": "6-9",
+          "duration": 791,
+          "durationText": "00:13:11",
+          "cumulativeStart": 91697,
+          "cumulativeEnd": 92488
+        },
+        {
+          "page": 112,
+          "cid": "1334785592",
+          "title": "6-10",
+          "duration": 617,
+          "durationText": "00:10:17",
+          "cumulativeStart": 92488,
+          "cumulativeEnd": 93105
+        },
+        {
+          "page": 113,
+          "cid": "1340310939",
+          "title": "7-1",
+          "duration": 873,
+          "durationText": "00:14:33",
+          "cumulativeStart": 93105,
+          "cumulativeEnd": 93978
+        },
+        {
+          "page": 114,
+          "cid": "1340311054",
+          "title": "7-2",
+          "duration": 778,
+          "durationText": "00:12:58",
+          "cumulativeStart": 93978,
+          "cumulativeEnd": 94756
+        },
+        {
+          "page": 115,
+          "cid": "1340311158",
+          "title": "7-3",
+          "duration": 1044,
+          "durationText": "00:17:24",
+          "cumulativeStart": 94756,
+          "cumulativeEnd": 95800
+        },
+        {
+          "page": 116,
+          "cid": "1340311208",
+          "title": "7-4",
+          "duration": 577,
+          "durationText": "00:09:37",
+          "cumulativeStart": 95800,
+          "cumulativeEnd": 96377
+        },
+        {
+          "page": 117,
+          "cid": "1340311237",
+          "title": "7-5",
+          "duration": 1128,
+          "durationText": "00:18:48",
+          "cumulativeStart": 96377,
+          "cumulativeEnd": 97505
+        },
+        {
+          "page": 118,
+          "cid": "1340311492",
+          "title": "7-6",
+          "duration": 222,
+          "durationText": "00:03:42",
+          "cumulativeStart": 97505,
+          "cumulativeEnd": 97727
+        },
+        {
+          "page": 119,
+          "cid": "1340311629",
+          "title": "7-7",
+          "duration": 827,
+          "durationText": "00:13:47",
+          "cumulativeStart": 97727,
+          "cumulativeEnd": 98554
+        },
+        {
+          "page": 120,
+          "cid": "1340311722",
+          "title": "7-8",
+          "duration": 161,
+          "durationText": "00:02:41",
+          "cumulativeStart": 98554,
+          "cumulativeEnd": 98715
+        },
+        {
+          "page": 121,
+          "cid": "1340311911",
+          "title": "7-9",
+          "duration": 367,
+          "durationText": "00:06:07",
+          "cumulativeStart": 98715,
+          "cumulativeEnd": 99082
+        },
+        {
+          "page": 122,
+          "cid": "1343855102",
+          "title": "7-10",
+          "duration": 638,
+          "durationText": "00:10:38",
+          "cumulativeStart": 99082,
+          "cumulativeEnd": 99720
+        },
+        {
+          "page": 123,
+          "cid": "1343855144",
+          "title": "7-11",
+          "duration": 455,
+          "durationText": "00:07:35",
+          "cumulativeStart": 99720,
+          "cumulativeEnd": 100175
+        },
+        {
+          "page": 124,
+          "cid": "1343855176",
+          "title": "7-12",
+          "duration": 338,
+          "durationText": "00:05:38",
+          "cumulativeStart": 100175,
+          "cumulativeEnd": 100513
+        },
+        {
+          "page": 125,
+          "cid": "1343855219",
+          "title": "7-13",
+          "duration": 446,
+          "durationText": "00:07:26",
+          "cumulativeStart": 100513,
+          "cumulativeEnd": 100959
+        },
+        {
+          "page": 126,
+          "cid": "1343855325",
+          "title": "7-14",
+          "duration": 435,
+          "durationText": "00:07:15",
+          "cumulativeStart": 100959,
+          "cumulativeEnd": 101394
+        },
+        {
+          "page": 127,
+          "cid": "1343855099",
+          "title": "7-15",
+          "duration": 324,
+          "durationText": "00:05:24",
+          "cumulativeStart": 101394,
+          "cumulativeEnd": 101718
+        },
+        {
+          "page": 128,
+          "cid": "1343855422",
+          "title": "7-16",
+          "duration": 525,
+          "durationText": "00:08:45",
+          "cumulativeStart": 101718,
+          "cumulativeEnd": 102243
+        },
+        {
+          "page": 129,
+          "cid": "1343855623",
+          "title": "7-17",
+          "duration": 1792,
+          "durationText": "00:29:52",
+          "cumulativeStart": 102243,
+          "cumulativeEnd": 104035
+        },
+        {
+          "page": 130,
+          "cid": "1343855647",
+          "title": "7-18",
+          "duration": 512,
+          "durationText": "00:08:32",
+          "cumulativeStart": 104035,
+          "cumulativeEnd": 104547
+        },
+        {
+          "page": 131,
+          "cid": "1343855868",
+          "title": "7-20",
+          "duration": 407,
+          "durationText": "00:06:47",
+          "cumulativeStart": 104547,
+          "cumulativeEnd": 104954
+        },
+        {
+          "page": 132,
+          "cid": "1343856291",
+          "title": "7-21",
+          "duration": 1043,
+          "durationText": "00:17:23",
+          "cumulativeStart": 104954,
+          "cumulativeEnd": 105997
+        },
+        {
+          "page": 133,
+          "cid": "1343856498",
+          "title": "7-22",
+          "duration": 672,
+          "durationText": "00:11:12",
+          "cumulativeStart": 105997,
+          "cumulativeEnd": 106669
+        },
+        {
+          "page": 134,
+          "cid": "1343856713",
+          "title": "7-23",
+          "duration": 560,
+          "durationText": "00:09:20",
+          "cumulativeStart": 106669,
+          "cumulativeEnd": 107229
+        },
+        {
+          "page": 135,
+          "cid": "1343856563",
+          "title": "7-24",
+          "duration": 1320,
+          "durationText": "00:22:00",
+          "cumulativeStart": 107229,
+          "cumulativeEnd": 108549
+        },
+        {
+          "page": 136,
+          "cid": "1343856777",
+          "title": "7-25",
+          "duration": 1154,
+          "durationText": "00:19:14",
+          "cumulativeStart": 108549,
+          "cumulativeEnd": 109703
+        },
+        {
+          "page": 137,
+          "cid": "1343857184",
+          "title": "7-26",
+          "duration": 868,
+          "durationText": "00:14:28",
+          "cumulativeStart": 109703,
+          "cumulativeEnd": 110571
+        },
+        {
+          "page": 138,
+          "cid": "1343857303",
+          "title": "7-27",
+          "duration": 482,
+          "durationText": "00:08:02",
+          "cumulativeStart": 110571,
+          "cumulativeEnd": 111053
+        },
+        {
+          "page": 139,
+          "cid": "1343857327",
+          "title": "7-28",
+          "duration": 506,
+          "durationText": "00:08:26",
+          "cumulativeStart": 111053,
+          "cumulativeEnd": 111559
+        },
+        {
+          "page": 140,
+          "cid": "1343857586",
+          "title": "7-29",
+          "duration": 738,
+          "durationText": "00:12:18",
+          "cumulativeStart": 111559,
+          "cumulativeEnd": 112297
+        },
+        {
+          "page": 141,
+          "cid": "1345663630",
+          "title": "7-30",
+          "duration": 537,
+          "durationText": "00:08:57",
+          "cumulativeStart": 112297,
+          "cumulativeEnd": 112834
+        },
+        {
+          "page": 142,
+          "cid": "1345676668",
+          "title": "7-31",
+          "duration": 1801,
+          "durationText": "00:30:01",
+          "cumulativeStart": 112834,
+          "cumulativeEnd": 114635
+        },
+        {
+          "page": 143,
+          "cid": "1345668159",
+          "title": "7-32",
+          "duration": 1226,
+          "durationText": "00:20:26",
+          "cumulativeStart": 114635,
+          "cumulativeEnd": 115861
+        },
+        {
+          "page": 144,
+          "cid": "1345663661",
+          "title": "7-33",
+          "duration": 307,
+          "durationText": "00:05:07",
+          "cumulativeStart": 115861,
+          "cumulativeEnd": 116168
+        },
+        {
+          "page": 145,
+          "cid": "1345663537",
+          "title": "7-34",
+          "duration": 729,
+          "durationText": "00:12:09",
+          "cumulativeStart": 116168,
+          "cumulativeEnd": 116897
+        },
+        {
+          "page": 146,
+          "cid": "1345663815",
+          "title": "7-35",
+          "duration": 551,
+          "durationText": "00:09:11",
+          "cumulativeStart": 116897,
+          "cumulativeEnd": 117448
+        },
+        {
+          "page": 147,
+          "cid": "1345663558",
+          "title": "7-36",
+          "duration": 513,
+          "durationText": "00:08:33",
+          "cumulativeStart": 117448,
+          "cumulativeEnd": 117961
+        },
+        {
+          "page": 148,
+          "cid": "1345663568",
+          "title": "7-37",
+          "duration": 313,
+          "durationText": "00:05:13",
+          "cumulativeStart": 117961,
+          "cumulativeEnd": 118274
+        },
+        {
+          "page": 149,
+          "cid": "1348121941",
+          "title": "8-1",
+          "duration": 1287,
+          "durationText": "00:21:27",
+          "cumulativeStart": 118274,
+          "cumulativeEnd": 119561
+        },
+        {
+          "page": 150,
+          "cid": "1348122039",
+          "title": "8-2",
+          "duration": 390,
+          "durationText": "00:06:30",
+          "cumulativeStart": 119561,
+          "cumulativeEnd": 119951
+        },
+        {
+          "page": 151,
+          "cid": "1348121982",
+          "title": "8-3",
+          "duration": 532,
+          "durationText": "00:08:52",
+          "cumulativeStart": 119951,
+          "cumulativeEnd": 120483
+        },
+        {
+          "page": 152,
+          "cid": "1348122125",
+          "title": "8-4",
+          "duration": 189,
+          "durationText": "00:03:09",
+          "cumulativeStart": 120483,
+          "cumulativeEnd": 120672
+        },
+        {
+          "page": 153,
+          "cid": "1348122218",
+          "title": "8-5",
+          "duration": 173,
+          "durationText": "00:02:53",
+          "cumulativeStart": 120672,
+          "cumulativeEnd": 120845
+        },
+        {
+          "page": 154,
+          "cid": "1348122179",
+          "title": "8-6",
+          "duration": 428,
+          "durationText": "00:07:08",
+          "cumulativeStart": 120845,
+          "cumulativeEnd": 121273
+        },
+        {
+          "page": 155,
+          "cid": "1348122411",
+          "title": "8-7",
+          "duration": 1049,
+          "durationText": "00:17:29",
+          "cumulativeStart": 121273,
+          "cumulativeEnd": 122322
+        },
+        {
+          "page": 156,
+          "cid": "1348122288",
+          "title": "8-8",
+          "duration": 1309,
+          "durationText": "00:21:49",
+          "cumulativeStart": 122322,
+          "cumulativeEnd": 123631
+        },
+        {
+          "page": 157,
+          "cid": "1348122704",
+          "title": "8-9",
+          "duration": 743,
+          "durationText": "00:12:23",
+          "cumulativeStart": 123631,
+          "cumulativeEnd": 124374
+        },
+        {
+          "page": 158,
+          "cid": "1353632721",
+          "title": "8-10",
+          "duration": 1613,
+          "durationText": "00:26:53",
+          "cumulativeStart": 124374,
+          "cumulativeEnd": 125987
+        },
+        {
+          "page": 159,
+          "cid": "1353632817",
+          "title": "8-11",
+          "duration": 760,
+          "durationText": "00:12:40",
+          "cumulativeStart": 125987,
+          "cumulativeEnd": 126747
+        },
+        {
+          "page": 160,
+          "cid": "1353632948",
+          "title": "8-12",
+          "duration": 491,
+          "durationText": "00:08:11",
+          "cumulativeStart": 126747,
+          "cumulativeEnd": 127238
+        },
+        {
+          "page": 161,
+          "cid": "1353633034",
+          "title": "8-13",
+          "duration": 517,
+          "durationText": "00:08:37",
+          "cumulativeStart": 127238,
+          "cumulativeEnd": 127755
+        },
+        {
+          "page": 162,
+          "cid": "1353633071",
+          "title": "8-14",
+          "duration": 553,
+          "durationText": "00:09:13",
+          "cumulativeStart": 127755,
+          "cumulativeEnd": 128308
+        },
+        {
+          "page": 163,
+          "cid": "1353632896",
+          "title": "8-15",
+          "duration": 342,
+          "durationText": "00:05:42",
+          "cumulativeStart": 128308,
+          "cumulativeEnd": 128650
+        },
+        {
+          "page": 164,
+          "cid": "1353633308",
+          "title": "8-16",
+          "duration": 482,
+          "durationText": "00:08:02",
+          "cumulativeStart": 128650,
+          "cumulativeEnd": 129132
+        },
+        {
+          "page": 165,
+          "cid": "1353633199",
+          "title": "8-17",
+          "duration": 1156,
+          "durationText": "00:19:16",
+          "cumulativeStart": 129132,
+          "cumulativeEnd": 130288
+        },
+        {
+          "page": 166,
+          "cid": "1353633427",
+          "title": "8-18",
+          "duration": 441,
+          "durationText": "00:07:21",
+          "cumulativeStart": 130288,
+          "cumulativeEnd": 130729
+        },
+        {
+          "page": 167,
+          "cid": "1353633469",
+          "title": "8-19",
+          "duration": 849,
+          "durationText": "00:14:09",
+          "cumulativeStart": 130729,
+          "cumulativeEnd": 131578
+        },
+        {
+          "page": 168,
+          "cid": "1353633513",
+          "title": "8-20",
+          "duration": 496,
+          "durationText": "00:08:16",
+          "cumulativeStart": 131578,
+          "cumulativeEnd": 132074
+        }
+      ],
+      "lastProgress": {
+        "page": 79,
+        "progress": 2,
+        "view_at": 1788266678,
+        "synced_at": 1788330467
+      },
+      "added_at": 1788266653
+    },
+    {
+      "bvid": "BV1ERu26sEgx",
+      "url": "https://www.bilibili.com/video/BV1ERu26sEgx",
+      "title": "【神人TV】非常经典的C+上不去分觉得是队友问题",
+      "owner": "DED1E123",
+      "cover": "http://i1.hdslb.com/bfs/archive/f270bc100573aaacf0b6f644ad38f237e20205a5.jpg",
+      "totalEpisodes": 1,
+      "totalDuration": 1274,
+      "totalDurationText": "00:21:14",
+      "episodes": [
+        {
+          "page": 1,
+          "cid": "40749630294",
+          "title": "【神人TV】非常经典的C+上不去分觉得是队友问题",
+          "duration": 1274,
+          "durationText": "00:21:14",
+          "cumulativeStart": 0,
+          "cumulativeEnd": 1274
+        }
+      ],
+      "lastProgress": {
+        "page": 1,
+        "progress": 59,
+        "view_at": 1788329200,
+        "synced_at": 1788330319,
+        "manual": true
+      },
+      "added_at": 1788266662
+    },
+    {
+      "bvid": "BV1LrhP6SEkN",
+      "url": "https://www.bilibili.com/video/BV1LrhP6SEkN",
+      "title": "修电脑抄作业都抄不明白，细节决定成败",
+      "owner": "韩宇修机",
+      "cover": "http://i1.hdslb.com/bfs/archive/9ed31d2ebf28b72fcbce26c7fe614c3b82ea5355.jpg",
+      "totalEpisodes": 1,
+      "totalDuration": 180,
+      "totalDurationText": "00:03:00",
+      "episodes": [
+        {
+          "page": 1,
+          "cid": "41221097663",
+          "title": "修电脑抄作业都抄不明白，细节决定成败",
+          "duration": 180,
+          "durationText": "00:03:00",
+          "cumulativeStart": 0,
+          "cumulativeEnd": 180
+        }
+      ],
+      "lastProgress": {
+        "page": 1,
+        "progress": 180,
+        "view_at": 1788272562,
+        "synced_at": 1788330306,
+        "manual": true
+      },
+      "added_at": 1788274710
+    },
+    {
+      "bvid": "BV1Ro866nEVh",
+      "url": "https://www.bilibili.com/video/BV1Ro866nEVh",
+      "title": "Dsh大肥鱼-余额小挂件v0.2.5现已发布！",
+      "owner": "月匠",
+      "cover": "http://i2.hdslb.com/bfs/archive/1f3fc2eee83c11ffba5b2bb8f1cffaba05aeef06.jpg",
+      "totalEpisodes": 1,
+      "totalDuration": 160,
+      "totalDurationText": "00:02:40",
+      "episodes": [
+        {
+          "page": 1,
+          "cid": "41139373572",
+          "title": "Dsh大肥鱼-余额小挂件v0.2.5现已发布！",
+          "duration": 160,
+          "durationText": "00:02:40",
+          "cumulativeStart": 0,
+          "cumulativeEnd": 160
+        }
+      ],
+      "lastProgress": {
+        "page": 1,
+        "progress": 139,
+        "view_at": 1788328392,
+        "synced_at": 1788330305,
+        "manual": true
+      },
+      "added_at": 1788330063
+    }
+  ],
+  "jumps": [
+    {
+      "bvid": "BV1nz6KBHEc9",
+      "title": "黑马程序员零基础具身智能机械臂实战项目开发全套视频课程，涵盖OpenCV、YOLO、DeepSeek等，从机械臂硬件、核心算法到人工智能完整技术栈",
+      "from_page": 28,
+      "to_page": 1,
+      "from_progress": 1306,
+      "to_progress": 1,
+      "view_at": 1788265233,
+      "detected_at": 1788266244
+    },
+    {
+      "bvid": "BV1nz6KBHEc9",
+      "title": "黑马程序员零基础具身智能机械臂实战项目开发全套视频课程，涵盖OpenCV、YOLO、DeepSeek等，从机械臂硬件、核心算法到人工智能完整技术栈",
+      "from_page": 1,
+      "to_page": 28,
+      "from_progress": 1,
+      "to_progress": 1306,
+      "view_at": 1788265233,
+      "detected_at": 1788266424
+    },
+    {
+      "bvid": "BV1nz6KBHEc9",
+      "title": "黑马程序员零基础具身智能机械臂实战项目开发全套视频课程，涵盖OpenCV、YOLO、DeepSeek等，从机械臂硬件、核心算法到人工智能完整技术栈",
+      "from_page": 28,
+      "to_page": 1,
+      "from_progress": 1306,
+      "to_progress": 1,
+      "view_at": 1788265233,
+      "detected_at": 1788266444
+    },
+    {
+      "bvid": "BV1nz6KBHEc9",
+      "title": "黑马程序员零基础具身智能机械臂实战项目开发全套视频课程，涵盖OpenCV、YOLO、DeepSeek等，从机械臂硬件、核心算法到人工智能完整技术栈",
+      "from_page": 1,
+      "to_page": 28,
+      "from_progress": 1,
+      "to_progress": 1306,
+      "view_at": 1788265233,
+      "detected_at": 1788266513
+    },
+    {
+      "bvid": "BV1Dh4y1m7Vh",
+      "title": "邱关源《电路》第六版课后习题详解1-8章||全程精讲解读||电气考研||专业课电路||邱关源电路讲解",
+      "from_page": 1,
+      "to_page": 79,
+      "from_progress": 1,
+      "to_progress": 1,
+      "view_at": 1788266640,
+      "detected_at": 1788266678
+    },
+    {
+      "bvid": "BV1F34y1h7so",
+      "title": "【4K超清修复】27考研最新版 自动控制原理 西北工业大学 卢京潮 自控期末",
+      "from_page": 67,
+      "to_page": 79,
+      "from_progress": 1147,
+      "to_progress": 2,
+      "view_at": 1788266630,
+      "detected_at": 1788266690
+    },
+    {
+      "bvid": "BV1F34y1h7so",
+      "title": "【4K超清修复】27考研最新版 自动控制原理 西北工业大学 卢京潮 自控期末",
+      "from_page": 79,
+      "to_page": 67,
+      "from_progress": 2,
+      "to_progress": 1147,
+      "view_at": 1788266630,
+      "detected_at": 1788266690
+    },
+    {
+      "bvid": "BV1F34y1h7so",
+      "title": "【4K超清修复】27考研最新版 自动控制原理 西北工业大学 卢京潮 自控期末",
+      "from_page": 67,
+      "to_page": 1,
+      "from_progress": 1147,
+      "to_progress": 186,
+      "view_at": 1788266630,
+      "detected_at": 1788266709
+    },
+    {
+      "bvid": "BV1F34y1h7so",
+      "title": "【4K超清修复】27考研最新版 自动控制原理 西北工业大学 卢京潮 自控期末",
+      "from_page": 1,
+      "to_page": 67,
+      "from_progress": 186,
+      "to_progress": 1147,
+      "view_at": 1788266630,
+      "detected_at": 1788266712
+    },
+    {
+      "bvid": "BV1Dh4y1m7Vh",
+      "title": "邱关源《电路》第六版课后习题详解1-8章||全程精讲解读||电气考研||专业课电路||邱关源电路讲解",
+      "from_page": 79,
+      "to_page": 1,
+      "from_progress": 2,
+      "to_progress": 186,
+      "view_at": 1788266678,
+      "detected_at": 1788274717
+    },
+    {
+      "bvid": "BV1Dh4y1m7Vh",
+      "title": "邱关源《电路》第六版课后习题详解1-8章||全程精讲解读||电气考研||专业课电路||邱关源电路讲解",
+      "from_page": 1,
+      "to_page": 79,
+      "from_progress": 186,
+      "to_progress": 2,
+      "view_at": 1788266678,
+      "detected_at": 1788274717
+    },
+    {
+      "bvid": "BV1ERu26sEgx",
+      "title": "【神人TV】非常经典的C+上不去分觉得是队友问题",
+      "kind": "time",
+      "from_page": 1,
+      "to_page": 1,
+      "from_progress": 918,
+      "to_progress": 59,
+      "view_at": 1788329200,
+      "detected_at": 1788329198
+    },
+    {
+      "bvid": "BV1ERu26sEgx",
+      "title": "【神人TV】非常经典的C+上不去分觉得是队友问题",
+      "kind": "time",
+      "from_page": 1,
+      "to_page": 1,
+      "from_progress": 918,
+      "to_progress": 59,
+      "view_at": 1788329200,
+      "detected_at": 1788329203
+    },
+    {
+      "bvid": "BV1LrhP6SEkN",
+      "title": "修电脑抄作业都抄不明白，细节决定成败",
+      "kind": "time",
+      "from_page": 1,
+      "to_page": 1,
+      "from_progress": 180,
+      "to_progress": -1,
+      "view_at": 1788272562,
+      "detected_at": 1788329210
+    },
+    {
+      "bvid": "BV1LrhP6SEkN",
+      "title": "修电脑抄作业都抄不明白，细节决定成败",
+      "kind": "time",
+      "from_page": 1,
+      "to_page": 1,
+      "from_progress": 180,
+      "to_progress": -1,
+      "view_at": 1788272562,
+      "detected_at": 1788329259
+    },
+    {
+      "bvid": "BV1LrhP6SEkN",
+      "title": "修电脑抄作业都抄不明白，细节决定成败",
+      "kind": "time",
+      "from_page": 1,
+      "to_page": 1,
+      "from_progress": 180,
+      "to_progress": -1,
+      "view_at": 1788272562,
+      "detected_at": 1788329277
+    },
+    {
+      "bvid": "BV1LrhP6SEkN",
+      "title": "修电脑抄作业都抄不明白，细节决定成败",
+      "kind": "time",
+      "from_page": 1,
+      "to_page": 1,
+      "from_progress": 180,
+      "to_progress": -1,
+      "view_at": 1788272562,
+      "detected_at": 1788330068
+    },
+    {
+      "bvid": "BV1ERu26sEgx",
+      "title": "【神人TV】非常经典的C+上不去分觉得是队友问题",
+      "kind": "time",
+      "from_page": 1,
+      "to_page": 1,
+      "from_progress": 1274,
+      "to_progress": 59,
+      "view_at": 1788329200,
+      "detected_at": 1788330071
+    },
+    {
+      "bvid": "BV1LrhP6SEkN",
+      "title": "修电脑抄作业都抄不明白，细节决定成败",
+      "kind": "time",
+      "from_page": 1,
+      "to_page": 1,
+      "from_progress": 180,
+      "to_progress": -1,
+      "view_at": 1788272562,
+      "detected_at": 1788330075
+    },
+    {
+      "bvid": "BV1LrhP6SEkN",
+      "title": "修电脑抄作业都抄不明白，细节决定成败",
+      "kind": "time",
+      "from_page": 1,
+      "to_page": 1,
+      "from_progress": 180,
+      "to_progress": -1,
+      "view_at": 1788272562,
+      "detected_at": 1788330078
+    },
+    {
+      "bvid": "BV1LrhP6SEkN",
+      "title": "修电脑抄作业都抄不明白，细节决定成败",
+      "kind": "time",
+      "from_page": 1,
+      "to_page": 1,
+      "from_progress": 180,
+      "to_progress": -1,
+      "view_at": 1788272562,
+      "detected_at": 1788330091
+    },
+    {
+      "bvid": "BV1ERu26sEgx",
+      "title": "【神人TV】非常经典的C+上不去分觉得是队友问题",
+      "kind": "time",
+      "from_page": 1,
+      "to_page": 1,
+      "from_progress": 1274,
+      "to_progress": 59,
+      "view_at": 1788329200,
+      "detected_at": 1788330315
+    },
+    {
+      "bvid": "BV1nz6KBHEc9",
+      "title": "黑马程序员零基础具身智能机械臂实战项目开发全套视频课程，涵盖OpenCV、YOLO、DeepSeek等，从机械臂硬件、核心算法到人工智能完整技术栈",
+      "kind": "ep",
+      "from_page": 29,
+      "to_page": 79,
+      "from_progress": 0,
+      "to_progress": 2,
+      "view_at": 1788329577,
+      "detected_at": 1788330466
+    },
+    {
+      "bvid": "BV1nz6KBHEc9",
+      "title": "黑马程序员零基础具身智能机械臂实战项目开发全套视频课程，涵盖OpenCV、YOLO、DeepSeek等，从机械臂硬件、核心算法到人工智能完整技术栈",
+      "kind": "ep",
+      "from_page": 79,
+      "to_page": 29,
+      "from_progress": 2,
+      "to_progress": 0,
+      "view_at": 1788329577,
+      "detected_at": 1788330467
+    }
+  ],
+  "active_bvid": "BV1nz6KBHEc9"
+}
