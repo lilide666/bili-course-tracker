@@ -1,0 +1,13 @@
+#!/bin/sh
+# 隐私保护钩子：拦截敏感文件进入提交（本目录经 core.hooksPath=hooks 启用）
+# 命中以下任一模式即拒绝提交：凭据 / 本地数据 / 打包产物
+PATTERN='sessdata|tracked_videos|course_data|covers/|\.exe$|\.bin$|\.pyc$'
+HITS=$(git diff --cached --name-only | grep -Ei "$PATTERN")
+if [ -n "$HITS" ]; then
+  echo ""
+  echo "XX 隐私拦截：暂存区包含不应上传的文件（凭据/本地数据/打包产物）："
+  echo "$HITS"
+  echo ""
+  echo "如确要提交，请先确认文件内容不含个人隐私，然后用 git commit --no-verify。"
+  exit 1
+fi

@@ -1,0 +1,20 @@
+# ===== 应用数据与凭据（绝不上传）=====
+B站课程进度追踪/
+.sessdata.txt
+*.sessdata*
+
+# ===== 打包中间产物 =====
+build/
+pyi-cache/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# ===== IDE / 系统 =====
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+~$*
