@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 本地代理服务：托管界面 + 实时读取B站观看进度（多视频追踪）。
+
+【AI 助手注意】开发前必读项目根目录 AGENTS.md（架构约定、隐私红线、踩坑记录）；
+改动架构/约定后必须同步更新 AGENTS.md，它是随仓库转移的项目记忆。
+
 用法：
   1. 在应用内设置面板粘贴 SESSDATA（加密存于 .sessdata.bin；或设环境变量 BILI_SESSDATA）
   2. py -3 server.py
@@ -299,7 +303,7 @@ def bilibili_get_bounded(url, sessdata, timeout=15):
 # 磁盘上的 tracked_videos.json 只保留"数字型"字段（bvid/集数/秒数/时间戳），
 # 课程标题、UP主、封面、分P列表等描述性信息只存内存（_meta_cache），
 # 每次启动实时从B站拉取——即使文件被误上传，也看不出用户在学什么。
-_DISK_KEYS = ("bvid", "totalEpisodes", "totalDuration", "lastProgress", "added_at")
+_DISK_KEYS = ("bvid", "totalEpisodes", "totalDuration", "lastProgress", "lastSynced", "added_at")
 _meta_cache = {}          # bvid -> {url,title,owner,cover,episodes,totalDurationText}
 _meta_lock = threading.Lock()
 
@@ -375,7 +379,24 @@ def load_tracked():
     data.setdefault("videos", [])
     data["videos"] = [_strip_to_disk(v) for v in (data.get("videos") or [])
                       if isinstance(v, dict) and v.get("bvid")]
-    data.setdefault("jumps", [])
+    # 跳跃记录去重：相同（视频/类型/起终点）的跳跃只保留最早一条，
+    # 清理旧版本因基准错误反复误报堆积的重复回看。
+    seen = set()
+    deduped = []
+    for j in (data.get("jumps") or []):
+        if not isinstance(j, dict):
+            continue
+        # 丢弃旧版本把"看完(progress=-1)"误判成回看的脏数据
+        if j.get("kind") == "time" and (j.get("to_progress") or 0) < 0:
+            continue
+        sig = (j.get("bvid"), j.get("kind"), j.get("from_page"), j.get("to_page"),
+               j.get("from_progress"), j.get("to_progress"))
+        if sig in seen:
+            continue
+        seen.add(sig)
+        j.pop("title", None)  # 旧版本曾把课程标题落盘到 jumps，统一剥离（标题实时从B站取）
+        deduped.append(j)
+    data["jumps"] = deduped[-100:]
     data.setdefault("active_bvid", None)
     return data
 
@@ -478,6 +499,42 @@ def _friendly_err(err):
     return "请求B站失败：" + s
 
 
+# ===================== 统一状态码（供前端状态模块派生提示） =====================
+# kind 取值：
+#   network  网络不通/超时/证书（可重试，可回退本地缓存）
+#   sessdata SESSDATA 未配置或失效（needSessdata=True，引导去设置）
+#   notfound B站历史里扫不到该视频（不是错误，近期无观看记录）
+#   bili     B站返回其他业务错误
+def _classify_err(err):
+    s = f"{type(err).__name__}: {err}"
+    if "SESSDATA" in s or "未登录" in s:
+        return "sessdata"
+    if (isinstance(err, (socket.gaierror, socket.timeout, TimeoutError, ssl.SSLError))
+            or "getaddrinfo failed" in s or "timed out" in s
+            or "SSLError" in s or "CERTIFICATE" in s.upper()
+            or "Connection" in s or "Remote end" in s):
+        return "network"
+    return "bili"
+
+
+def _kind_from_msg(msg):
+    msg = msg or ""
+    if "SESSDATA" in msg or "未登录" in msg:
+        return "sessdata"
+    if "B站返回" in msg:
+        return "bili"
+    return "network"
+
+
+def _err_result(kind, message, **extra):
+    """统一错误响应：ok=False + kind（机器可读）+ message（人可读）。"""
+    res = {"ok": False, "kind": kind, "message": message}
+    if kind == "sessdata":
+        res["needSessdata"] = True
+    res.update(extra)
+    return res
+
+
 def _fetch_cursor_pages(sessdata, max_pages=10, stop_bvid=None):
     """分页拉取历史 cursor，返回 (items_list, error_or_None)。
 
@@ -527,12 +584,10 @@ def fetch_progress(sessdata, bvid):
     t0 = time.time()
     items, err = _fetch_cursor_pages(sessdata, max_pages=10, stop_bvid=bvid)
     if err is not None:
-        msg = _friendly_err(err)
+        kind = _classify_err(err)
+        msg = str(err) if kind == "sessdata" else _friendly_err(err)
         print("[进度] " + msg, flush=True)
-        res = {"ok": False, "message": msg}
-        if "SESSDATA" in msg:
-            res["needSessdata"] = True
-        return res
+        return _err_result(kind, msg)
 
     scanned = len(items)
     found = None
@@ -544,9 +599,11 @@ def fetch_progress(sessdata, bvid):
 
     if not found:
         print(f"[进度] 未找到 {bvid}，共扫描{scanned}条，耗时{time.time()-t0:.2f}s", flush=True)
-        return {"ok": False,
-                "message": f"在最近{scanned}条B站历史中未找到该视频。"
-                           f"cursor接口可能过滤了短时观看。请在B站网页点开该视频某集，播放30秒以上再刷新。"}
+        return _err_result(
+            "notfound",
+            f"在最近{scanned}条B站历史中未找到该视频。"
+            f"cursor接口可能过滤了短时观看。请在B站网页点开该视频某集，播放30秒以上再刷新。",
+            scanned=scanned)
 
     hit = _match_item(found, bvid)
     hist = found.get("history") or {}
@@ -604,10 +661,9 @@ def fetch_history_list(sessdata, max_count=50):
     t0 = time.time()
     items, err = _fetch_cursor_pages(sessdata, max_pages=3)  # 3页约90条
     if err is not None:
-        res = {"ok": False, "message": _friendly_err(err)}
-        if "SESSDATA" in str(res["message"]):
-            res["needSessdata"] = True
-        return None, res
+        kind = _classify_err(err)
+        msg = str(err) if kind == "sessdata" else _friendly_err(err)
+        return None, _err_result(kind, msg)
     out = []
     seen_bvid = set()
     for item in items:
@@ -692,18 +748,24 @@ def fetch_image_cached(url, timeout=15):
 
 
 def record_jump_if_needed(data, bvid, new_page, new_progress, new_view_at):
-    """对比该 bvid 的 lastProgress，若差距较大则记录跳跃。返回本次跳跃记录或 None。
+    """对比该 bvid 的【上次B站同步值 lastSynced】，若差距较大则记录跳跃。返回跳跃记录或 None。
+
+    注意：基准用 lastSynced（仅B站同步写入），不用 lastProgress——后者会被用户在应用内
+    拖进度条/切集/标记已看等手动操作覆盖，若拿它和B站历史比，B站值静止时会每次启动都
+    误判出同一条"回看"。手动编辑进度是用户主观行为，不算跳跃，也不调用本函数。
 
     "差距较大"判定（对应用户口中的"如29集直接跳到第一集"）：
       - 跨集：向后跳（to < from）且 |gap| >= 3：记录（如 29→1）
       - 跨集：向前跳（to > from）且 gap >= 5：记录（如 1→10 跳过5集）
       - 集内：同一集进度大幅倒退 >= 180 秒（如 10 分钟跳回 1 分钟，回看复习）
     单集的正常来回（如 29↔28，gap=1）与集内自然前进不记录。
+    调用方需先确认 new_view_at 比 lastSynced.view_at 新（B站端确有新观看事件），
+    否则 B站历史静止时不应重复检测。
     """
     idx, video = _find_video(data, bvid)
     if not video:
         return None
-    old = video.get("lastProgress")
+    old = video.get("lastSynced")  # 基准：上一次B站同步值
     if not old or not old.get("page"):
         return None
     from_p = old.get("page") or 0
@@ -715,33 +777,40 @@ def record_jump_if_needed(data, bvid, new_page, new_progress, new_view_at):
     # 跨集：向后跳需 >=3，向前跳需 >=5
     notable = (is_backward and gap >= 3) or ((not is_backward) and gap >= 5)
     kind = "ep"
-    # 集内：进度大幅倒退（回看），如 10 分钟跳回 1 分钟
-    if not notable and to_p == from_p and old_prog - new_prog >= 180:
+    # 集内：进度大幅倒退（回看），如 10 分钟跳回 1 分钟。
+    # new_prog<0（B站 progress=-1 表示"本集已看完"）不算回看，否则看完会被误判成大幅倒退。
+    if not notable and to_p == from_p and new_prog >= 0 and old_prog - new_prog >= 180:
         notable = True
         kind = "time"
-    jump = None
-    if notable:
-        jump = {
-            "bvid": bvid,
-            "title": video.get("title", ""),
-            "kind": kind,
-            "from_page": from_p,
-            "to_page": to_p,
-            "from_progress": old_prog,
-            "to_progress": new_prog,
-            "view_at": new_view_at,
-            "detected_at": int(time.time()),
-        }
-        jumps = data.setdefault("jumps", [])
-        jumps.append(jump)
-        # cap 100 条，保留最近的
-        if len(jumps) > 100:
-            del jumps[: len(jumps) - 100]
-        if kind == "time":
-            print(f"[进度] 检测到集内回看：第{from_p}集 {fmt_sec(old_prog)}→{fmt_sec(new_prog)} "
-                  f"(bvid={bvid})", flush=True)
-        else:
-            print(f"[进度] 检测到跳跃：第{from_p}集→第{to_p}集 (gap={gap}, bvid={bvid})", flush=True)
+    if not notable:
+        return None
+    jump = {
+        "bvid": bvid,
+        "kind": kind,
+        "from_page": from_p,
+        "to_page": to_p,
+        "from_progress": old_prog,
+        "to_progress": new_prog,
+        "view_at": new_view_at,
+        "detected_at": int(time.time()),
+    }
+    jumps = data.setdefault("jumps", [])
+    # 去重兜底：完全相同的跳跃（同视频/类型/起终点）只记一次，防止重复刷屏
+    sig = (bvid, kind, from_p, to_p, old_prog, new_prog)
+    for prev in jumps[-5:]:
+        if (prev.get("bvid"), prev.get("kind"), prev.get("from_page"),
+                prev.get("to_page"), prev.get("from_progress"),
+                prev.get("to_progress")) == sig:
+            return None
+    jumps.append(jump)
+    # cap 100 条，保留最近的
+    if len(jumps) > 100:
+        del jumps[: len(jumps) - 100]
+    if kind == "time":
+        print(f"[进度] 检测到集内回看：第{from_p}集 {fmt_sec(old_prog)}→{fmt_sec(new_prog)} "
+              f"(bvid={bvid})", flush=True)
+    else:
+        print(f"[进度] 检测到跳跃：第{from_p}集→第{to_p}集 (gap={gap}, bvid={bvid})", flush=True)
     return jump
 
 
@@ -926,8 +995,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if path == "/api/progress":
             sd = get_sessdata()
             if not sd:
-                self._send_json({"ok": False, "needSessdata": True,
-                                 "message": "未配置 SESSDATA：请在右上角 ⚙ 设置中粘贴 SESSDATA"})
+                self._send_json(_err_result(
+                    "sessdata", "未配置 SESSDATA：请在右上角 ⚙ 设置中粘贴 SESSDATA"))
                 return
             bvid = (qs.get("bvid") or [None])[0]
             if not bvid:
@@ -945,16 +1014,29 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     # 视频不在追踪列表，仅返回进度不存储
                     self._send_json(res)
                     return
-                jump = record_jump_if_needed(
-                    data, bvid,
-                    new_page=res.get("page"),
-                    new_progress=res.get("progress", 0),
-                    new_view_at=res.get("view_at"),
-                )
+                new_va = res.get("view_at")
+                old_synced = video.get("lastSynced") or {}
+                # 仅当 B站端出现更新的观看事件（view_at 变新）才做跳跃检测；
+                # B站历史静止（用户没在B站新看）时不检测，避免每次启动重复误报同一条回看。
+                jump = None
+                if old_synced.get("page") and new_va and new_va > (old_synced.get("view_at") or 0):
+                    jump = record_jump_if_needed(
+                        data, bvid,
+                        new_page=res.get("page"),
+                        new_progress=res.get("progress", 0),
+                        new_view_at=new_va,
+                    )
+                # lastSynced：B站同步基准（仅此处写入，跳跃检测用）
+                video["lastSynced"] = {
+                    "page": res.get("page"),
+                    "progress": res.get("progress", 0),
+                    "view_at": new_va,
+                }
+                # lastProgress：界面显示/本地回退用
                 video["lastProgress"] = {
                     "page": res.get("page"),
                     "progress": res.get("progress", 0),
-                    "view_at": res.get("view_at"),
+                    "view_at": new_va,
                     "synced_at": int(time.time()),
                 }
                 save_tracked(data)
@@ -1055,8 +1137,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return
             sd = get_sessdata()
             if not sd:
-                self._send_json({"ok": False, "needSessdata": True,
-                                 "message": "未配置 SESSDATA：无法拉取视频信息"})
+                self._send_json(_err_result(
+                    "sessdata", "未配置 SESSDATA：无法拉取视频信息"))
                 return
             with _wlock:
                 data = load_tracked()
@@ -1147,7 +1229,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json({"ok": True, "configured": True})
             return
 
-        # 手动保存进度（也触发跳跃检测：手动大跨度切集算跳跃；同集拖滑块 page 不变不误报）
+        # 手动保存进度（拖进度条/切集/标记已看）：只更新 lastProgress，不做跳跃检测、
+        # 不碰 lastSynced——用户主动编辑自己的进度不是"意外跳跃"，否则会与B站历史值
+        # 互相覆盖，导致每次启动同步都误报同一条回看。
         if path == "/api/progress/save":
             body, err = self._read_body_json()
             if err is not None:
@@ -1166,13 +1250,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 if not video:
                     self._send_json({"ok": False, "message": "该视频不在追踪列表"})
                     return
-                # 先用旧 lastProgress 做跳跃检测，再更新（基于 page 变化）
                 old_va = (video.get("lastProgress") or {}).get("view_at") or now
-                jump = record_jump_if_needed(
-                    data, bvid,
-                    new_page=int(page), new_progress=int(progress),
-                    new_view_at=old_va,
-                )
                 video["lastProgress"] = {
                     "page": int(page),
                     "progress": int(progress),
@@ -1181,7 +1259,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     "manual": True,
                 }
                 save_tracked(data)
-            self._send_json({"ok": True, "jump": jump})
+            self._send_json({"ok": True, "jump": None})
             return
 
         # 自定义应用图标：上传图片(base64)生成 ico + 更新桌面快捷方式；或重置为默认
