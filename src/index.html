@@ -30,6 +30,7 @@
     padding:0;
     line-height:1.5;
     overflow-y:auto;
+    overflow-x:hidden;  /* 番茄钟圆环从屏外飞入，防横向滚动条 */
   }
   /* 全局滚动条：极细半透明，默认几乎不可见，hover 略明显 */
   ::-webkit-scrollbar{width:6px; height:6px}
@@ -183,14 +184,62 @@
     align-items:center; justify-content:center}
   .ring .pct{font-size:44px; font-weight:800; letter-spacing:-1px; line-height:1}
   .ring .pct small{font-size:19px; font-weight:700; color:var(--accent)}
-  /* 老虎机数字：每一位是一个竖向滚轮，切换时从左到右错峰滚动 */
-  .pct .dslot{display:inline-block; height:1em; overflow:hidden; vertical-align:bottom;
+  /* 老虎机数字：每一位是一个竖向滚轮，切换时从左到右错峰滚动。
+     选择器必须同时覆盖 .pct（总进度）和 .focus-time（番茄钟时间）——spinPct 复用到
+     哪个容器，滚轮结构样式就要跟到哪个容器，否则滚轮竖排散开不裁切 */
+  .pct .dslot,.focus-time .dslot{display:inline-block; height:1em; overflow:hidden; vertical-align:bottom;
     width:.64em; line-height:1; position:relative}
-  .pct .ddot{width:.3em; overflow:visible; text-align:center}
-  .pct .droll{display:flex; flex-direction:column; will-change:transform}
-  .pct .dline{display:block; height:1em; line-height:1; text-align:center}
+  .pct .ddot,.focus-time .ddot{width:.3em; overflow:visible; text-align:center}
+  .pct .droll,.focus-time .droll{display:flex; flex-direction:column; will-change:transform}
+  .pct .dline,.focus-time .dline{display:block; height:1em; line-height:1; text-align:center}
   .ring .pct-label{font-size:12.5px; color:var(--muted); margin-top:6px}
   .ring .played-time{font-size:13.5px; color:#cfe0ff; margin-top:8px; font-variant-numeric:tabular-nums}
+
+  /* 番茄钟：与总进度环并排（等大 240px），总环保持原尺寸不动；番茄环从屏幕外飞入。
+     【排版完整性】width 固定 240px 不动画（避免 overflow:hidden 按宽裁切 SVG 致内容错乱/消失）；
+     隐藏时用 margin-right:-240px 折叠布局占位（总环仍居中），显示时 margin-left:60px 让位；
+     飞入走 transform，循环动画仍只走 transform/opacity */
+  .ring-row{display:flex; align-items:center; justify-content:center; min-height:264px; width:100%}
+  .ring.focus-ring{width:240px; height:240px; margin:6px -240px 18px 0; opacity:0; overflow:visible;
+    transform:translateX(560px); pointer-events:none; flex:0 0 auto;
+    transition:margin .5s cubic-bezier(.22,.61,.36,1),
+      opacity .42s ease, transform .6s cubic-bezier(.18,.7,.25,1)}
+  body.focus-mode .ring.focus-ring{margin:6px 0 18px 60px; opacity:1; transform:none; pointer-events:auto}
+  .ring.focus-ring .track{stroke:#3a2430}
+  .ring.focus-ring .bar{stroke:#f87171; filter:drop-shadow(0 0 8px rgba(248,113,113,.35))}
+  .focus-time{font-size:40px; font-weight:800; letter-spacing:-1px; line-height:1;
+    color:#fecaca; font-variant-numeric:tabular-nums}
+  .ring.focus-ring .center-txt{justify-content:center; transform:translateY(14px)}  /* 视觉重心略低于几何中心 */
+  .ring.focus-ring .pct-label{margin-top:7px}
+  .focus-btns{margin-top:12px}
+  .focus-btns button{font-size:12px; font-weight:600; color:#fecaca; cursor:pointer;
+    background:rgba(248,113,113,.14); border:1px solid rgba(248,113,113,.45);
+    border-radius:999px; padding:4px 18px; transition:background .2s}
+  .focus-btns button:hover{background:rgba(248,113,113,.38); border-color:rgba(248,113,113,.6)}
+
+  /* 番茄钟开关行：progress-panel 最下方；未开启时与"读取进度"primary 渐变同款，
+     专注进行中（focus-mode，显示"结束专注"）切换为暂停按钮同款红色半透明风。
+     【闪黑根因】渐变是 background-image、红底是 background-color：状态切换时渐变图
+     瞬间消失、底色从透明过渡 150ms，期间透出近黑页面底色——视觉上"闪黑一下"。
+     【修法】按钮底色恒定为红色半透明（两态共用），渐变挂在 ::after(z-index:-1) 上
+     交叉淡出/淡入，任意时刻都有不透明背景；isolation:isolate 让 z-index:-1 的
+     ::after 落在本元素背景之上、文字之下。filter 加亮会同时作用于渐变层。
+     注意：hover 必须显式重申 background/border-color——全局 button:hover(#152047
+     +accent 描边) 声明在文件更后面，同特异性下会覆盖这里，导致悬浮变深/出描边 */
+  .focus-row{display:flex; flex-direction:column; align-items:stretch; gap:8px;
+    width:100%; max-width:680px; margin-top:14px}
+  .focus-row button{flex:1; font-size:13px; font-weight:600; color:#0a1024; cursor:pointer;
+    position:relative; isolation:isolate;
+    background:rgba(248,113,113,.14); border:1px solid transparent; border-radius:10px;
+    padding:10px 0; transition:.15s}
+  .focus-row button::after{content:''; position:absolute; inset:0; z-index:-1; border-radius:inherit;
+    background:linear-gradient(90deg,var(--accent),var(--accent2)); opacity:1;
+    transition:opacity .15s; pointer-events:none}
+  .focus-row button:hover{background:rgba(248,113,113,.14); border-color:transparent; filter:brightness(1.08)}
+  body.focus-mode .focus-row button{border-color:rgba(248,113,113,.45); color:#fecaca}
+  body.focus-mode .focus-row button::after{opacity:0}
+  body.focus-mode .focus-row button:hover{background:rgba(248,113,113,.38); border-color:rgba(248,113,113,.6); filter:none}
+  #focusToday{font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums; text-align:center}
 
   .stats{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; width:100%; max-width:680px; margin-top:6px}
   .stat{background:rgba(0,0,0,.18); border:1px solid var(--border); border-radius:12px; padding:14px 10px}
@@ -431,14 +480,14 @@
   </div>
 
   <!-- 离线横幅 -->
-  <div class="offline-bar" id="offlineBar">⚠ 离线模式：进度同步不可用，显示上次保存的本地数据</div>
+  <div class="offline-bar" id="offlineBar">离线模式：显示上次同步的本地数据</div>
 
   <!-- 空状态引导页（无追踪视频时显示） -->
   <div class="empty-state" id="emptyState">
     <div class="e-ico">📚</div>
-    <h2>开始追踪你的第一门课程</h2>
-    <p>从你的B站观看历史中选择视频加入追踪，<br>即可实时同步播放进度、统计总进度并检测集数跳跃。</p>
-    <button class="primary" id="emptyAdd">＋ 从B站历史添加视频</button>
+    <h2>添加追踪课程</h2>
+    <p>从B站观看历史中选择视频加入追踪，<br>自动同步播放进度、统计总进度并检测集数跳跃。</p>
+    <button class="primary" id="emptyAdd">从B站历史添加视频</button>
   </div>
 
   <!-- 1. 视频简介（最上面） -->
@@ -460,23 +509,41 @@
 
   <!-- 2. 进度（中间） -->
   <section class="panel progress-panel">
-    <div class="section-title">📊 总体播放进度</div>
-    <div class="ring">
-      <svg width="240" height="240" viewBox="0 0 240 240">
-        <defs>
-          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#6ea8ff"/>
-            <stop offset="1" stop-color="#8b5cf6"/>
-          </linearGradient>
-        </defs>
-        <circle class="track" cx="120" cy="120" r="105"/>
-        <circle class="bar" id="ringBar" cx="120" cy="120" r="105"
-          stroke-dasharray="659.734" stroke-dashoffset="659.734"/>
-      </svg>
-      <div class="center-txt">
-        <div class="pct" id="bigPct">0<small>%</small></div>
-        <div class="pct-label">总体播放进度</div>
-        <div class="played-time" id="bigPlayed">00:00:00 / 00:00:00</div>
+    <div class="section-title">总体播放进度</div>
+    <div class="ring-row">
+      <div class="ring" id="mainRing">
+        <svg width="240" height="240" viewBox="0 0 240 240">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#6ea8ff"/>
+              <stop offset="1" stop-color="#8b5cf6"/>
+            </linearGradient>
+          </defs>
+          <circle class="track" cx="120" cy="120" r="105"/>
+          <circle class="bar" id="ringBar" cx="120" cy="120" r="105"
+            stroke-dasharray="659.734" stroke-dashoffset="659.734"/>
+        </svg>
+        <div class="center-txt">
+          <div class="pct" id="bigPct">0<small>%</small></div>
+          <div class="pct-label">总体播放进度</div>
+          <div class="played-time" id="bigPlayed">00:00:00 / 00:00:00</div>
+        </div>
+      </div>
+
+      <!-- 番茄钟圆环：专注时从屏幕外飞入，与总进度环等大并排；内部计时 00:12:30 -->
+      <div class="ring focus-ring" id="focusRing" aria-hidden="true">
+        <svg width="240" height="240" viewBox="0 0 240 240">
+          <circle class="track" cx="120" cy="120" r="105"/>
+          <circle class="bar" id="focusBar" cx="120" cy="120" r="105"
+            stroke-dasharray="659.734" stroke-dashoffset="659.734"/>
+        </svg>
+        <div class="center-txt">
+          <div class="focus-time" id="focusTime">00:00:00</div>
+          <div class="pct-label">本次专注</div>
+          <div class="focus-btns">
+            <button id="btnFocusPause" type="button" tabindex="-1">暂停</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -496,15 +563,21 @@
       <div class="bar-track"><div class="bar-fill" id="overFill" style="width:0%"></div></div>
       <div class="bot"><span id="overStart">00:00:00</span><span id="overEnd">00:00:00</span></div>
     </div>
+
+    <!-- 番茄钟：开关按钮即开始/结束；按天累计只存数字 -->
+    <div class="focus-row">
+      <button id="btnFocus" type="button">番茄钟</button>
+      <span id="focusToday">今日专注 00:00:00</span>
+    </div>
   </section>
 
   <!-- 3. 其他功能（最后） -->
   <section class="panel">
-    <div class="section-title">⚙️ 集数与进度控制</div>
+    <div class="section-title">集数与进度控制</div>
 
     <div class="refresh-row">
-      <button class="primary" id="btnRefresh">🔄 从B站读取当前视频进度</button>
-      <div class="refresh-status" id="refreshStatus">点击从B站读取你真实的观看进度</div>
+      <button class="primary" id="btnRefresh">从B站读取进度</button>
+      <div class="refresh-status" id="refreshStatus">点击后从B站同步当前观看进度</div>
     </div>
 
     <div class="control-grid">
@@ -535,20 +608,20 @@
 
     <div class="btns">
       <button id="btnPrev">← 上一集</button>
-      <button class="primary" id="btnDone">本集看完，跳下一集 →</button>
+      <button class="primary" id="btnDone">本集看完，下一集 →</button>
     </div>
   </section>
 
   <!-- 跳跃历史 -->
   <section class="panel">
     <div class="jumps-head">
-      <span class="t">📜 跳跃历史（差距较大的进度变化）</span>
-      <span class="s">点击条目恢复到跳跃前位置</span>
+      <span class="t">跳跃历史</span>
+      <span class="s">点击条目可恢复到跳跃前位置</span>
     </div>
     <div class="jumps-list" id="jumpsList"></div>
   </section>
 
-  <footer>数据来源：bilibili 官方 API，本地 tracked_videos.json 备份。无网络时加载本地数据。</footer>
+  <footer>数据来源：Bilibili 官方 API，本地备份。无网络时使用本地数据。</footer>
 </div>
 
 <!-- 添加视频弹窗 -->
@@ -562,7 +635,7 @@
       <input id="modalSearch" type="text" placeholder="搜索标题过滤…">
     </div>
     <div class="modal-list" id="modalList">
-      <div class="modal-status">点击下方按钮加载B站历史…</div>
+      <div class="modal-status">点击下方按钮加载B站历史</div>
     </div>
   </div>
 </div>
@@ -577,27 +650,45 @@
     <div class="settings-body">
       <!-- ===== 分区：B站账号 ===== -->
       <div class="set-sec"><span class="sbar"></span><span class="stxt">B站账号</span><span class="sline"></span></div>
-      <div style="font-size:12px; color:var(--muted); margin:-4px 0 10px">登录凭据（SESSDATA），用于读取观看进度；约 1 个月过期，失效时应用会提示更新</div>
-      <div style="display:flex; gap:8px">
-        <input id="sessdataInput" type="password" placeholder="粘贴 SESSDATA 的值…"
-          style="flex:1; background:#0e1530; border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:10px 12px; font-size:13px; font-family:monospace">
-        <button id="sessdataToggle" type="button" style="flex:0 0 auto; width:auto; padding:0 14px">👁 显示</button>
+      <div style="font-size:12px; color:var(--muted); margin:-4px 0 10px">登录凭据（SESSDATA）用于读取观看进度，约 1 个月过期，失效时应用会提示更新</div>
+      <div class="btns" style="margin:0 0 10px">
+        <button type="button" class="primary" id="qrBtn" style="width:100%">扫码登录</button>
       </div>
-      <div id="sessdataStatus" style="font-size:12px; color:var(--muted); margin-top:8px; min-height:16px"></div>
-      <div class="btns" style="margin-top:10px">
-        <button class="primary" id="sessdataSave">保存</button>
+      <div id="qrBox" style="display:none; text-align:center; padding:12px; margin-bottom:12px; background:rgba(0,0,0,.22); border:1px solid var(--border); border-radius:10px">
+        <div style="position:relative; display:inline-block; line-height:0">
+          <canvas id="qrCanvas" style="background:#fff; border-radius:8px; width:224px; height:224px; image-rendering:pixelated"></canvas>
+          <div id="qrMask" role="dialog" aria-label="二维码已失效，点击刷新" style="display:none; position:absolute; inset:0; background:rgba(10,16,36,.55); border-radius:8px; color:#fff; font-size:14px; font-weight:500; align-items:center; justify-content:center; gap:10px; line-height:1.5; padding:0 18px; backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); cursor:pointer">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="qrRefresh" style="cursor:pointer; flex-shrink:0; transition:transform .4s cubic-bezier(.22,.61,.36,1)">
+              <path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/>
+              <path d="M21 3v5h-5"/>
+              <path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/>
+              <path d="M3 21v-5h5"/>
+            </svg>
+            <span id="qrMaskTxt">二维码已失效</span>
+          </div>
+        </div>
+        <div id="qrStatus" style="font-size:12.5px; color:var(--muted); margin-top:8px; min-height:18px">正在生成二维码…</div>
+        <div style="font-size:11px; color:var(--dim); margin-top:2px; line-height:1.6">B站官方网页登录通道，仅新增一条网页登录记录，可在手机端「登录设备管理」随时下线</div>
       </div>
-      <details style="margin-top:12px; padding:10px 14px; background:rgba(0,0,0,.2); border:1px solid var(--border); border-radius:10px">
-        <summary style="cursor:pointer; font-size:12.5px; color:#cfe0ff; font-weight:600; user-select:none">如何获取 SESSDATA？（点击展开）</summary>
-        <div style="margin-top:8px; font-size:12px; color:var(--muted); line-height:1.85">
-          <div style="margin-bottom:4px">① 在浏览器中登录 <b style="color:#cfe0ff">bilibili.com</b>，并保持登录状态。</div>
-          <div style="margin-bottom:4px">② 在当前页面按 <b style="color:#cfe0ff">F12</b> 键，打开浏览器开发者工具。</div>
-          <div style="margin-bottom:4px">③ 在开发者工具顶部切换到 <b style="color:#cfe0ff">应用程序</b>（Application）面板。</div>
-          <div style="margin-bottom:4px">④ 在左侧 <b style="color:#cfe0ff">存储</b>（Storage）栏目中展开 <b style="color:#cfe0ff">Cookies</b>，点击其中的 <b style="color:#cfe0ff">www.bilibili.com</b>。</div>
-          <div style="margin-bottom:4px">⑤ 在右侧 Cookie 列表中找到名称为 <b style="color:#cfe0ff">SESSDATA</b> 的条目，复制其「值」一列的内容。</div>
-          <div style="margin-bottom:8px">⑥ 将复制到的值粘贴到上方输入框，点击「保存」即可完成配置。</div>
-          <div style="padding-top:8px; border-top:1px solid rgba(42,58,107,.4); color:var(--dim); font-size:11.5px">
-            <b style="color:var(--muted)">隐私说明：</b>SESSDATA 是B站用于识别登录身份的凭据，仅保存在本地 <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px">.sessdata.txt</code> 文件中，仅由本程序直接请求B站接口时使用，不会上传至任何第三方服务器。
+      <div id="sessdataStatus" style="font-size:12px; color:var(--muted); margin:4px 0 10px"></div>
+      <button type="button" class="primary" id="sessdataLogout" style="display:none; width:100%; margin-bottom:10px">退出登录</button>
+      <details style="margin:0 0 12px">
+        <summary style="cursor:pointer; font-size:12px; color:var(--muted); user-select:none; padding:4px 0">手动粘贴 SESSDATA</summary>
+        <div style="display:flex; gap:8px; margin-top:8px">
+          <input id="sessdataInput" type="password" placeholder="粘贴 SESSDATA 的值…"
+            style="flex:1; background:#0e1530; border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:10px 12px; font-size:13px; font-family:monospace">
+          <button id="sessdataToggle" type="button" style="flex:0 0 auto; width:auto; padding:0 14px">显示</button>
+        </div>
+        <button class="primary" id="sessdataSave" style="width:100%; margin-top:8px">保存</button>
+        <div style="margin-top:12px; padding-top:10px; border-top:1px solid rgba(42,58,107,.4); font-size:11.5px; color:var(--muted); line-height:1.8">
+          <div style="font-size:12px; color:#cfe0ff; font-weight:600; margin-bottom:4px">获取 SESSDATA</div>
+          <div style="margin-bottom:2px">① 在浏览器中登录 <b style="color:#cfe0ff">bilibili.com</b>。</div>
+          <div style="margin-bottom:2px">② 按 <b style="color:#cfe0ff">F12</b> 打开开发者工具 → <b style="color:#cfe0ff">应用程序</b> 面板。</div>
+          <div style="margin-bottom:2px">③ 左侧 <b style="color:#cfe0ff">存储 → Cookies → www.bilibili.com</b>。</div>
+          <div style="margin-bottom:2px">④ 找到 Cookie 名 <b style="color:#cfe0ff">SESSDATA</b>，复制其值。</div>
+          <div>⑤ 粘贴到上方输入框，点击保存。</div>
+          <div style="margin-top:6px; padding-top:6px; border-top:1px solid rgba(42,58,107,.4); color:var(--dim); font-size:11px">
+            <b style="color:var(--muted)">隐私说明：</b>SESSDATA 经 Windows DPAPI 加密保存在 <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px">.sessdata.bin</code>（仅本账户可解），仅本机请求B站接口使用。
           </div>
         </div>
       </details>
@@ -672,9 +763,9 @@
   // 跳跃/回看 toast：同集显示时间点，跨集显示集数
   function jumpToast(j){
     if((j.to_page||0) === (j.from_page||0)){
-      showToast(`检测到回看：第${j.from_page}集内 ${fmt(j.from_progress||0)} → ${fmt(j.to_progress||0)}`);
+      showToast(`回看：第${j.from_page}集 ${fmt(j.from_progress||0)} → ${fmt(j.to_progress||0)}`);
     } else {
-      showToast(`检测到跳跃：第${j.from_page}集 → 第${j.to_page}集`);
+      showToast(`跳跃：第${j.from_page}集 → 第${j.to_page}集`);
     }
   }
 
@@ -727,7 +818,7 @@
       close.title = '移除追踪';
       close.addEventListener('click', async ev=>{
         ev.stopPropagation();
-        if(!confirm('确定从追踪列表移除该视频？（跳跃记录保留）')) return;
+        if(!confirm('确定从追踪列表移除该视频？跳跃记录将保留')) return;
         await fetch('/api/tracked/remove', {method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({bvid:v.bvid})});
         await bootstrap();
@@ -779,19 +870,25 @@
   }
   function selectEp(page, keepPos){
     const eps = active.episodes || [];
-    if(!eps.length){ return; }
-    cur = Math.max(1, Math.min(active.totalEpisodes, page|0));
+    cur = Math.max(1, Math.min(active.totalEpisodes || 1, page|0));
     $('epSelect').value = cur;
     const e = eps[cur-1];
     if(!keepPos) pos = 0;
-    pos = Math.min(pos, e.duration);
-    $('epTitle').textContent = e.title;
-    $('epDur').textContent = e.durationText;
-    $('epPos').textContent = `第 ${cur}/${active.totalEpisodes} 集`;
-    const sl = $('posSlider');
-    sl.min = 0; sl.max = e.duration; sl.value = Math.round(pos);
-    sl.style.setProperty('--p', (pos/e.duration*100)+'%');
-    $('posEnd').textContent = e.durationText;
+    if(e){
+      pos = Math.min(pos, e.duration);
+      $('epTitle').textContent = e.title;
+      $('epDur').textContent = e.durationText;
+      const sl = $('posSlider');
+      sl.min = 0; sl.max = e.duration; sl.value = Math.round(pos);
+      sl.style.setProperty('--p', (pos/e.duration*100)+'%');
+      $('posEnd').textContent = e.durationText;
+    } else {
+      // 无集数信息：用 lastProgress 兜底，至少让百分比老虎机能渲染
+      const lp = active.lastProgress;
+      if(lp && typeof lp.progress === 'number') pos = Math.max(0, lp.progress);
+      $('epTitle').textContent = '集数信息加载中…';
+    }
+    $('epPos').textContent = `第 ${cur}/${active.totalEpisodes||'?'} 集`;
     render();
   }
 
@@ -799,22 +896,27 @@
     if(!active){ return; }
     const eps = active.episodes || [];
     const e = eps[cur-1];
-    if(!e){ return; }
     const TOTAL = active.totalDuration;
-    pos = Math.min(pos, e.duration);
-    const played = (e.cumulativeStart||0) + pos;
-    const remain = Math.max(0, TOTAL - played);
-    const pct = TOTAL ? (played/TOTAL*100) : 0;
-    const doneCount = (cur-1) + (pos >= e.duration ? 1 : 0);
+    let played, pct;
+    if(e){
+      pos = Math.min(pos, e.duration);
+      played = (e.cumulativeStart||0) + pos;
+    } else {
+      // 没有集数信息（断网首启）：用 lastProgress 粗略计算，至少让百分比老虎机有动画
+      const lp = active.lastProgress;
+      played = lp ? Math.max(0, lp.progress||0) : 0;
+    }
+    pct = TOTAL ? (played/TOTAL*100) : 0;
+    const doneCount = e ? ((cur-1) + (pos >= e.duration ? 1 : 0)) : 0;
 
     renderPct(pct);
     $('bigPlayed').textContent = fmt(played)+' / '+fmt(TOTAL);
 
     $('stPlayed').textContent = fmt(played);
-    $('stRemain').textContent = fmt(remain);
+    $('stRemain').textContent = fmt(Math.max(0, TOTAL - played));
     $('posNow').textContent = fmt(pos);
 
-    $('epFrac').textContent = `第 ${cur} 集 / 共 ${active.totalEpisodes} 集（看到第 ${cur} 集）`;
+    $('epFrac').textContent = e ? `第 ${cur} 集 / 共 ${active.totalEpisodes} 集（看到第 ${cur} 集）` : '集数信息加载中…';
     $('epFracPct').textContent = (cur/active.totalEpisodes*100).toFixed(1)+'%';
     $('overFill').style.width = Math.min(100, (cur/active.totalEpisodes*100))+'%';
     $('overStart').textContent = '第 1 集';
@@ -959,10 +1061,13 @@
         body: JSON.stringify({bvid:bvid})});
     }catch(e){}
     await loadActiveDetail(bvid);
-    pendingSpin = true;   // 切换视频：百分比数字播放老虎机滚动
+    // renderAll 用本地缓存值播一次动画（保证切换一定有动画，不依赖网络）。
+    // fetchProgress 成功后若进度有变化再播第二次，进度相同则不重复。
+    pendingSpin = true;
+    spinMinSteps = 3;
     renderTabs();
-    renderAll();
-    playSwapIn();
+    playSwapIn();        // 先移除旧金环/彩带（在 renderAll 之前，避免被新值覆盖后又移除）
+    renderAll();         // 渲染新视频，maybeCelebrate 按需恢复金环
     fetchProgress('switch');
   }
 
@@ -976,7 +1081,7 @@
         AppStatus.metaReady = (active.episodes||[]).length > 0;
         emitStatus();
       } else {
-        showToast('加载视频数据失败：' + (j.message||'未知'));
+        showToast('加载视频数据失败');
       }
     }catch(e){
       showToast('加载视频数据失败：' + e.message);
@@ -986,6 +1091,7 @@
   // ===================== 动效层 =====================
   const REDUCED_MOTION = (()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } })();
   let pendingSpin = false;      // 下次百分比更新播放老虎机滚动（切视频/刷新同步后置 true）
+  let spinMinSteps = 0;         // 最小步数：切视频时设 3，保证动画时长；同步更新时 0（精确差值）
 
   // 同步呼吸灯的 DOM 初始化（状态/颜色由统一状态模块 AppStatus 驱动）
   (function initSyncDot(){
@@ -997,61 +1103,95 @@
 
   // ===== 老虎机百分比数字 =====
   // 每一位数字是一个竖向滚轮；更新时变化的位从左到右错峰滚动（数字由上滚下落位），
-  // 单位/小数点静止。拖动滑块/开启"减少动态"时直接跳变不滚动。
+  // 分隔符静止。滚动步数 = 数字精确差值（2→3 滚 1 格、4→8 滚 4 格，用户指定），
+  // 时长按格数缩放（110+55*格数，封顶 SLOT_DUR）：1 格 165ms 利落翻页、多格保持动感，
+  // 每格速度接近机械翻页钟。拖动滑块/开启"减少动态"时直接跳变不滚动。
   const SLOT_DUR = 460;   // 单个滚轮滚动时长 ms（不能太长也不能看不出）
   const SLOT_STAG = 65;   // 相邻位启动间隔 ms（左→右错峰）
   function pctSlotNode(ch){
     const s = document.createElement('span');
-    if(ch === '.'){ s.className = 'dslot ddot'; s.textContent = '.'; }
+    if(ch === '.' || ch === ':'){ s.className = 'dslot ddot'; s.textContent = ch; }  // 分隔符静止（时间用 ':'）
     else {
       s.className = 'dslot'; s.dataset.d = ch;
       s.innerHTML = '<span class="droll"><span class="dline">' + ch + '</span></span>';
     }
     return s;
   }
-  function setPctInstant(str){
-    const el = $('bigPct');
+  // 通用：把任意容器重建为静态滚轮结构（不滚动）。bigPct 由 setPctInstant 负责补 % 后缀
+  function setRollInstant(el, str){
     el.innerHTML = '';
     for(const ch of str) el.appendChild(pctSlotNode(ch));
+  }
+  function setPctInstant(str){
+    const el = $('bigPct');
+    setRollInstant(el, str);
     const sm = document.createElement('small'); sm.textContent = '%'; el.appendChild(sm);
   }
-  function spinPct(str){
-    const el = $('bigPct');
+  // el 缺省 = bigPct（自动补 % 后缀）；传入其他容器（如番茄钟时间）则只滚数字不加后缀
+  // coordinated：是否"一位变、全体转"（百分比用 true，保证 44.0→45.0 时十分位也动；番茄钟用 false，只滚变化的位）
+  function spinPct(str, el, minSteps, coordinated){
+    // minSteps：最小步数（仅切换视频时传 3）。当精确差值 < minSteps 时加 10 步多滚一圈，
+    // 保证来回切换进度接近的视频时也有足够的动画时长；普通同步更新不传，保持精确差值。
+    minSteps = minSteps || 0;
+    if(coordinated === undefined) coordinated = true;
+    const bigPctMode = !el;
+    el = el || $('bigPct');
+    const isSep = ch => ch === '.' || ch === ':';
     const chars = str.split('');
     let slots = Array.from(el.children).filter(c => c.classList && c.classList.contains('dslot'));
     const structureOk = slots.length === chars.length &&
-      slots.every((s, i) => s.classList.contains('ddot') === (chars[i] === '.'));
+      slots.every((s, i) => s.classList.contains('ddot') === isSep(chars[i]));
     // 首次渲染或位数变化（如 9.0→10.0 / 开机 0.0→44.9）：按目标结构新建滚轮，
     // 数字位先停在 0，再滚动到目标值——保证开机/刷新也能看到老虎机滚动。
     if(!structureOk){
       el.innerHTML = '';
       slots = chars.map(ch => {
-        const node = pctSlotNode(ch === '.' ? '.' : '0');
-        if(ch !== '.') node.dataset.target = ch;
+        const node = pctSlotNode(isSep(ch) ? ch : '0');
+        if(!isSep(ch)) node.dataset.target = ch;
         el.appendChild(node);
         return node;
       });
-      el.appendChild((()=>{ const sm=document.createElement('small'); sm.textContent='%'; return sm; })());
+      if(bigPctMode) el.appendChild((()=>{ const sm=document.createElement('small'); sm.textContent='%'; return sm; })());
+    }
+    // 先预检：本次是否有任何一位需要滚动。coordinated=true 时，只要有一位变了，所有数字位都跟着转
+    // （否则 44.0→45.0 时十分位 0→0 直接跳过，视觉上不协调）；coordinated=false（番茄钟）时只滚变化的位。
+    let hasAnySpin = !structureOk;  // 新建滚轮默认所有位都动
+    if(structureOk && coordinated){
+      chars.forEach((ch, i) => {
+        if(isSep(ch)) return;
+        const slot = slots[i];
+        const to = parseInt(ch, 10);
+        const from = parseInt(slot.dataset.d ?? '0', 10);
+        if(from !== to) hasAnySpin = true;
+      });
     }
     chars.forEach((ch, i) => {
       const slot = slots[i];
-      if(ch === '.') return;
+      if(isSep(ch)) return;
       const to = parseInt(ch, 10);
       const from = parseInt(slot.dataset.d ?? '0', 10);
       slot.dataset.d = ch;
-      if(from === to && structureOk) return;  // 已在目标位且不是刚建的轮，不动
       const roll = slot.querySelector('.droll');
-      // 数字从上往下滚落：滚轮条自上而下为 目标→目标-1→…→起点，先停在起点（-steps），
-      // 再过渡到 translateY(0)，内容下移 = 新数字从顶部落下来。
-      // 步数必须是"差值 + 整十圈"，末位才能准确落回目标数字。
-      const steps = ((to - from) + 10) % 10 + 10;
+      // 精确滚动：步数 = 数字差值（2→3 滚 1 格、4→8 滚 4 格；用户指定"精确滚动"）。
+      // steps=0 时分三种情况：
+      //   ① 新建滚轮（!structureOk）→ 强制 10 步整圈（保证 0.0%、100.0% 有动画）
+      //   ② 位数不变且数字没变，但本次有其他位在转 → 强制 10 步（保持视觉协调）
+      //   ③ 位数不变、数字没变、本次无任何位变化 → 跳过（真静止）
+      let steps = ((to - from) + 10) % 10;
+      if(steps === 0){
+        if(!structureOk || hasAnySpin || minSteps > 0){ steps = 10; }
+        else { return; }
+      } else if(steps < minSteps){
+        steps += 10;  // 切换视频时差值太小，多滚一圈
+      }
+      const dur = Math.min(SLOT_DUR, 110 + steps * 55);
       let html = '';
       for(let k = 0; k <= steps; k++) html += '<span class="dline">' + (((to - k) % 10) + 10) % 10 + '</span>';
       roll.style.transition = 'none';
       roll.innerHTML = html;
       roll.style.transform = 'translateY(-' + steps + 'em)';
       void roll.offsetHeight;  // 强制重排，确保下面的 transition 生效
-      roll.style.transition = 'transform ' + SLOT_DUR + 'ms cubic-bezier(.22,.61,.36,1) ' + (i * SLOT_STAG) + 'ms';
+      roll.style.transition = 'transform ' + dur + 'ms cubic-bezier(.22,.61,.36,1) ' + (i * SLOT_STAG) + 'ms';
       roll.style.transform = 'translateY(0)';
     });
   }
@@ -1071,8 +1211,9 @@
     }
     ring.style.transition = 'stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1)';
     ring.style.strokeDashoffset = (C*(1-pct/100)).toFixed(2);
-    if(pendingSpin){ spinPct(str); } else { setPctInstant(str); }
+    if(pendingSpin){ spinPct(str, null, spinMinSteps); } else { setPctInstant(str); }
     pendingSpin = false;
+    spinMinSteps = 0;
   }
 
   // 切换视频：内容区 180ms 淡入
@@ -1166,6 +1307,93 @@
   document.addEventListener('visibilitychange', ()=>{
     document.body.classList.toggle('doc-hidden', document.hidden);
   });
+
+  // ===================== 番茄钟（纯专注计时，按天累计只存数字） =====================
+  // 与同步状态无关，独立于 AppStatus；计时基于时间戳（后台节流不丢秒），UI 每秒刷新。
+  const FocusTimer = (()=>{
+    const PERIOD = 25 * 60;      // 弧线转一圈的周期（秒），纯视觉节奏，不到点提醒
+    const CIRC = 659.734;        // r=105 周长，与总环一致
+    let phase = 'idle';          // idle | running | paused
+    let base = 0;                // 暂停前已累计秒数
+    let startedAt = 0;           // 本段开始时间戳（秒）
+    let todaySec = 0;            // 今日累计（服务端为准，离线时内存兜底）
+    let timer = null;
+
+    const $ = id => document.getElementById(id);
+    const elapsed = () => base + (phase === 'running' ? Date.now()/1000 - startedAt : 0);
+
+    function render(){
+      const e = elapsed();
+      const s = fmt(e);
+      if (REDUCED_MOTION) setRollInstant($('focusTime'), s);  // 减少动态：直接跳变不滚
+      else spinPct(s, $('focusTime'), 0, false);              // 只滚变化的位（秒位），不全体联动
+      const frac = (e % PERIOD) / PERIOD;
+      $('focusBar').style.strokeDashoffset = CIRC * (1 - frac);
+    }
+    function renderToday(){ $('focusToday').textContent = '今日专注 ' + fmt(todaySec); }
+
+    function start(){
+      if (phase !== 'idle') return;
+      base = 0; startedAt = Date.now()/1000; phase = 'running';
+      document.body.classList.add('focus-mode');
+      $('focusRing').setAttribute('aria-hidden','false');
+      $('btnFocus').textContent = '结束专注';
+      $('btnFocusPause').textContent = '暂停';
+      $('focusTime').textContent = '00:00:00';  // 重置为纯文本，让 spinPct 重建滚轮并滚动（每次开启都有动画）
+      timer = setInterval(render, 1000);
+      render();
+    }
+    function pause(){
+      if (phase !== 'running') return;
+      base = elapsed(); phase = 'paused';
+      clearInterval(timer); timer = null;
+      $('btnFocusPause').textContent = '继续';
+      render();
+    }
+    function resume(){
+      if (phase !== 'paused') return;
+      startedAt = Date.now()/1000; phase = 'running';
+      $('btnFocusPause').textContent = '暂停';
+      timer = setInterval(render, 1000);
+      render();
+    }
+    async function stop(){
+      if (phase === 'idle') return;
+      const e = Math.round(elapsed());
+      clearInterval(timer); timer = null;
+      phase = 'idle'; base = 0;
+      document.body.classList.remove('focus-mode');
+      $('focusRing').setAttribute('aria-hidden','true');
+      $('btnFocus').textContent = '番茄钟';
+      $('focusBar').style.strokeDashoffset = CIRC;
+      setRollInstant($('focusTime'), '00:00:00');  // 保持滚轮结构，别用 textContent 打回纯文本
+      if (e >= 5) {  // 不足 5 秒视为误触，不记录
+        try{
+          const r = await fetch('/api/focus', {method:'POST',
+            headers:{'Content-Type':'application/json'}, body: JSON.stringify({add:e})});
+          const j = await r.json();
+          if (j && j.ok) todaySec = j.seconds; else todaySec += e;
+        }catch(_){ todaySec += e; }  // 离线兜底：只记内存，下次成功以服务端为准
+        renderToday();
+      }
+    }
+    async function init(){
+      try{
+        const r = await fetch('/api/focus');
+        const j = await r.json();
+        if (j && j.ok) todaySec = j.seconds || 0;
+      }catch(_){}
+      renderToday();
+    }
+
+    $('btnFocus').addEventListener('click', ()=> phase === 'idle' ? start() : stop());
+    $('btnFocusPause').addEventListener('click', ()=> phase === 'paused' ? resume() : pause());
+    // 回窗口补一帧：后台 timer 可能被节流，时间按时间戳算不会丢，只需刷新显示
+    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && phase !== 'idle') render(); });
+
+    return { init, phase: ()=>phase };
+  })();
+  FocusTimer.init();
 
   // ===== 从B站同步当前视频进度 =====
   // ===================== 统一状态模块（单一事实源） =====================
@@ -1379,11 +1607,21 @@
         // 还会让数字瞬间掉到本集起点。keepPos=true 保留下面设好的 pos，内部只 render 一次。
         const _eps = active.episodes || [];
         const _ep = _eps[page-1];
-        if(typeof j.progress === 'number' && _ep){
-          pos = j.progress < 0 ? _ep.duration : Math.max(0, Math.min(j.progress, _ep.duration));
+        const newPos = (typeof j.progress === 'number' && _ep)
+          ? (j.progress < 0 ? _ep.duration : Math.max(0, Math.min(j.progress, _ep.duration)))
+          : pos;
+        // 切视频时 renderAll 已经播过一次动画；只有 B站返回的进度与本地缓存不同才再播一次，
+        // 避免重复动画或争抢 pendingSpin。
+        const progressChanged = (page !== cur) || (Math.abs(newPos - pos) > 0.5);
+        pos = newPos;
+        if(context === 'switch' && !progressChanged){
+          // 进度未变：renderAll 已播过动画，跳过 selectEp 避免 setPctInstant 打断动画
+          pendingSpin = false;
+        } else {
+          pendingSpin = true;
+          spinMinSteps = (context === 'switch') ? 3 : 0;
+          selectEp(page, true);
         }
-        pendingSpin = true;   // 同步成功：百分比数字播放老虎机滚动
-        selectEp(page, true);
         // 更新 header 同步时间 + Tab 徽章 + 列表缓存
         const syncTxt2 = $('tagSyncTxt');
         if(syncTxt2) syncTxt2.textContent = '同步 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
@@ -1394,7 +1632,7 @@
         if(tb){ tb.textContent = `${page}/${active.totalEpisodes||'?'}`; }
         active.lastProgress = lp;
         const t = j.view_at ? new Date(j.view_at*1000).toLocaleString('zh-CN') : '未知';
-        reportSyncOk(`已同步：第 ${page} 集 · 集内 ${fmt(pos)}（观看时间 ${t}）`);
+        reportSyncOk(`已同步：第 ${page} 集，集内 ${fmt(pos)}`);
         playSheen();
         // 断网首启时集数列表暂缺，联网同步成功后静默补齐
         if(!AppStatus.metaReady){ loadActiveDetail(active.bvid).then(()=>renderAll()); }
@@ -1405,14 +1643,15 @@
         }
       } else {
         const kind = j.kind || (j.needSessdata ? 'sessdata' : 'bili');
-        _restoreLocalProgress();
+        // init/switch 上下文：renderAll 已用本地缓存渲染，_restoreLocalProgress 会用 setPctInstant 打断动画
+        if(context !== 'switch' && context !== 'init') _restoreLocalProgress();
         if(kind === 'sessdata') stopSyncRetry();
         reportSyncFail(kind, {msg: j.message});
         if(kind === 'network' && silent) scheduleSyncRetry();
       }
     }catch(e){
       // fetch 异常/超时一律视为网络问题：回退本地缓存，静默场景排队重试
-      _restoreLocalProgress();
+      if(context !== 'switch' && context !== 'init') _restoreLocalProgress();
       reportSyncFail('network');
       if(silent) scheduleSyncRetry();
     }finally{
@@ -1524,6 +1763,7 @@
         if(activeBvid){
           await loadActiveDetail(activeBvid);
           pendingSpin = true;   // 首次加载：数字从 0 老虎机滚动到实际进度
+          spinMinSteps = 0;     // 首次加载：精确差值
           renderTabs();
           renderAll();
         } else {
@@ -1559,7 +1799,7 @@
   $('autoSyncChk').checked = isAutoSyncOn();
   $('autoSyncChk').addEventListener('change', ev=>{
     try{ localStorage.setItem('autoSync', ev.target.checked ? '1' : '0'); }catch(e){}
-    showToast(ev.target.checked ? '已开启自动同步：每 5 分钟自动读取一次进度' : '已关闭自动同步');
+    showToast(ev.target.checked ? '已开启自动同步：每 5 分钟同步一次' : '已关闭自动同步');
     resetAutoSync();
   });
 
@@ -1590,37 +1830,295 @@
   $('addModal').addEventListener('click', ev=>{ if(ev.target.id==='addModal'){ $('addModal').classList.remove('show'); updateModalLock(); } });
   $('modalSearch').addEventListener('input', ev=> renderModalList(ev.target.value.trim()));
 
+  // ===== 精简 QR 码编码器（零第三方代码：byte 模式 + ECC-M，版本 1~10 自动选择） =====
+  // 仅实现本场景所需子集（二维码内容是 ASCII URL，最长 ~120 字节，V7 足够，V10 兜底）。
+  // 参考：ISO/IEC 18004。8 种 mask 全量打分选最优；输出二维 0/1 矩阵（不含静区）。
+  function makeQRMatrix(text){
+    // ---- GF(256)，本原多项式 x^8+x^4+x^3+x^2+1 (0x11D) ----
+    const EXP = new Uint8Array(512), LOG = new Uint8Array(256);
+    (()=>{ let x=1; for(let i=0;i<255;i++){ EXP[i]=x; LOG[x]=i; x<<=1; if(x&0x100) x^=0x11D; }
+           for(let i=255;i<512;i++) EXP[i]=EXP[i-255]; })();
+    const gmul = (a,b)=> (a===0||b===0) ? 0 : EXP[LOG[a]+LOG[b]];
+    function rsGenPoly(n){                 // (x-α^0)...(x-α^(n-1))，系数按次数升序
+      let p=[1];
+      for(let i=0;i<n;i++){
+        const nx=new Array(p.length+1).fill(0);
+        for(let j=0;j<p.length;j++){ nx[j]^=gmul(p[j], EXP[i]); nx[j+1]^=p[j]; }
+        p=nx;
+      }
+      return p;
+    }
+    // ECC-M 分块表（V1~10）：[每块纠错字数, 组1块数, 组1每块数据字数, 组2块数?, 组2数据字数?]
+    const T = {1:[10,1,16],2:[16,1,28],3:[26,1,44],4:[18,2,32],5:[24,2,43],
+               6:[16,4,27],7:[18,4,31],8:[22,2,38,2,39],9:[22,3,36,2,37],10:[26,4,43,1,44]};
+    const bytes = Array.from(new TextEncoder().encode(text));
+    // 选最小可容下的版本（容量从分块表实算：数据位 - 模式4位 - 字符计数位(8/16)）
+    let ver=0, spec=null, totalData=0;
+    for(let v=1;v<=10;v++){
+      const s=T[v]; let td=s[1]*s[2]+(s[3]?s[3]*s[4]:0);
+      const hdr=4+(v>=10?16:8);
+      if(bytes.length <= Math.floor((td*8-hdr)/8)){ ver=v; spec=s; totalData=td; break; }
+    }
+    if(!ver) throw new Error('二维码内容过长');
+    const ecLen=spec[0];
+    const groups=[]; for(let i=1;i<spec.length;i+=2) groups.push([spec[i],spec[i+1]]);
+
+    // ---- 数据位流 ----
+    const bits=[];
+    const push=(val,n)=>{ for(let i=n-1;i>=0;i--) bits.push((val>>i)&1); };
+    push(0b0100,4);                          // byte 模式
+    push(bytes.length, ver>=10?16:8);
+    bytes.forEach(b=>push(b,8));
+    push(0, Math.min(4, totalData*8-bits.length));   // 终止符（至多 4 个 0）
+    while(bits.length%8) bits.push(0);       // 字节对齐
+    const codes=[];
+    for(let i=0;i<bits.length;i+=8){ let v=0; for(let k=0;k<8;k++) v=(v<<1)|bits[i+k]; codes.push(v); }
+    const PAD=[0xEC,0x11]; let pi=0;
+    while(codes.length<totalData) codes.push(PAD[pi++%2]);
+
+    // ---- 分块 + RS 纠错 ----
+    const dataBlocks=[]; let off=0;
+    groups.forEach(([cnt,len])=>{ for(let b=0;b<cnt;b++) dataBlocks.push(codes.slice(off,off+len)), off+=len; });
+    const gen=rsGenPoly(ecLen);
+    const ecBlocks=dataBlocks.map(blk=>{
+      const r=new Array(ecLen).fill(0);
+      for(const c of blk){
+        const f=c^r[0]; r.shift(); r.push(0);
+        if(f) for(let i=0;i<ecLen;i++) r[i]^=gmul(gen[i],f);
+      }
+      return r;
+    });
+    // 交错：数据字按列交错，再纠错字按列交错
+    const maxD=Math.max(...dataBlocks.map(b=>b.length)), final=[];
+    for(let i=0;i<maxD;i++) dataBlocks.forEach(b=>{ if(i<b.length) final.push(b[i]); });
+    for(let i=0;i<ecLen;i++) ecBlocks.forEach(b=>final.push(b[i]));
+
+    // ---- 矩阵 ----
+    const N=17+4*ver;
+    const m=Array.from({length:N},()=>new Int8Array(N).fill(-1));  // -1 空，0/1 模块
+    const fn=Array.from({length:N},()=>new Uint8Array(N));         // 功能模块标记（不参与放数据/mask）
+    const setFn=(r,c,v)=>{ if(r>=0&&c>=0&&r<N&&c<N){ m[r][c]=v; fn[r][c]=1; } };
+    // 定位符：7x7 图案在 (pr,pc)，8x8 分隔留白起点 (sr,sc)——右上/左下角的留白在
+    // 图案内侧（起点 N-8），不能从 N-7 开始（会漏掉内侧分隔行列且越界一格）
+    function finder(pr,pc,sr,sc){
+      for(let r=0;r<8;r++)for(let c=0;c<8;c++) setFn(sr+r,sc+c,0);
+      for(let r=0;r<7;r++)for(let c=0;c<7;c++){
+        const ring=(r===0||r===6||c===0||c===6), core=(r>=2&&r<=4&&c>=2&&c<=4);
+        setFn(pr+r,pc+c,(ring||core)?1:0);
+      }
+    }
+    finder(0,0,0,0); finder(0,N-7,0,N-8); finder(N-7,0,N-8,0);
+    // 定时图案
+    for(let i=8;i<N-8;i++){ setFn(6,i,(i%2===0)?1:0); setFn(i,6,(i%2===0)?1:0); }
+    // 黑预留模块
+    setFn(4*ver+9,8,1);
+    // 对齐图案中心坐标（V1 无；V7+ 每行 3 个）
+    const ALIGN={2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],9:[6,26,46],10:[6,28,50]}[ver]||[];
+    ALIGN.forEach(cy=>ALIGN.forEach(cx=>{
+      if((cx===6&&cy===6)||(cx===N-7&&cy===6)||(cx===6&&cy===N-7)) return;  // 与定位符冲突
+      for(let dr=-2;dr<=2;dr++)for(let dc=-2;dc<=2;dc++){
+        const edge=Math.max(Math.abs(dr),Math.abs(dc))===2, ctr=(dr===0&&dc===0);
+        setFn(cy+dr,cx+dc,(edge||ctr)?1:0);
+      }
+    }));
+    // 格式信息预留位（内容 mask 选定后写入）
+    const FMT=[[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
+    FMT.forEach(([r,c])=>{ fn[r][c]=1; });
+    for(let i=0;i<7;i++) fn[N-1-i][8]=1;
+    for(let i=7;i<15;i++) fn[8][N-15+i]=1;
+    // 版本信息预留位（V7+）
+    if(ver>=7){ for(let r=0;r<6;r++)for(let c=0;c<3;c++){ fn[r][N-11+c]=1; fn[N-11+c][r]=1; } }
+    // Z 字形放数据（右列对向上、下一列对向下；遇到定时列 6 时左移为 5，配对 5,4——
+    // 不能 continue：否则步进 -2 会让最左列 0 永远访问不到）
+    let bi=0;
+    const bitAt=i=> (final[i>>3]>>(7-(i&7)))&1;
+    for(let col=N-1;col>0;col-=2){
+      if(col===6) col=5;
+      const upward=(((col+1)&2)===0);
+      for(let row=0;row<N;row++)for(let j=0;j<2;j++){
+        const x=col-j, y=upward?N-1-row:row;
+        if(!fn[y][x]){ m[y][x] = bi<final.length*8 ? bitAt(bi++) : 0; }
+      }
+    }
+    // ---- 8 种 mask + 罚分 ----
+    const masks=[(r,c)=>(r+c)%2===0, r=>r%2===0, (_r,c)=>c%3===0, (r,c)=>(r+c)%3===0,
+      (r,c)=>(Math.floor(r/2)+Math.floor(c/3))%2===0,
+      (r,c)=>((r*c)%2+(r*c)%3)===0,
+      (r,c)=>(((r*c)%2)+((r*c)%3))%2===0,
+      (r,c)=>(((r+c)%2)+((r*c)%3))%2===0];
+    function fmtBits(mask){           // BCH(15,5)，ECC-M=00，异或 0x5415
+      const data=mask;               // 5 位：00（纠错级M）+ 3 位 mask
+      let b=data<<10;
+      for(let i=14;i>=10;i--) if((b>>i)&1) b^=0x537<<(i-10);
+      return ((data<<10)|b)^0x5415;
+    }
+    function verBits(){               // BCH(18,6)，不异或
+      let b=ver<<12;
+      for(let i=17;i>=12;i--) if((b>>i)&1) b^=0x1F25<<(i-12);
+      return (ver<<12)|b;
+    }
+    function score(mx){
+      let s=0, dark=0;
+      const run=arr=>{ let cur=1, runLen=1;
+        for(let i=1;i<arr.length;i++){ if(arr[i]===cur) runLen++; else { if(runLen>=5) s+=3+(runLen-5); cur=arr[i]; runLen=1; } }
+        if(runLen>=5) s+=3+(runLen-5); };
+      for(let r=0;r<N;r++){ run(mx[r]); run(mx.map(row=>row[r])); }
+      for(let r=0;r<N-1;r++)for(let c=0;c<N-1;c++){
+        const v=mx[r][c];
+        if(v===mx[r][c+1]&&v===mx[r+1][c]&&v===mx[r+1][c+1]) s+=3;
+      }
+      const P1=[1,0,1,1,1,0,1,0,0,0,0], P2=[0,0,0,0,1,0,1,1,1,0,1];
+      const match11=arr=>{ for(let k=0;k<11;k++) if(arr[k]!==P1[k]&&arr[k]!==P2[k]) return false;
+        return (P1.every((v,k)=>arr[k]===v))||(P2.every((v,k)=>arr[k]===v)); };
+      for(let r=0;r<=N-11;r++)for(let c=0;c<N;c++){
+        if(c<=N-11 && match11(mx[r].slice(c,c+11))) s+=40;   // 行内 11 元组
+        const col=[]; for(let k=0;k<11;k++) col.push(mx[r+k][c]);
+        if(match11(col)) s+=40;                              // 列向 11 元组
+      }
+      for(let r=0;r<N;r++)for(let c=0;c<N;c++) dark+=mx[r][c]===1?1:0;
+      s+=Math.floor(Math.abs(dark*100/(N*N)-50)/5)*10;
+      return s;
+    }
+    let bestMask=0, bestScore=Infinity;
+    for(let mi=0;mi<8;mi++){
+      const tst=m.map(row=>Int8Array.from(row));
+      for(let r=0;r<N;r++)for(let c=0;c<N;c++) if(!fn[r][c]&&masks[mi](r,c)) tst[r][c]^=1;
+      const sc=score(tst);
+      if(sc<bestScore){ bestScore=sc; bestMask=mi; }
+    }
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++) if(!fn[r][c]&&masks[bestMask](r,c)) m[r][c]^=1;
+    // 写格式信息（两份）
+    const fb=fmtBits(bestMask);
+    FMT.forEach(([r,c],i)=>{ m[r][c]=(fb>>i)&1; });
+    for(let i=0;i<7;i++) m[N-1-i][8]=(fb>>i)&1;
+    for(let i=7;i<15;i++) m[8][N-15+i]=(fb>>i)&1;
+    // 写版本信息（两份，V7+）
+    if(ver>=7){
+      const vb=verBits();
+      for(let r=0;r<6;r++)for(let c=0;c<3;c++){
+        const bit=(vb>>(17-(r*3+c)))&1;
+        m[r][N-11+c]=bit; m[N-11+c][r]=bit;
+      }
+    }
+    return m;
+  }
+  function drawQR(canvas, matrix){
+    const n=matrix.length, mod=5;
+    const dim=n*mod;
+    canvas.width=dim; canvas.height=dim;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,dim,dim);
+    ctx.fillStyle='#000';
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++) if(matrix[r][c]===1) ctx.fillRect(c*mod,r*mod,mod,mod);
+  }
+
+  // ===== 扫码登录控制器（设置弹窗内） =====
+  const QrLogin=(()=>{
+    let timer=null;
+    const box=()=>$('qrBox'), mask=()=>$('qrMask'), status=()=>$('qrStatus');
+    function stop(){ if(timer){ clearInterval(timer); timer=null; } }
+    function reset(){                       // 关弹窗/打开弹窗时复位
+      stop();
+      box().style.display='none';
+      mask().style.display='none';
+      status().textContent=''; status().style.color='var(--muted)';
+    }
+    async function begin(){
+      stop();
+      box().style.display='block';
+      mask().style.display='none';
+      status().textContent='正在生成二维码…'; status().style.color='var(--muted)';
+      let j;
+      try{
+        const r=await fetch('/api/qrlogin/start',{method:'POST'});
+        j=await r.json();
+      }catch(e){ j={ok:false,message:e.message}; }
+      if(!j.ok){ status().textContent='二维码获取失败：'+(j.message||'网络异常')+'（点"刷新二维码"重试）';
+                 status().style.color='var(--danger)'; showMask('二维码获取失败'); return; }
+      try{ drawQR($('qrCanvas'), j.matrix); }
+      catch(e){ status().textContent='二维码生成失败：'+e.message; status().style.color='var(--danger)'; return; }
+      status().textContent='请使用哔哩哔哩手机客户端扫码';
+      timer=setInterval(poll, 2000);
+      poll();
+    }
+    function showMask(txt){ $('qrMaskTxt').textContent=txt; mask().style.display='flex'; }
+    async function poll(){
+      let j;
+      try{
+        const r=await fetch('/api/qrlogin/poll',{cache:'no-store'});
+        j=await r.json();
+      }catch(e){ return; }                 // 单次网络抖动忽略，下轮继续
+      if(!j.ok){
+        if(j.message==='no-session'){ stop(); showMask('二维码已失效'); return; }
+        status().textContent='登录异常：'+(j.message||'未知错误')+'（点击刷新重试）';
+        status().style.color='var(--danger)'; stop(); return;
+      }
+      if(j.status==='wait'){ status().textContent='请使用哔哩哔哩手机客户端扫码'; status().style.color='var(--muted)'; }
+      else if(j.status==='scanned'){ status().textContent='✓ 已扫码，请在手机上确认登录'; status().style.color='var(--ok)'; }
+      else if(j.status==='expired'){ stop(); showMask('二维码已过期'); status().textContent='二维码已过期，请刷新'; }
+      else if(j.status==='success'){
+        stop();
+        status().textContent='✓ 登录成功'; status().style.color='var(--ok)';
+        AppStatus.sessdata='ok'; emitStatus();
+        showToast('扫码登录成功，正在同步…');
+        setTimeout(()=>{
+          closeSettings();
+          if(active){ fetchProgress('manual'); } else { openAddModal(); }
+        }, 600);
+      }
+    }
+    return { begin, reset, stop };
+  })();
+
   // ===== 设置弹窗（SESSDATA） =====
   async function openSettings(){
     $('settingsModal').classList.add('show');
     updateModalLock();
+    QrLogin.reset();
     const st = $('sessdataStatus');
+    const qrBtn = $('qrBtn');
     st.textContent = '检查中…'; st.style.color = 'var(--muted)';
     try{
-      const r = await fetch('/api/sessdata', {cache:'no-store'});
+      const r = await fetch('/api/sessdata?value=1', {cache:'no-store'});
       const j = await r.json();
       if(j.configured){
-        st.textContent = '✓ 已配置 SESSDATA（可在下方重新粘贴覆盖）';
+        st.textContent = '✓ 已配置 SESSDATA';
         st.style.color = 'var(--ok)';
+        $('sessdataLogout').style.display = '';
+        qrBtn.style.display = 'none';
+        if(j.value) {
+          $('sessdataInput').value = j.value;
+          $('sessdataInput').type = 'password';
+          $('sessdataToggle').textContent = '👁 显示';
+        }
       } else {
-        st.textContent = '尚未配置，请按下方步骤获取并粘贴';
-        st.style.color = 'var(--warn)';
+        st.textContent = '';
+        $('sessdataLogout').style.display = 'none';
+        qrBtn.style.display = '';
+        $('sessdataInput').value = '';
+        $('sessdataInput').type = 'password';
+        $('sessdataToggle').textContent = '👁 显示';
       }
     }catch(e){
       st.textContent = '检查失败：'+e.message; st.style.color = 'var(--danger)';
+      $('sessdataLogout').style.display = 'none';
+      qrBtn.style.display = '';
+      $('sessdataInput').value = '';
+      $('sessdataInput').type = 'password';
+      $('sessdataToggle').textContent = '👁 显示';
     }
-    $('sessdataInput').value = '';
-    $('sessdataInput').type = 'password';
-    $('sessdataToggle').textContent = '👁 显示';
   }
-  function closeSettings(){ $('settingsModal').classList.remove('show'); updateModalLock(); }
+  function closeSettings(){ $('settingsModal').classList.remove('show'); QrLogin.reset(); updateModalLock(); }
   $('tabSettings').addEventListener('click', openSettings);
   $('settingsClose').addEventListener('click', closeSettings);
   $('settingsModal').addEventListener('click', ev=>{ if(ev.target.id==='settingsModal') closeSettings(); });
+  $('qrBtn').addEventListener('click', ()=> QrLogin.begin());
+  $('qrRefresh').addEventListener('click', ev=>{ ev.stopPropagation(); QrLogin.begin(); });
+  $('qrMask').addEventListener('click', ()=> QrLogin.begin());
   $('sessdataToggle').addEventListener('click', ()=>{
     const inp = $('sessdataInput');
-    if(inp.type==='password'){ inp.type='text'; $('sessdataToggle').textContent='👁 隐藏'; }
-    else { inp.type='password'; $('sessdataToggle').textContent='👁 显示'; }
+    if(inp.type==='password'){ inp.type='text'; $('sessdataToggle').textContent='隐藏'; }
+    else { inp.type='password'; $('sessdataToggle').textContent='显示'; }
   });
   $('sessdataSave').addEventListener('click', async ()=>{
     const v = $('sessdataInput').value.trim();
@@ -1634,7 +2132,7 @@
       const j = await r.json();
       if(j.ok){
         AppStatus.sessdata = 'ok'; emitStatus();
-        showToast('SESSDATA 已保存，正在同步进度…');
+        showToast('SESSDATA 已保存，正在同步…');
         closeSettings();
         if(active){ fetchProgress('manual'); }
         else { openAddModal(); }
@@ -1645,6 +2143,20 @@
       st.textContent='保存失败：'+e.message; st.style.color='var(--danger)';
     }finally{
       $('sessdataSave').disabled = false; $('sessdataSave').textContent = oldTxt;
+    }
+  });
+  $('sessdataLogout').addEventListener('click', async ()=>{
+    const btn = $('sessdataLogout');
+    btn.disabled = true; btn.textContent = '退出中…';
+    try{
+      await fetch('/api/sessdata/logout', {method:'POST'});
+      AppStatus.sessdata = 'missing'; emitStatus();
+      showToast('已退出登录');
+      closeSettings();
+    }catch(e){
+      showToast('退出失败：'+e.message);
+    }finally{
+      btn.disabled = false; btn.textContent = '退出登录';
     }
   });
 
@@ -1681,7 +2193,7 @@
       if(j.ok){
         st.textContent = j.message || '图标已应用'; st.style.color='var(--ok)';
         refreshIconPreview();
-        showToast('应用图标已更新（桌面快捷方式可能需重启应用生效）');
+        showToast('应用图标已更新');
       } else {
         st.textContent='失败：'+(j.message||'未知错误'); st.style.color='var(--danger)';
       }
@@ -1850,7 +2362,7 @@
       emitStatus();
       if(!j.configured){
         openSettings();
-        showToast('请先在右上角设置中配置 B站账号 SESSDATA');
+        showToast('请先在设置中配置 B站账号 SESSDATA');
       }
     }catch(e){}
   })();

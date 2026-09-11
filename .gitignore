@@ -2,6 +2,7 @@
 B站课程进度追踪/
 .sessdata.txt
 *.sessdata*
+focus.json
 
 # ===== 打包中间产物 =====
 build/

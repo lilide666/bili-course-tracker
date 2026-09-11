@@ -8,13 +8,13 @@
 > 4. **隐私红线**：严禁把 SESSDATA、真实观看记录、真实课程标题/UP 主、cookie、个人路径等写进本文件或任何会提交的文件。举例一律用虚构数据（如"高等数学基础班 · BV1DemoMath01"）。
 > 5. **与用户沟通**：使用中文；先给方案/分析，用户确认后再动手；不要使用"（推荐）""最快上手（3 步）"这类营销腔。
 > 6. **bat 脚本必须纯 ASCII**（GBK cmd 下中文乱码）；中文文件名操作放 build.py。
-> 7. 打包命令：`py -3 build.py`（onedir + --noconsole）。沙箱环境打包需 `PYTHONDONTWRITEBYTECODE=1`，`PYINSTALLER_CONFIG_DIR` 指向项目内 `build/pyi-cache`。
+> 7. 打包命令：`py -3 build.py`（onedir + --noconsole；应用运行中自动关闭——先 taskkill 请求正常退出、卡住才强杀；打包完成后 `os.startfile` 自动启动新版本）。沙箱环境打包需 `PYTHONDONTWRITEBYTECODE=1`，`PYINSTALLER_CONFIG_DIR` 指向项目内 `build/pyi-cache`。
 
 ---
 
 ## 项目概览
 
-B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内嵌 WebView2 窗口），纯本地运行，通过 B站历史接口实时读取观看进度，支持多课程追踪、跳跃/回看检测、100% 庆祝动效。
+B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内嵌 WebView2 窗口），纯本地运行，通过 B站历史接口实时读取观看进度，支持多课程追踪、跳跃/回看检测、100% 庆祝动效、App 扫码登录（官方 WEB 二维码通道，手动粘贴 SESSDATA 兜底）。
 
 - 后端：`src/server.py`（http.server，仅绑定 127.0.0.1，端口 8765，被占自动回退 8775）
 - 前端：`src/index.html`（单文件，原生 JS + CSS，无框架）
@@ -38,6 +38,7 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 | `.sessdata.bin` | B站 SESSDATA 凭据 | **Windows DPAPI（CurrentUser）加密 + base64**，仅当前 Windows 账户可解；旧明文 `.sessdata.txt` 读取时自动迁移并删除。也支持环境变量 `BILI_SESSDATA` |
 | `tracked_videos.json` | 追踪列表 | **数据最小化**：落盘只存数字字段 `bvid/totalEpisodes/totalDuration/lastProgress/added_at/lastSynced/jumps`；标题、UP 主、封面、集数标题等描述性信息不落盘，每次启动实时从 B站拉取，内存 `_meta_cache` 缓存 |
 | `course_data.json` | 集数缓存 | 同上，仅作离线兜底 |
+| `focus.json` | 番茄钟专注统计 | **数据最小化**：只存 `{"date": "YYYY-MM-DD", "seconds": N}`，按天累计、跨天自动清零；已加入 .gitignore 与 pre-commit 拦截 |
 | `covers/` | 封面图缓存 | 可删，会重新拉取 |
 
 路径约定（server.py 顶部）：
@@ -48,10 +49,10 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 ## 隐私与安全红线（不可破坏）
 
 1. **凭据**：SESSDATA 只在进程内存中用于请求 B站 API，不写日志、不回显；落盘必须走 DPAPI（`_dpapi_protect/_dpapi_unprotect`，ctypes 调 crypt32）。
-2. **静态服务拒绝**：`.sessdata*`、点开头隐藏文件一律 403，HTTP 读不到凭据。
+2. **静态服务拒绝**：`.sessdata*`、点开头隐藏文件、含 `..` 的路径一律返回 **404**（不是 403——404 连"文件是否存在"都不暴露，更稳妥），HTTP 读不到凭据。
 3. **本地接口防护**：每个请求过 `_guard()`——校验 `Host` 必须为 127.0.0.1/localhost（防 DNS rebinding），`Origin`/`Sec-Fetch-Site` 非法则 403（防 CSRF）。
 4. **接口错误统一状态码**：`_err_result(kind, message)`，kind ∈ `network | sessdata | notfound | bili`，由 `_classify_err`/`_kind_from_msg` 自动归类。前端状态模块依赖此字段，新增接口错误必须带 kind。
-5. **pre-commit 钩子**（`hooks/pre-commit`）：暂存区命中 `sessdata|tracked_videos|course_data|covers/|\.exe$|\.bin$|\.pyc$` 直接拒绝提交。
+5. **pre-commit 钩子**（`hooks/pre-commit`）：暂存区命中 `sessdata|tracked_videos|course_data|focus\.json|covers/|\.exe$|\.bin$|\.pyc$` 直接拒绝提交。
 6. 桌面快捷方式 `Desktop\B站课程追踪.lnk` → 应用 exe（换图标功能依赖此文件名）。
 
 ## 前端架构要点（src/index.html）
@@ -65,11 +66,14 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 
 ### 总百分比老虎机数字（多次踩坑，改动必读）
 - 结构：`#bigPct` 内每位一个 `.dslot`（高 1em、overflow:hidden；`.ddot` 小数点宽 .3em）> `.droll`（flex 列，translateY 滚动）> 若干 `.dline`（高 1em）。
-- `spinPct(str)`：变化位滚 `((to-from+10)%10)+10` 格。**步数必须是"差值 + 整十圈"**，否则落位错误（+12 曾导致 100.0 滚成 322.2）。
-- **方向：数字从上往下落**：滚轮条 line k = `(to-k) 模 10`（目标数字在最上），初始 `translateY(-steps em)` 显示旧值，过渡到 `translateY(0)` 落位；缓动 `cubic-bezier(.22,.61,.36,1)`；位间延迟 `i*65ms` 实现左→右错峰；单轮 460ms。
+- `spinPct(str, el, minSteps, coordinated)`：变化位滚**精确差值** `((to-from+10)%10)` 格（2→3 滚 1 格、4→8 滚 4 格，用户指定"精确滚动"，2026-09 从"差值+整十圈"改来）；`minSteps` 仅切换视频时传 3——当精确差值 < 3 时 steps+=10 多滚一圈，保证来回切换进度接近的视频时也有足够动画时长；同步更新/首次加载不传（minSteps=0，保持精确差值）。`coordinated` 默认 true——百分比用"一位变、全体转"（44.0→45.0 时十分位也滚，视觉协调）；**番茄钟传 false，只滚变化的位**（25:00→24:59 只有秒位和分钟位滚，小时位不动）。时长按格数缩放 `110+55*格数` 封顶 460ms（单格 165ms 利落翻页，实测美观成立）。落位正确性靠**行序公式**而非步数：滚轮条 line k = `(to-k) 模 10`（line[0]=目标数字），初始 `translateY(-steps em)` 显示旧值、过渡到 0 必落目标——**html 行数必须与 steps 严格一致**（旧坑：步数与行数不匹配曾致 100.0 滚成 322.2）。**steps=0 时的分支**：① 新建滚轮（!structureOk）→ 强制 10 步；② 位数不变数字没变但有其他位在转（hasAnySpin，仅 coordinated=true 时生效）或 minSteps>0 → 强制 10 步；③ 真静止 → 跳过。hasAnySpin 在执行循环前预检，coordinated=false 时不预检。
+- **方向：数字从上往下落**：初始 `translateY(-steps em)` 显示旧值，过渡到 `translateY(0)` 落位；缓动 `cubic-bezier(.22,.61,.36,1)`；位间延迟 `i*65ms` 实现左→右错峰（时长各自独立，见上条）。
 - 首次渲染/位数不匹配（开机 0.0→44.9、9.0→100.0）：**按目标结构新建滚轮、数字位先置 0 再滚**，严禁 setPctInstant 直跳（否则开机永远看不到动画）。
+- **断网首启无集数也得滚**：`render()` 原来 `if(!e) return`、`selectEp` 原来 `if(!eps.length) return`——无 episodes 时直接返回，导致首次打开程序（无 SESSDATA、episodes 暂缺）时 `renderPct` 不被调用、bigPct 保持纯文本 "0" 不滚动。修法：两处都去掉早退，无 `e`/无 eps 时用 `active.lastProgress.progress` 兜底设 `pos`、算 `played`/`pct`，仍调 `renderPct(pct)`；集数标题回退"集数信息加载中…"。
 - 触发：`pendingSpin` 标志（bootstrap、switchVideo、fetchProgress 成功置位）；`REDUCED_MOTION` 或 `body.scrubbing`（拖滑块）走 `setPctInstant` 直跳。
 - **同步成功渲染坑**：必须先按 `j.progress` 设好 `pos`，`pendingSpin=true`，再调 `selectEp(page, true)`（keepPos 不清 pos）只渲染一次。**严禁 `selectEp(page, false)`**——它内部以 pos=0 先 render 一帧，数字瞬间掉到本集起点并清空滚轮 transform，打断动画。
+- **切视频动画时序坑**：`switchVideo` 里 `renderAll`（本地缓存）和 `fetchProgress` 成功回调（最新进度）都会触发 `renderPct`。**修法**：`switchVideo` 里 `renderAll` 之前设 `pendingSpin=true, spinMinSteps=3`，用本地缓存值播一次动画（保证切换一定有动画，不依赖网络）；fetchProgress 成功回调里比较 B站返回的 page/progress 与本地缓存（`cur`/`pos`），**只有进度真正变化时才设 `pendingSpin=true` 并调 `selectEp` 播第二次，否则跳过 selectEp**（避免 setPctInstant 打断正在播放的动画）。spinMinSteps 在 switch 上下文为 3，其他为 0。**`playSwapIn()` 必须在 `renderAll()` 之前调用**——playSwapIn 会移除金色环和彩带，如果在 renderAll 之后执行，会把 maybeCelebrate 刚恢复的金环又删掉（切回已完成视频时金环/彩带消失）。
+- **_restoreLocalProgress 打断动画坑**：fetchProgress 失败（无 SESSDATA/网络错误）时会调 `_restoreLocalProgress()` → `selectEp` → `render` → `renderPct`，但该路径**不设 pendingSpin**，renderPct 走 `setPctInstant` 重建 DOM，会打断 switchVideo/bootstrap 中 renderAll 正在播放的老虎机动画（表现为"切视频/首次打开有几率不动"）。**修法**：fetchProgress 失败分支中 `if(context !== 'switch' && context !== 'init') _restoreLocalProgress()`——switch/init 上下文 renderAll 已用本地缓存渲染，无需再恢复。
 - 进度环：`ring.style.strokeDashoffset` + CSS transition .7s（必须用 style，setAttribute 不触发过渡）。
 
 ### 100% 庆祝
@@ -94,6 +98,30 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 - 完全相同的跳跃去重；加载时自动清理存量重复记录与残留在磁盘上的描述性字段（标题等）。
 - 跳跃列表只显示当前视频；名字显示涉及的**集标题**（断网缺集数信息才回退课程名）。
 
+### 扫码登录（server.py `qrlogin_*` + index.html `QrLogin`/`makeQRMatrix`）
+- 走 **WEB 通道**（`passport.bilibili.com/x/passport-login/web/qrcode/{generate,poll}`，source=main-fe-header），**不是 TV 通道**——WEB 拿到的是网页端 cookie 会话，在 B站侧只新增一条"网页登录记录"（可在手机端登录设备管理随时下线），不占手机/TV 端设备名额；TV 通道才会作为一台云视听设备挂进设备列表。
+- 后端：`POST /api/qrlogin/start` 用**独立 opener + `http.cookiejar`**（generate 会 Set-Cookie buvid3 等，poll 必须带同一套）+ 统一浏览器 UA（与后续历史接口同一画像）；`qrcode_key` 只存进程内存（`_qr_state`，180 秒有效，进程退出即消失），**不落盘**。`_qr_state` 同时存 `jar`（CookieJar 引用）和 `opener`——**`urllib.request.build_opener()` 返回的 `OpenerDirector` 没有 `.cookiejar` 属性**，cookiejar 挂在 `HTTPCookieProcessor` handler 上，必须显式存 jar 引用，不能调 `opener.cookiejar`（会 AttributeError 导致 poll 崩溃断连）。响应回传 `{url, matrix}`——matrix 是 `qrcode` 库生成的 0/1 二维数组（含 4 模块静区），前端直接画 canvas 不再前端编码。`GET /api/qrlogin/poll` 透传状态：86101 wait / 86090 scanned / 86038 expired（过期清状态）/ 0 成功——成功时 SESSDATA 有两处来源：① `data.url` query 参数（旧版通道）② cookie jar（新版通道，B 站通过 Set-Cookie 下发），**必须两处都查**。复用 `write_sessdata()` 走 DPAPI 落盘并立即清状态，响应只回 `{status:"success"}`，凭据不进日志、不进响应体。do_GET/do_POST 必须加顶层 try-catch（server 崩溃会断连，前端拿到 expired 遮罩而非真实错误）。
+- 前端 `QrLogin` IIFE：点"扫码登录"→ start → `drawQR(canvas, j.matrix)` 出码 → **2 秒一轮** poll；单次网络抖动静默等下一轮，后端返回 no-session/expired 则停轮询并弹遮罩（遮罩可点、内含圆形刷新图标按钮，均触发 `QrLogin.begin()` 重新 start）；成功后 toast、`AppStatus.sessdata='ok'`、关弹窗、有追踪视频则 `fetchProgress('manual')` 否则引导添加课程。关/开设置弹窗必须 `QrLogin.reset()` 停轮询。手动粘贴 SESSDATA 入口**保留作兜底**（扫码被风控时还有路走）。
+- **二维码过期遮罩设计**：遮罩 `#qrMask` 绝对覆盖 `#qrCanvas`，背景 `rgba(10,16,36,.55)` + `backdrop-filter:blur(3px)` → 底下 canvas 二维码轻度模糊可见（虚化效果）。内容为**图标和文字并排**：刷新圆圈箭头 SVG（`id="qrRefresh"`，白色描边，20×20px）+ "二维码已失效"白色文字，flex-direction 默认 row（并排），gap:10px。整体黑白灰风格，无多余装饰。遮罩整体可点击刷新，SVG 单独绑定 click + `stopPropagation` 防冒泡。**关键 id `qrMask`/`qrMaskTxt`/`qrRefresh` 不可删**（JS 绑定了显隐和点击）。
+- **设置弹窗 SESSDATA 区域布局**：从上到下依次为 `sessdataStatus`（状态文字，始终可见）→ `sessdataLogout`（退出登录按钮，仅 configured 时显示）→ `<details>` 折叠区包裹手动粘贴 input + toggle + save（默认折叠，点击"手动粘贴 SESSDATA（备用）"展开）。**所有关键 id 必须保留**（JS 绑定了显隐和点击）。
+- **登出**：设置弹窗"退出登录"按钮（仅 SESSDATA 已配置时显示），`POST /api/sessdata/logout` → `delete_sessdata()` 删除 `.sessdata.bin` 及旧明文 `.sessdata.txt` → 前端 `AppStatus.sessdata='missing'` + toast + 关弹窗。与保存接口风格一致，走 `_wlock`。
+- **二维码编码由后端 Python `qrcode` 库生成**（`_make_qr_matrix`：ECC-M、border=0 后手动加 4 模块静区、返回 `[[0/1,...],...]`）。**手写 JS 编码器 `makeQRMatrix` 已弃用**——手写编码器有版本信息 BCH、格式信息掩模等系统性 bug（pyzbar 无法解码），与标准库对比 372 处差异；node 反向解码自检"通过"是因为解码和编码犯了同样的错误，自洽但不合标准。`makeQRMatrix` 函数保留在 index.html 中（未删，但登录流程不再调用），改动二维码时**不要恢复手写编码器**，直接用后端 `qrcode` 库。build.py 已加 `--hidden-import qrcode/qrcode.main/qrcode.generator/qrcode.constants`。
+- **canvas 缩放模糊坑（已修，勿回退）**：`drawQR` 设 canvas 原生尺寸（V8 = 285×285），CSS 固定 224×224 缩放显示。默认 `image-rendering:auto`（双线性插值）会让黑白模块边缘出现灰色过渡像素，**手机摄像头无法识别二维码**——必须显式设 `image-rendering:pixelated`（最近邻缩放，边缘保持锐利）。canvas 缩放显示时这条样式不可省。
+- **验证方法**：后端 `_make_qr_matrix(url)` → PIL 画 PNG → `pyzbar.decode` 确认能解码还原原文（已通过）；真实窗口实测 start/poll/canvas 黑模占比（V8 实测 0.379）与失效遮罩。真机扫码的 scanned/success 端到端需用户手机确认。
+
+### 番茄钟（纯专注计时，index.html `FocusTimer` + server.py `/api/focus`）
+- **独立于 AppStatus**：纯本地功能，与网络/同步状态无关，做成独立 IIFE 模块（`window.FocusTimer` 未暴露，内部 phase: idle|running|paused）。
+- 交互：`btnFocus` 即开关（点一下开始、再点结束）；暂停/继续是番茄环内的 `btnFocusPause`；不足 5 秒视为误触不记录。
+- 并排切换动效：`body.focus-mode` 下总环 `#mainRing` **保持原尺寸不动**（用户明确要求不要缩小）；`.focus-ring` `transform` 从 `translateX(560px)` 屏外飞入 + opacity 淡入。`body` 已加 `overflow-x:hidden`，防 transform 溢出产生横向滚动条。**约定修正：一次性布局切换动画允许 margin 过渡**（每次点击只触发一帧流水，非循环），循环动画仍然只许 transform/opacity。
+- **番茄环排版完整性坑（已修，勿回退）**：旧方案 `width:0→240px` + `overflow:hidden` 动画 width 腾位——动画期间 SVG 被 overflow 按宽裁切（width≈0 时内容完全消失、width 中段时 SVG 被竖切只剩半截），用户反馈"移入时错乱排版""移入其间被遮挡消失一段时间"。修法：**width 固定 240px 不动画**（SVG 始终完整渲染）、`overflow:visible`（不裁切）、隐藏时用 `margin-right:-240px` 折叠布局占位（总环仍居中）、显示时 `margin:6px 0 18px 60px` 让位。实测采样 svgW 全程恒定 240px、opacity/transform/margin 单调平滑过渡。**不要再恢复 width 动画 + overflow:hidden**。
+- 番茄环与总环**等大 240px**（SVG 同尺寸同几何，无缩放补偿），弧线红色 `#f87171`、track `#3a2430`、计时文字 `#fecaca` 40px；`.center-txt` 加 `translateY(14px)` 让内容视觉重心略低于几何中心（用户要求整体往下）。
+- 开关按钮颜色规则（用户指定）：**未开启时用 primary 渐变同款**（深色字），hover 加亮 `brightness(1.08)`；`body.focus-mode` 下（显示"结束专注"）**切换为暂停按钮同款红色半透明风**（rgba(248,113,113,.14) 底 + .45 边 + `#fecaca` 字），与暂停/继续按钮 hover 都用**加深**（background 升到 .38）。整行 flex:1 + padding 10px 0；`#focusToday` 在按钮下方居中。
+- **开关按钮"闪黑"坑（已修，勿回退）**：渐变是 background-image、红底是 background-color——状态切换时渐变图瞬间消失、底色从透明过渡 150ms，透出近黑页面底色即"闪黑一下"。修法：**按钮底色恒定** rgba(248,113,113,.14)（两态共用），渐变挂在 `::after`（`z-index:-1` + 按钮 `isolation:isolate`，使其落在背景之上、文字之下）上做 opacity 交叉淡出/淡入；`filter` 加亮会同时作用于渐变层。
+- **hover 覆盖坑**：全局 `button:hover{background:#152047; border-color:var(--accent)}` 声明在文件后部，同特异性下会覆盖 focus-row 按钮——`.focus-row button:hover` 必须**显式重申 background 和 `border-color:transparent`**（否则悬浮变深且出 accent 描边）。
+- **时间显示复用进度同款老虎机滚轮**：`spinPct(str, el, minSteps, coordinated)` 已泛化——el 缺省 = bigPct（自动补 % 后缀），传容器（如 `focusTime`）只滚数字不加后缀；分隔符 `isSep` 同时支持 `.` 和 `:`（静止不滚）。**滚轮结构 CSS（`.dslot/.ddot/.droll/.dline`）作用域必须随容器一起扩展**（现为 `.pct` 与 `.focus-time` 双选择器），复用到新容器漏加选择器会导致滚轮竖排散开不裁切。计时每秒 tick 只滚变化的位（秒位）——`spinPct(s, el, 0, false)` 传 `coordinated=false`，不触发 hasAnySpin 全体联动；`REDUCED_MOTION` 走 `setRollInstant` 直跳；**stop() 复位必须用 `setRollInstant`**（`textContent=` 会把滚轮 DOM 打回纯文本）。**start() 每次都要滚**：start 时先 `$('focusTime').textContent='00:00:00'` 重置为纯文本，让 spinPct 走 structureOk=false 重建分支、所有位滚 10 步（回滚一圈）；否则 stop 后 setRollInstant 留下的 .dslot 结构会让 spinPct 判定 structureOk=true、steps=0 直接 return，第二次开启就没动画了。
+- 计时基于时间戳（`Date.now()/1000 - startedAt` + 暂停累计 `base`），**后台 timer 被节流也不丢秒**，visibilitychange 回窗口只需补一帧渲染；弧线按 25 分钟一圈循环（纯视觉节奏，不到点提醒）。
+- 结束时 POST `/api/focus {"add": 秒}`；离线失败兜底只加内存 `todaySec`（下次以服务端为准）。启动时 GET `/api/focus` 渲染"今日专注"。
+
 ### 同步与轮询
 - B站请求走 `_https_get` 连接复用（threading.local 每线程每域名一条 HTTPSConnection，出错 drop 重建重试一次）；错误文案 `_friendly_err`（DNS/超时/证书）；code=-101 → needSessdata。
 - **历史翻页协议**：游标在 `data.cursor.view_at`（秒级时间戳），下一页传 `view_at=<上页 view_at>`；旧 `max`/`data.page` 已失效（传了返回首页，曾导致只扫 60 条）。`fetch_progress` 必传 stop_bvid，命中即停（通常 1 页）。
@@ -111,6 +139,7 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 ## 环境教训
 
 - Windows 11，Python 3.14（`py -3`），PyInstaller 6.22.2，pywebview/Pillow 已装。
+- **改动后必须 grep 自查关键声明已落盘**——"已改"的口头/摘要声明不可信（出现过摘要说已改、实际漏改的情况）；接手会话或恢复上下文时先以代码实际状态为准再动手。
 - 沙箱禁止 Python 往安装目录写 `__pycache__/*.pyc`（PyInstaller 报 "hit restricted"）：`PYTHONDONTWRITEBYTECODE=1` + `py -3 -B` + `PYINSTALLER_CONFIG_DIR` 指项目内。
 - PowerShell 执行策略可能禁止 .ps1；复杂文件操作用 Python 脚本而非内联 PowerShell（引号嵌套易出错）。
 - 修改 index.html 后验证：提取 `<script>` 内容 `node --check` 语法；**动效类改动必须调用工作区 skill `ui-motion-verify`**（`.trae/skills/ui-motion-verify/SKILL.md`：pywebview 真实窗口 + PrintWindow 截图 + evaluate_js 采样 transform/opacity，含可复用脚本骨架和采样踩坑），不要只靠静态分析或"代码看起来对"——本项目动效坑（数字落位错、动画被中间帧打断）全是实测才发现的。

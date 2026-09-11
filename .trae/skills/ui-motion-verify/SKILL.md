@@ -22,7 +22,7 @@ node --check C:\Users\18509\AppData\Local\Temp\check.js
 
 ### 3. pywebview 真实窗口实测（动效必做）
 
-写临时脚本到 `%TEMP%`（不要放仓库内），骨架：
+**直接复制本目录 `verify_template.py` 到 `%TEMP%`（不要放仓库内），改三处**：① `PROJECT_SRC` 改成你的仓库 src 目录；② `JS_SAMPLE` 采样字段；③ `on_loaded` 动作时间轴。截图前缀默认已用 `%TEMP%`。以下骨架仅供理解原理：
 
 ```python
 # -*- coding: utf-8 -*-
@@ -77,7 +77,7 @@ webview.start()
 $env:PYTHONDONTWRITEBYTECODE='1'; py -3 -B C:\Users\18509\AppData\Local\Temp\xxx.py 2>&1 | Select-String "STATE|Error|Traceback"
 ```
 
-命令可能转入后台，读 output.log；PowerShell profile 的 PSSecurityException 报错可忽略。
+命令可能转入后台，读 output.log；PowerShell profile 的 PSSecurityException 报错可忽略。**本机 PowerShell 5 不支持 `&&`/`||`，多条命令用 `;` 分隔。**
 
 ## 采样要点
 
@@ -90,6 +90,7 @@ $env:PYTHONDONTWRITEBYTECODE='1'; py -3 -B C:\Users\18509\AppData\Local\Temp\xxx
 - **避免视觉台阶**：多段拼接的尾迹/渐变，段数要 ≥10 且透明度连续（幂函数渐增）、段间 butt 相接、仅头段 round；3 段固定透明度会出现明显三档台阶。
 - **高光动效不要实压底色**：叠在既有 UI（进度环/条）上的白色高光，峰值透明度要与同类效果同档（横条流光用 .75，环彗星用 .6），近纯白(.95)+强 drop-shadow 会盖住底色、在元素起止处尤其难看；采样时加拍动效末段（头部到达起止位置）截图确认。
 - evaluate_js 脚本里**访问元素属性前先判空**（`const r=el.querySelector(...); r ? r.style.transform : null`），null 上读属性抛 TypeError 会让整轮采样失败。
+- **断言用终值/区间，不依赖精确采样点**：首次同步回调、大段 DOM 重建会让主线程卡数百 ms，transition 时刻整体偏移（实测点击后 150ms 的过渡在 +300ms 仍是初值）——断言"终值正确"+"中间帧≠终值"即可，别指望采样点精确命中动画某刻。
 - 测试环境 localStorage 每次全新：`celebrated:xxx` 标记不存在，首次切到完成视频会爆发 12 片纸屑，属预期。
 
 ## 截图判读
@@ -98,6 +99,6 @@ PrintWindow 截到的是动画某一帧，模糊/半透明拖尾正是动效进�
 
 ## 收尾
 
-- 验证通过后再 `py -3 build.py` 打包（应用运行中会打包失败，提示先关闭）。
+- 验证通过后再 `py -3 build.py` 打包；应用运行中会被自动关闭（先请求退出，卡住才强杀），打包完成后自动启动新版本。
 - 动效实现细节/踩坑同步写进 `AGENTS.md` 的"其他动效"段落。
 - 临时脚本和截图留在 `%TEMP%`，不进仓库、不提交。

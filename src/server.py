@@ -18,6 +18,7 @@
 """
 import base64
 import http.client
+import http.cookiejar
 import http.server
 import json
 import os
@@ -45,8 +46,8 @@ if getattr(sys, "frozen", False):
     FRONTEND_DIR = sys._MEIPASS
 else:
     FRONTEND_DIR = os.path.dirname(os.path.abspath(__file__))
-TARGET_BVID = "BV1nz6KBHEc9"  # 仅用于启动迁移默认值，运行时不再硬编码
 TRACKED_FILE = os.path.join(ROOT, "tracked_videos.json")
+FOCUS_FILE = os.path.join(ROOT, "focus.json")  # 番茄钟专注统计（按天累计，只存数字）
 COURSE_FILE = os.path.join(ROOT, "course_data.json")
 COVER_CACHE_DIR = os.path.join(ROOT, "covers")  # 封面图本地缓存目录
 
@@ -184,6 +185,19 @@ def write_sessdata(value):
     return True
 
 
+def delete_sessdata():
+    """删除 .sessdata.bin（及旧明文 .sessdata.txt）。登出时调用。"""
+    removed = False
+    for p in (SESSDATA_BIN, _sessdata_txt_path()):
+        try:
+            if os.path.exists(p):
+                os.remove(p)
+                removed = True
+        except OSError:
+            pass
+    return removed
+
+
 # 全局强制B站相关域名只走 IPv4（用户网络 IPv6 解析会让 Python 挂起几十秒）。
 # 模块级一次性打补丁、永不恢复，避免多线程并发请求时的竞态。
 # 覆盖：API 域名 + 图片/视频 CDN 域名（hdslb.com / bilivideo.com / bilibili.com）。
@@ -295,6 +309,116 @@ def bilibili_get_bounded(url, sessdata, timeout=15):
     if "err" in box:
         return None, box["err"]
     return box.get("data"), None
+
+
+# ===================== 扫码登录（B站官方 WEB 二维码通道） =====================
+# 流程：start 申请二维码内容（B站同时 Set-Cookie buvid3 等，用 cookiejar 保持）→
+# 前端渲染二维码、轮询 poll；手机 App 扫码确认后 poll 的 data.url 带 SESSDATA，
+# 复用 write_sessdata() 走 DPAPI 落盘——与手动粘贴殊途同归，凭据不回传前端、不落日志。
+# 走 WEB 通道（非 TV 通道）：拿到的是网页端会话，不占 TV/手机端登录设备名额。
+# qrcode_key 只存进程内存（180 秒有效），进程退出即消失。
+_QR_BASE = "https://passport.bilibili.com/x/passport-login/web/qrcode"
+_QR_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+          "(KHTML, like Gecko) Chrome/120.0 Safari/537.36")
+_qr_lock = threading.Lock()
+_qr_state = {}   # {key, opener, created_at}
+
+
+def _qr_request(opener, url):
+    """扫码通道专用请求：独立 opener + cookiejar，浏览器风格头（登录与后续接口同一 UA 画像）。"""
+    req = urllib.request.Request(url, headers={
+        "User-Agent": _QR_UA,
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "zh-CN,zh;q=0.9",
+        "Referer": "https://passport.bilibili.com/login?",
+    })
+    with opener.open(req, timeout=15) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def _make_qr_matrix(url):
+    """用 qrcode 库生成矩阵（含 4 模块静区），返回 [[0/1,...],...]。编码正确性由成熟库保证。"""
+    import qrcode
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=1, border=0)
+    qr.add_data(url)
+    qr.make(fit=True)
+    n = len(qr.modules)
+    # 手动加 4 模块静区（全 0）
+    q = 4
+    total = n + q * 2
+    mat = [[0] * total for _ in range(total)]
+    for r in range(n):
+        row = qr.modules[r]
+        for c in range(n):
+            if row[c]:
+                mat[r + q][c + q] = 1
+    return mat
+
+
+def qrlogin_start():
+    """申请二维码。返回 ({"url": 二维码内容, "matrix": [[0/1,...],...]}, None) 或 (None, 错误)。"""
+    try:
+        jar = http.cookiejar.CookieJar()
+        opener = urllib.request.build_opener(
+            urllib.request.HTTPSHandler(context=_tls_ctx),
+            urllib.request.HTTPCookieProcessor(jar))
+        j = _qr_request(opener, _QR_BASE + "/generate?source=main-fe-header")
+        d = j.get("data") or {}
+        url, key = d.get("url"), d.get("qrcode_key")
+        if j.get("code") != 0 or not url or not key:
+            return None, "B站二维码接口返回异常：%s" % (j.get("message") or j.get("code"))
+        with _qr_lock:
+            _qr_state.clear()
+            _qr_state.update(key=key, opener=opener, jar=jar, created_at=time.time())
+        return {"url": url, "matrix": _make_qr_matrix(url)}, None
+    except Exception as e:
+        return None, _friendly_err(e)
+
+
+def qrlogin_poll():
+    """轮询扫码状态。返回 ({"status": wait|scanned|expired|success}, None) 或 (None, 错误)。"""
+    with _qr_lock:
+        st = dict(_qr_state)
+    if not st.get("key"):
+        return None, "no-session"   # 前端据此重新 start
+    try:
+        j = _qr_request(st["opener"],
+                        _QR_BASE + "/poll?qrcode_key=" + urllib.parse.quote(st["key"]) +
+                        "&source=main-fe-header")
+    except Exception as e:
+        return None, _friendly_err(e)
+    d = j.get("data") or {}
+    code = d.get("code")
+    status_map = {86101: "wait", 86090: "scanned", 86038: "expired"}
+    if code in status_map:
+        if code == 86038:
+            with _qr_lock:
+                _qr_state.clear()
+        return {"status": status_map[code]}, None
+    if code == 0:
+        with _qr_lock:
+            jar_ref = st.get("jar")
+            _qr_state.clear()
+        # SESSDATA 可能来自两处：
+        # 1) data.url query 参数（旧版通道）
+        # 2) cookie jar（新版通道，B 站通过 Set-Cookie 下发）
+        q = urllib.parse.parse_qs(urllib.parse.urlparse(d.get("url") or "").query)
+        sd = (q.get("SESSDATA") or [None])[0]
+        if not sd and jar_ref:
+            for c in jar_ref:
+                if c.name == "SESSDATA" and c.domain.endswith("bilibili.com"):
+                    sd = c.value; break
+        if not sd:
+            print("[登录] B站返回 success 但未取得 SESSDATA，url=", d.get("url"),
+                  "refresh_token=", d.get("refresh_token"), flush=True)
+            return None, "登录成功但未取得 SESSDATA"
+        with _wlock:
+            ok = write_sessdata(sd)
+        if not ok:
+            return None, "SESSDATA 写入失败"
+        print("[配置] SESSDATA 已通过扫码登录保存", flush=True)
+        return {"status": "success"}, None
+    return None, "B站返回未知状态：%s" % code
 
 
 # ===================== 本地存储 =====================
@@ -417,6 +541,39 @@ def _find_video(data, bvid):
         if v.get("bvid") == bvid:
             return i, v
     return None, None
+
+
+# ===================== 番茄钟专注统计（数据最小化：只存日期+秒数） =====================
+
+def load_focus():
+    """读今日专注秒数；跨天（date 不匹配）或文件损坏返回 0。"""
+    try:
+        with open(FOCUS_FILE, "r", encoding="utf-8") as f:
+            d = json.load(f)
+        if isinstance(d, dict) and d.get("date") == time.strftime("%Y-%m-%d"):
+            return max(0, int(d.get("seconds") or 0))
+    except Exception:
+        pass
+    return 0
+
+
+def add_focus(seconds):
+    """把本轮专注秒数累加到今天；跨天自动清零重计。返回今日累计。"""
+    today = time.strftime("%Y-%m-%d")
+    seconds = max(0, int(seconds))
+    with _wlock:
+        try:
+            with open(FOCUS_FILE, "r", encoding="utf-8") as f:
+                d = json.load(f)
+            cur = max(0, int(d.get("seconds") or 0)) if (
+                isinstance(d, dict) and d.get("date") == today) else 0
+        except Exception:
+            cur = 0
+        tmp = FOCUS_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump({"date": today, "seconds": cur + seconds}, f)
+        os.replace(tmp, FOCUS_FILE)
+    return cur + seconds
 
 
 def _video_summary(v):
@@ -936,6 +1093,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     # -------- GET --------
     def do_GET(self):
+        try:
+            self._do_GET()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            try:
+                self._send_json({"ok": False, "message": f"server error: {e}"})
+            except Exception:
+                pass
+
+    def _do_GET(self):
         if not self._guard():
             return
         parsed = urllib.parse.urlparse(self.path)
@@ -1044,6 +1212,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json(res)
             return
 
+        # 番茄钟：读今日专注秒数（按天累计，只存数字，无描述性信息）
+        if path == "/api/focus":
+            self._send_json({"ok": True, "date": time.strftime("%Y-%m-%d"),
+                             "seconds": load_focus()})
+            return
+
         # 连通性诊断
         if path == "/api/diag":
             sd = get_sessdata()
@@ -1052,9 +1226,38 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, json.dumps(res, ensure_ascii=False, indent=2).encode("utf-8"))
             return
 
-        # 查询 SESSDATA 是否已配置（不返回明文，仅示状态）
+        # 查询 SESSDATA 是否已配置（不返回明文，仅示状态）；加 ?value=1 时返回明文（供设置弹窗回填）
         if path == "/api/sessdata":
-            self._send_json({"configured": bool(get_sessdata())})
+            show_value = qs.get("value", [""])[0] == "1"
+            sd = get_sessdata()
+            resp = {"configured": bool(sd)}
+            if show_value and sd:
+                resp["value"] = sd
+            self._send_json(resp)
+            return
+
+        # DEBUG：查看扫码登录状态和 cookie jar（排查用）
+        if path == "/api/_debug/qrstate":
+            with _qr_lock:
+                st = dict(_qr_state)
+            cookies = []
+            if st.get("opener"):
+                for c in st["opener"].cookiejar:
+                    cookies.append({"domain": c.domain, "name": c.name,
+                                    "value": c.value[:30] if c.value else None})
+            self._send_json({"has_key": bool(st.get("key")), "key": st.get("key"),
+                             "cookies": cookies})
+            return
+
+        # 扫码登录：轮询二维码状态（密钥保存在服务端内存，前端只拿状态）
+        if path == "/api/qrlogin/poll":
+            res, err = qrlogin_poll()
+            if err is not None:
+                # 扫码模块独立于 AppStatus，kind 仅作协议完整性（network 含超时/DNS）
+                kind = "network" if any(w in err for w in ("超时", "网络", "DNS", "连接")) else "bili"
+                self._send_json(_err_result(kind, err))
+                return
+            self._send_json({"ok": True, **res})
             return
 
         # 图标预览图（png，供设置弹窗显示当前图标）
@@ -1229,6 +1432,24 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json({"ok": True, "configured": True})
             return
 
+        # 扫码登录：申请二维码（返回二维码内容 URL + 矩阵，前端渲染成二维码图片）
+        if path == "/api/qrlogin/start":
+            res, err = qrlogin_start()
+            if err is not None:
+                kind = "network" if any(w in err for w in ("超时", "网络", "DNS", "连接")) else "bili"
+                self._send_json(_err_result(kind, err))
+                return
+            self._send_json({"ok": True, **res})
+            return
+
+        # 登出：删除 .sessdata.bin（DPAPI 加密凭据），下次请求即判为未配置
+        if path == "/api/sessdata/logout":
+            with _wlock:
+                delete_sessdata()
+            print("[配置] SESSDATA 已通过登出删除", flush=True)
+            self._send_json({"ok": True, "configured": False})
+            return
+
         # 手动保存进度（拖进度条/切集/标记已看）：只更新 lastProgress，不做跳跃检测、
         # 不碰 lastSynced——用户主动编辑自己的进度不是"意外跳跃"，否则会与B站历史值
         # 互相覆盖，导致每次启动同步都误报同一条回看。
@@ -1260,6 +1481,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 }
                 save_tracked(data)
             self._send_json({"ok": True, "jump": None})
+            return
+
+        # 番茄钟：结束一轮专注，把秒数累加到今天（跨天自动清零）
+        if path == "/api/focus":
+            body, err = self._read_body_json()
+            if err is not None:
+                self._send_json({"ok": False, "message": err})
+                return
+            total = add_focus((body or {}).get("add", 0))
+            self._send_json({"ok": True, "date": time.strftime("%Y-%m-%d"),
+                             "seconds": total})
             return
 
         # 自定义应用图标：上传图片(base64)生成 ico + 更新桌面快捷方式；或重置为默认
