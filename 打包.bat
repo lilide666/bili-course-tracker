@@ -8,5 +8,4 @@ echo.
 echo   Building app. This may take 1-3 minutes ...
 echo.
 py -3 -B build.py
-echo.
-pause
+if errorlevel 1 pause

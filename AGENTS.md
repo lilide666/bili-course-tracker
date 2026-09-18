@@ -3,8 +3,8 @@
 > **给 AI 助手的硬性规则（每次会话必读、必遵守）：**
 >
 > 1. **开始动手前**：通读本文件，再读对应源码。不要凭猜测修改。
-> 2. **完成改动后**：如果改动涉及架构、约定、踩坑经验或本文件记录的任何条目，**必须同步更新本文件**（新增/修正/删除过时内容）。这是项目记忆，随仓库转移，目的是让下一位 AI 不重复踩坑。
-> 3. **只写稳定知识**：目录结构、关键约定、协议细节、踩坑教训、红线规则。不写临时进度、日志、一次性对话内容。
+> 2. **完成改动后**：如果改动涉及架构、约定、踩坑经验、**协作流程经验**或本文件记录的任何条目，**必须同步更新本文件**（新增/修正/删除过时内容）。这是项目记忆，随仓库转移，目的是让下一位 AI 不重复踩坑、不重复犯同样的协作错误。
+> 3. **只写稳定知识**：目录结构、关键约定、协议细节、踩坑教训、**协作流程经验**、红线规则。不写临时进度、日志、一次性对话内容。协作流程经验指：经用户确认的工作方式约定（如"现象清晰时不做无意义复现"），这类约定和技术踩坑同等重要，必须沉淀。
 > 4. **隐私红线**：严禁把 SESSDATA、真实观看记录、真实课程标题/UP 主、cookie、个人路径等写进本文件或任何会提交的文件。举例一律用虚构数据（如"高等数学基础班 · BV1DemoMath01"）。
 > 5. **与用户沟通**：使用中文；先给方案/分析，用户确认后再动手；不要使用"（推荐）""最快上手（3 步）"这类营销腔。
 > 6. **bat 脚本必须纯 ASCII**（GBK cmd 下中文乱码）；中文文件名操作放 build.py。
@@ -85,10 +85,27 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 - 钩子：`window.startConfettiRain/stopConfettiRain/spinPct/setPctInstant`。
 
 ### 其他动效（只动 transform/opacity）
-- 同步呼吸灯 syncDot（tag-sync 内，文案 #tagSyncTxt）；切换视频 `.swap-in` 180ms 淡入；跳跃列表 `.stagger` 20ms 错开；同步成功 `playSheen()` 一次性流光——**仅总进度条** `.bar-track.sheen`（::after 白色半透渐变高光从左扫到右）。圆环流光已试验后**取消**：试过单段白弧（两端硬切僵硬）、三段固定透明度弧（三档台阶）、12 段 WAAPI 彗星尾迹（连续渐隐但头部在环起止处仍显突兀、SVG 弧线高光天然不如线性渐变自然），用户明确不满意，不要再加。
+- 同步呼吸灯 syncDot（tag-sync 内，文案 #tagSyncTxt）；切换视频 `.swap-in` 180ms 淡入；跳跃列表 `.stagger` 20ms 错开；同步成功 `playSheen()` 一次性流光——**直线条 `.bar-track.sheen`（::after 白色渐变高光从左扫到右）和进度环 `.ring.sheen-on` 都有**。圆环扫光实现（**必须用锥形渐变彗星，不要用实心白弧**——单段白色 stroke 短弧会是"一根白柱子"，SVG stroke 无法沿弧线方向做线性渐变）：`.ring-sheen` 是 `.ring`（relative,240×240）内绝对定位的 div（不是 SVG 元素），`conic-gradient` 在 300°→360° 区间从透明渐变到白色（.06@324°/.30@346°/.85@360°，亮头在 0°、尾迹沿运动反方向衰减），再用 `radial-gradient` mask 只留半径 98~112px 的 14px 环带（与 stroke-width 14 对齐），`@keyframes ringSheen` rotate 0→360° 扫一周，opacity 0→1(14%)→1(82%)→0。**时长 0.48s linear（必须与直线条线速度统一，不要 0.9s）**：直线条 0.9s ease-out 走 1.6 倍条宽（默认 1120 窗条约 775px，亮头过条约 0.56s），圆环周长 660px，0.48s 对应 ~1375px/s 与直线条平均速度一致；0.9s 会让圆环慢一倍。直线条同款 0.9s ease-out。旧记录里"圆环流光取消、不要再加"已过时（2026-09 用户要求恢复为与直线条同款）。
 - Tab 栏悬停上浮：`.tabs` 需 `padding:8px 2px 12px` 留白，否则被 `overflow-x:auto` 容器裁切。
 - 红线：`@media (prefers-reduced-motion: reduce)` 全停用；`body.doc-hidden`（visibilitychange）暂停循环动画。
-- 标题栏按钮 `tabindex="-1"` + 无 `:focus` outline，启动/聚焦时 `document.body.focus()`，防白框；用 `aria-label` 不用 `title`。
+- 标题栏按钮 `tabindex="-1"` + 无 `:focus` outline，启动/聚焦时 `document.body.focus({preventScroll:true})`，防白框且避免聚焦把页面拉回顶部；用 `aria-label` 不用 `title`。
+- **标题栏必须 `position:fixed`，不能用 `sticky`**：WebView2/Blink 下 `body{overflow-y:auto}` 的实际滚动由 `html`（`document.scrollingElement`）承载，标题栏的 `sticky` 相对 body 计算，body 随 html 整体滚动，导致标题栏跟着滚走。修法：标题栏改 `position:fixed; top:0; left:0; right:0`，同时 `body{padding-top:38px}` 让出标题栏高度。固定定位永远相对视口，不随滚动移动。
+- **最小化恢复保持滚动位置（WebView2 坑）**：窗口最小化时宿主会把 WebView2 视口高度压到接近 0，浏览器据此把 `scrollTop` 钳制/清零，恢复后原位置丢失。修法：监听 `resize`，视口高度 `< 50px` 时记下 `scrollTop`，恢复到正常高度后用 `requestAnimationFrame` 还原（`preserveScrollOnMinimize` IIFE）。阈值 50px 远小于最小窗口高度 560，不会误判正常缩放。
+
+### AI 估算模式（集内进度时间差推算）
+- **背景**：B站历史接口的 `progress` 有上报延迟（心跳15秒/次，聚合可能更久），无法拿到实时播放进度。用 `view_at`（上报时间戳）+ 时间差推算当前集内进度。
+- **触发条件**：`progress + (now - view_at) < 当前集时长` → 上报时的进度 + 过去了多久，还没超过这集总时长，认为用户大概率还在看这集。不依赖跨集检测，单集即可判断。**额外限制：必须两次刷新间 `view_at` 有更新**（`lp.view_at > prevViewAt`）才进入估算——若 `view_at` 不变说明用户可能暂停了，此时不估算（避免进度虚涨）。`prevViewAt` 变量记录上一次的 view_at。
+- **调试按钮**：`#btnDebugEst`（"从B站读取进度"按钮下方），点击强制切换 `forceEstimate` 标志并 `startEstimate()/stopEstimate()`，绕过 `view_at` 更新检查，用于验证动效。`stopEstimate()` 时会重置 `forceEstimate` 并恢复按钮文字。调试开启时用 `debugBasePos`（当前 pos）/`debugBaseTime`（当前时间戳）作模拟基准，进度从当前位置每秒 +1 往前走（不篡改真实 `lastProgress`）；直接用真实 `view_at` 会因上报时间过旧直接顶到集末尾，看不出走动效果。
+- **运行逻辑**：进入估算模式后每秒 `pos = min(baseProgress + (now - baseViewAt), 该集时长)`，同时更新集数滑块（`posSlider.value` + `--p`）并 `render()`——`render()` 本身不更新滑块（滑块只在 `selectEp` 时同步），必须在 timer 里手动同步，否则估算时只有总百分比/环在动、滑块不动。总百分比/进度环/总进度条/集数滑块四处数据同源、每秒一起走。
+- **退出条件**：切换视频、手动拖动进度条、手动切集（上一集/下一集/选集）时 `stopEstimate()`。
+- **视觉标识**（`body.estimating` class 控制，**保持原有渐变风格只换色调**）：
+  - 窗口四周青色扩散波纹（`.ai-ripple` 三个 span，**必须用 `box-shadow: inset` 内阴影**：从边缘 1px 亮青线 `inset 0 0 0 1px` 扩散到 `inset 0 0 26px 14px` 淡出，错峰 0.9s，2.8s 循环）。**外扩 box-shadow 不可见**——span `inset:0` 占满视口，向外的 spread 全投到视口/屏幕外被裁掉；更早的 `border+scale` 也因 body overflow 裁切失败。只有 inset 方向（向窗口内扩散）肉眼可见。
+  - **接管动画（进入估算时一次性 0.9s）**：青色覆盖层从 0 点增长到当前进度位置，逐渐替换原色条；原蓝紫条全程不动、只在覆盖层下方静默同步，中途呈现"前段青、尾端原色"的替换效果。三处实现不同：①进度环——SVG 加第二个圆 `#ringBarEst`（class `.bar-est`，stroke 固定 `url(#gEst)`；**不要复用 `.bar`**，否则会被 `.ring.celebrate/.focus-ring .bar` 改色规则波及），进入时 dashoffset 从周长 C 过渡到当前值；②总进度横条——`.bar-track`（已有 position:relative）内加绝对定位 `#overFillEst`，width 0→集数占比；③集数滑块——input range 无法插子元素，用多层 background（青层 `--pe` 压在原色层 `--p` 上），**`@property --pe{syntax:'<percentage>'}` 注册后自定义属性才能 transition**，JS 设 0%→当前%。函数 `playEstimateTakeover()`；`takeoverUntil` 时间戳保证接管动画期间 renderPct/render/timer 的数据同步不打断动画；动画结束 setTimeout 校准终点并清过渡，之后覆盖层每秒直跳跟随（变化 <0.1% 无需过渡）。
+  - **回退动画（取消估算时一次性 0.9s，接管的反向）**：`stopEstimate()` 不立即移除 body class，而是置 `estClosing=true` + body 加 `est-closing` class、清数据 timer，三处覆盖层反向过渡回 0（环 dashoffset→C、横条 width→0、滑块 --pe→0%，缓动 `cubic-bezier(.42,0,1,1)` ease-in）；`body.est-closing` 下波纹容器 opacity 0、底部文字隐藏（CSS 选择器用 `body.estimating:not(.est-closing)` 排除），但覆盖层保持可见直到缩回完成。0.9s 后 `_finishEstClose()`（`closingTimer`）才移除 estimating/est-closing class 并复位，底色条无缝露出。回退期间 renderPct/render/timer 的覆盖层同步条件全部加 `!estClosing`；回退中又满足估算条件（如自动同步返回）则 `startEstimate()` 用 `wasClosing` 跳过 `if(estimating) return` 守卫、取消 closingTimer 重播接管（`playEstimateTakeover` 里必须清 `ringEst.style.opacity=''`）。REDUCED_MOTION 时回退时长 0 直接复位。
+  - **回退终点残留坑（已修，勿回退）**：两个根因——①缓动不能用末端减速的 `cubic-bezier(.55,.06,.4,.95)`，青弧最后 100ms 在顶部慢速爬行像残留，改 ease-in 末端加速收走；②`.bar-est` 是 `stroke-linecap:round`，dashoffset 收到 C（弧长 0）时两端圆头重合为一个 14px 青色圆点，要挂到 class 移除（960ms）才消失。修法：回退时 ringEst 的 transition 串附加 `opacity 140ms ease-in 760ms`（前 760ms 保持实色、最后 140ms 快速淡出盖住圆点）并设 inline opacity:0；`_finishEstClose` 复位时清掉 inline opacity 交还 class 控制。
+  - 估算色调 = 青蓝渐变 `#38e0ff → #4f8fff`（原色是蓝紫 `#6ea8ff → #8b5cf6`，方向/结构相同只换色调，禁止用纯色覆盖；渐变定义在 SVG `<defs>` 的 `#gEst`，与 `#g` 同结构）。估算时底色条不再换色，青色只存在于覆盖层；thumb 只换边框色，保持白底细边原样。注意不要给"今日专注"按钮变色——它是 primary 渐变按钮不是进度条。
+  - 窗口底部居中常驻文字"AI 估测时间中"（`.ai-estimating-label`，圆角胶囊，蓝色）。
+- **关键函数**：`checkEstimate()` / `startEstimate()` / `playEstimateTakeover()` / `stopEstimate()` / `_finishEstClose()`，变量 `estimating` / `estTimer` / `prevViewAt` / `forceEstimate` / `debugBasePos` / `debugBaseTime` / `takeoverUntil` / `estClosing` / `closingTimer`。
 
 ### 跳跃/回看记录（server.py `record_jump_if_needed`）
 - 三类判定：跨集向后 gap≥3、跨集向前 gap≥5、**集内同集进度倒退≥180 秒**（kind="time"）。
@@ -111,15 +128,20 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 
 ### 番茄钟（纯专注计时，index.html `FocusTimer` + server.py `/api/focus`）
 - **独立于 AppStatus**：纯本地功能，与网络/同步状态无关，做成独立 IIFE 模块（`window.FocusTimer` 未暴露，内部 phase: idle|running|paused）。
-- 交互：`btnFocus` 即开关（点一下开始、再点结束）；暂停/继续是番茄环内的 `btnFocusPause`；不足 5 秒视为误触不记录。
-- 并排切换动效：`body.focus-mode` 下总环 `#mainRing` **保持原尺寸不动**（用户明确要求不要缩小）；`.focus-ring` `transform` 从 `translateX(560px)` 屏外飞入 + opacity 淡入。`body` 已加 `overflow-x:hidden`，防 transform 溢出产生横向滚动条。**约定修正：一次性布局切换动画允许 margin 过渡**（每次点击只触发一帧流水，非循环），循环动画仍然只许 transform/opacity。
+- 交互：`btnFocus` 即开关（点一下开始、再点结束）；暂停/继续是番茄环内的 `btnFocusPause`；不足 5 秒视为误触不记录。**退出时立刻移除 focus-mode class**（按钮变回蓝色"今日专注"，不等 950ms 动画结束）——focus-closing 接管动画，移除 focus-mode 无 layout 跳变（两规则同值覆盖）。**防连续点击**：`focusLock` 时间戳，stop() 时设 `Date.now()+300`，start() 开头 `if(Date.now()<focusLock) return` 阻止 300ms 内重新开始。变量 `focusLock`。
+- 并排切换动效：`body.focus-mode` 下总环 `#mainRing` **保持原尺寸不动**（用户明确要求不要缩小、文字也不许动）；`.focus-ring` `transform` 从 `translateX(560px)` 屏外飞入 + opacity 淡入（margin/opacity/transform 过渡均 0.9s，与红弧进出动画同长）。`body` 已加 `overflow-x:hidden`，防 transform 溢出产生横向滚动条。**约定修正：一次性布局切换动画允许 margin 过渡**（每次点击只触发一帧流水，非循环），循环动画仍然只许 transform/opacity。
+- **红弧进出动画（与 AI 估算接管/回退同款，2026-09 新增）**：进入 `playBarGrow()`——focusBar 先 none+offset=C 强制重排，再 `stroke-dashoffset .9s cubic-bezier(.22,.9,.35,1)` 到今日累计/目标对应值，`takeUntil` 时间戳内 render() 不写 offset（交给 CSS 过渡），920ms setTimeout 清过渡并校准；退出 `playBarShrink()`——`cubic-bezier(.42,0,1,1)` ease-in 缩回 C，opacity `140ms ease-in 760ms` 串接淡出盖住 round 线帽弧长 0 时的圆点残留（同 AI 回退坑）。**移出时数字反复循环向上滚**（用户要求"向下移一样反复循环"+"连续滚动不能空白"）：`animation:focusNumUp .46s linear infinite`，0→-10em 循环。**关键坑：`setRollInstant`/`pctSlotNode` 创建的 `.droll` 静态时只有 1 行 `.dline`（当前数字），不是 10 行——stop() 必须先填满 0-9 再复制**：`document.querySelectorAll('#focusTime .droll').forEach(r=>{ const cur=parseInt(r.firstElementChild?.textContent||'0',10); if(isNaN(cur))return; r.innerHTML=''; for(let i=0;i<10;i++){const ln=document.createElement('span');ln.className='dline';ln.textContent=(cur+i)%10; r.appendChild(ln);} r.innerHTML+=r.innerHTML; })`——从当前数字起循环排列 10 行（如 cur=3→3,4,5,6,7,8,9,0,1,2），复制成 20 行，-10em 显示第 11 行=第 1 行副本，跳回 0 无缝衔接。数字循环滚动 + 环/淡出/margin/红弧缩回**全部同时 0.9s**（`playBarShrink()` 直接调用，CSS transition 无 delay，`closeTimer` 950ms）。**不要加 delay**（用户最终要求删去延迟）。`closeTimer` 950ms 后 finishClose：先 `fr.style.transition='none'` 禁用 transition 再移除 focus-mode/focus-closing class，`requestAnimationFrame` 下一帧恢复（保险措施，margin 已在 focus-closing 期间过渡到位）。**关键：focus-closing CSS 必须把 margin 也设回默认值 `6px -240px 18px 0` 并加入 transition**——否则 margin 在 finishClose 移除 class 时才瞬间变化，主环（无 transition）瞬间跳 150px，而番茄环已飞走，用户看到"一个先动"（番茄环 0~0.9s 飞出，主环 950ms 后跳）。实测加上 margin transition 后主环从 t=0 同步右移 282→432（0.9s 平滑过渡），与番茄环飞出完全同步。
 - **番茄环排版完整性坑（已修，勿回退）**：旧方案 `width:0→240px` + `overflow:hidden` 动画 width 腾位——动画期间 SVG 被 overflow 按宽裁切（width≈0 时内容完全消失、width 中段时 SVG 被竖切只剩半截），用户反馈"移入时错乱排版""移入其间被遮挡消失一段时间"。修法：**width 固定 240px 不动画**（SVG 始终完整渲染）、`overflow:visible`（不裁切）、隐藏时用 `margin-right:-240px` 折叠布局占位（总环仍居中）、显示时 `margin:6px 0 18px 60px` 让位。实测采样 svgW 全程恒定 240px、opacity/transform/margin 单调平滑过渡。**不要再恢复 width 动画 + overflow:hidden**。
-- 番茄环与总环**等大 240px**（SVG 同尺寸同几何，无缩放补偿），弧线红色 `#f87171`、track `#3a2430`、计时文字 `#fecaca` 40px；`.center-txt` 加 `translateY(14px)` 让内容视觉重心略低于几何中心（用户要求整体往下）。
+- 番茄环与总环**等大 240px**（SVG 同尺寸同几何，无缩放补偿），弧线红色 `#f87171`、track `#3a2430`、计时文字 `#fecaca` 40px。
+- **两环并排行对齐规则（2026-09 实测校准，勿拍脑袋平移）**：默认单环 `.ring .center-txt` 几何居中；**开启专注模式时主环内容禁止任何移动**（曾给主环加 translateY 上移被用户明确退回"不要动它"）。对齐完全由番茄环自己完成：番茄环（三行：40px 数字 + `.pct-label` + 暂停按钮）`body.focus-mode .ring.focus-ring .center-txt{justify-content:flex-start; padding-top:86px}`（飞入时不可见可直接定位；86px = 实测使数字行/标签行与主环居中的两行完全同 y），`body.focus-mode .ring .focus-time{height:44px;line-height:44px}`（主环数字自然 44px，行盒统一消化 44/40px 字号差），标签 margin 两边自然继承 `.ring .pct-label` 的 6px。实测两环数字行与标签行 rect 完全一致。主环无对应按钮行，留空。
+- **每日目标（2026-09 新增）**：番茄钟从"25 分钟循环纯视觉节奏"改为**每日目标进度**——默认 8 小时（`DEFAULT_GOAL=8*3600`），`.focus-row` 按钮下方 `.focus-goal` 行内嵌 `#focusGoal` number 输入（0.5~24 小时、0.5 步进、非法值回落 8，隐藏 number 原生箭头），localStorage `focusGoalSec` 持久化纯本地偏好；红环 `frac=clamp((todaySec+elapsed())/goalSec,0,1)`，填满即达成不再循环，运行中改目标 render() 立即重算；旧 `PERIOD=25*60` 已删，勿恢复。
+- **总环环内只保留两行**：`#bigPct` 百分比 + `.pct-label`"总体播放进度"，默认几何居中、并排时按上条规则对齐。原第三行 `#bigPlayed`（"已播 / 总时长"）已删——与下方 `#stPlayed`/`#stRemain` 统计卡片信息重复（2026-09 用户要求删除，勿恢复；`.played-time` CSS 与 render 中的 bigPlayed 赋值同步删除）。
 - 开关按钮颜色规则（用户指定）：**未开启时用 primary 渐变同款**（深色字），hover 加亮 `brightness(1.08)`；`body.focus-mode` 下（显示"结束专注"）**切换为暂停按钮同款红色半透明风**（rgba(248,113,113,.14) 底 + .45 边 + `#fecaca` 字），与暂停/继续按钮 hover 都用**加深**（background 升到 .38）。整行 flex:1 + padding 10px 0；`#focusToday` 在按钮下方居中。
 - **开关按钮"闪黑"坑（已修，勿回退）**：渐变是 background-image、红底是 background-color——状态切换时渐变图瞬间消失、底色从透明过渡 150ms，透出近黑页面底色即"闪黑一下"。修法：**按钮底色恒定** rgba(248,113,113,.14)（两态共用），渐变挂在 `::after`（`z-index:-1` + 按钮 `isolation:isolate`，使其落在背景之上、文字之下）上做 opacity 交叉淡出/淡入；`filter` 加亮会同时作用于渐变层。
 - **hover 覆盖坑**：全局 `button:hover{background:#152047; border-color:var(--accent)}` 声明在文件后部，同特异性下会覆盖 focus-row 按钮——`.focus-row button:hover` 必须**显式重申 background 和 `border-color:transparent`**（否则悬浮变深且出 accent 描边）。
-- **时间显示复用进度同款老虎机滚轮**：`spinPct(str, el, minSteps, coordinated)` 已泛化——el 缺省 = bigPct（自动补 % 后缀），传容器（如 `focusTime`）只滚数字不加后缀；分隔符 `isSep` 同时支持 `.` 和 `:`（静止不滚）。**滚轮结构 CSS（`.dslot/.ddot/.droll/.dline`）作用域必须随容器一起扩展**（现为 `.pct` 与 `.focus-time` 双选择器），复用到新容器漏加选择器会导致滚轮竖排散开不裁切。计时每秒 tick 只滚变化的位（秒位）——`spinPct(s, el, 0, false)` 传 `coordinated=false`，不触发 hasAnySpin 全体联动；`REDUCED_MOTION` 走 `setRollInstant` 直跳；**stop() 复位必须用 `setRollInstant`**（`textContent=` 会把滚轮 DOM 打回纯文本）。**start() 每次都要滚**：start 时先 `$('focusTime').textContent='00:00:00'` 重置为纯文本，让 spinPct 走 structureOk=false 重建分支、所有位滚 10 步（回滚一圈）；否则 stop 后 setRollInstant 留下的 .dslot 结构会让 spinPct 判定 structureOk=true、steps=0 直接 return，第二次开启就没动画了。
-- 计时基于时间戳（`Date.now()/1000 - startedAt` + 暂停累计 `base`），**后台 timer 被节流也不丢秒**，visibilitychange 回窗口只需补一帧渲染；弧线按 25 分钟一圈循环（纯视觉节奏，不到点提醒）。
+- **时间显示复用进度同款老虎机滚轮**：`spinPct(str, el, minSteps, coordinated)` 已泛化——el 缺省 = bigPct（自动补 % 后缀），传容器（如 `focusTime`）只滚数字不加后缀；分隔符 `isSep` 同时支持 `.` 和 `:`（静止不滚）。**滚轮结构 CSS（`.dslot/.ddot/.droll/.dline`）作用域必须随容器一起扩展**（现为 `.pct` 与 `.focus-time` 双选择器），复用到新容器漏加选择器会导致滚轮竖排散开不裁切。计时每秒 tick 只滚变化的位（秒位）——`spinPct(s, el, 0, false)` 传 `coordinated=false`，不触发 hasAnySpin 全体联动；`REDUCED_MOTION` 走 `setRollInstant` 直跳；**stop() 复位必须用 `setRollInstant`**（`textContent=` 会把滚轮 DOM 打回纯文本）。**start() 每次都要滚**：start 时先 `$('focusTime').textContent = fmt(todaySec)` 重置为今日累计纯文本，让 spinPct 走 structureOk=false 重建分支、所有位滚 10 步（回滚一圈）；否则 stop 后 setRollInstant 留下的 .dslot 结构会让 spinPct 判定 structureOk=true、steps=0 直接 return，第二次开启就没动画了。
+- **环内显示今日累计**：`render()` 显示 `fmt(todaySec + elapsed())`（今日累计含本次），不再是"本次时长"；按钮文字"番茄钟"已改为"今日专注"；stop 后回显 `fmt(todaySec)`（服务端返回的已含本次）。
+- 计时基于时间戳（`Date.now()/1000 - startedAt` + 暂停累计 `base`），**后台 timer 被节流也不丢秒**。**系统休眠后 interval 可能被挂起不恢复**——visibilitychange 回窗口时如果 `phase==='running'`，必须 `clearInterval(timer); timer = setInterval(render, 1000)` 重建 interval，否则休眠唤醒后番茄钟不再 tick。红环总量为每日目标（默认 8h，见上条），今日累计填满即达成。
 - 结束时 POST `/api/focus {"add": 秒}`；离线失败兜底只加内存 `todaySec`（下次以服务端为准）。启动时 GET `/api/focus` 渲染"今日专注"。
 
 ### 同步与轮询
@@ -144,3 +166,4 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 - PowerShell 执行策略可能禁止 .ps1；复杂文件操作用 Python 脚本而非内联 PowerShell（引号嵌套易出错）。
 - 修改 index.html 后验证：提取 `<script>` 内容 `node --check` 语法；**动效类改动必须调用工作区 skill `ui-motion-verify`**（`.trae/skills/ui-motion-verify/SKILL.md`：pywebview 真实窗口 + PrintWindow 截图 + evaluate_js 采样 transform/opacity，含可复用脚本骨架和采样踩坑），不要只靠静态分析或"代码看起来对"——本项目动效坑（数字落位错、动画被中间帧打断）全是实测才发现的。
 - 工作区 skill 目录 `.trae/skills/`：若提交 GitHub 共享则保留；不共享则将 `.trae/` 加入 .gitignore。
+- **复现验证的边界**：用户对现象描述清晰、无歧义时，直接读代码定位并修复，不要先花一轮操作去"复现确认"用户说的现象（无信息增量）。实测验证只用于两类场景：① 修复后确认修复生效；② 现象描述模糊/有多种可能根因时，缩小排查范围。

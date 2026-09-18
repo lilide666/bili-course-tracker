@@ -27,7 +27,7 @@
     background-attachment: fixed;
     background-repeat: no-repeat;
     min-height:100vh;
-    padding:0;
+    padding:38px 0 0 0;  /* 顶部留给固定定位的标题栏（38px） */
     line-height:1.5;
     overflow-y:auto;
     overflow-x:hidden;  /* 番茄钟圆环从屏外飞入，防横向滚动条 */
@@ -42,10 +42,10 @@
   /* 自定义无边框标题栏（pywebview frameless 模式下拖动窗口） */
   .titlebar{
     height:38px; display:flex; align-items:center; justify-content:space-between;
-    padding:0 6px 0 16px; position:sticky; top:0; z-index:1000;
+    padding:0 6px 0 16px; position:fixed; top:0; left:0; right:0; z-index:1000;
     background:linear-gradient(90deg, rgba(11,16,32,.96), rgba(19,26,51,.96));
     border-bottom:1px solid rgba(42,58,107,.5); backdrop-filter:blur(6px);
-    user-select:none; flex:0 0 auto;
+    user-select:none;
   }
   .titlebar .t-title{
     font-size:12.5px; font-weight:600; color:var(--muted); letter-spacing:.3px;
@@ -193,7 +193,6 @@
   .pct .droll,.focus-time .droll{display:flex; flex-direction:column; will-change:transform}
   .pct .dline,.focus-time .dline{display:block; height:1em; line-height:1; text-align:center}
   .ring .pct-label{font-size:12.5px; color:var(--muted); margin-top:6px}
-  .ring .played-time{font-size:13.5px; color:#cfe0ff; margin-top:8px; font-variant-numeric:tabular-nums}
 
   /* 番茄钟：与总进度环并排（等大 240px），总环保持原尺寸不动；番茄环从屏幕外飞入。
      【排版完整性】width 固定 240px 不动画（避免 overflow:hidden 按宽裁切 SVG 致内容错乱/消失）；
@@ -203,14 +202,30 @@
   .ring.focus-ring{width:240px; height:240px; margin:6px -240px 18px 0; opacity:0; overflow:visible;
     transform:translateX(560px); pointer-events:none; flex:0 0 auto;
     transition:margin .5s cubic-bezier(.22,.61,.36,1),
-      opacity .42s ease, transform .6s cubic-bezier(.18,.7,.25,1)}
+      opacity .9s ease, transform .9s cubic-bezier(.18,.7,.25,1)}
   body.focus-mode .ring.focus-ring{margin:6px 0 18px 60px; opacity:1; transform:none; pointer-events:auto}
+  /* 退出：数字循环滚动 + 环/淡出/margin/红弧缩回同时进行（用户要求删去延迟）。
+     margin 缩回使主环同步右移回到原位。规则必须在 focus-mode 规则之后（同特异性，后定义胜出） */
+  body.focus-closing .ring.focus-ring{margin:6px -240px 18px 0; transform:translateX(560px); opacity:0;
+    transition:margin .9s cubic-bezier(.18,.7,.25,1),
+               transform .9s cubic-bezier(.18,.7,.25,1),
+               opacity .9s ease}
   .ring.focus-ring .track{stroke:#3a2430}
   .ring.focus-ring .bar{stroke:#f87171; filter:drop-shadow(0 0 8px rgba(248,113,113,.35))}
   .focus-time{font-size:40px; font-weight:800; letter-spacing:-1px; line-height:1;
     color:#fecaca; font-variant-numeric:tabular-nums}
-  .ring.focus-ring .center-txt{justify-content:center; transform:translateY(14px)}  /* 视觉重心略低于几何中心 */
-  .ring.focus-ring .pct-label{margin-top:7px}
+  /* 移出时数字反复循环向上滚（与进入时循环滚动对称，infinite 直到环飞出消失） */
+  body.focus-closing .focus-time .droll{
+    animation:focusNumUp .46s linear infinite}
+  @keyframes focusNumUp{
+    from{transform:translateY(0)}
+    to{transform:translateY(-10em)}
+  }
+  /* 并排时番茄环向主环看齐：主环内容禁止任何移动（用户明确要求），
+     番茄环自己对齐——padding-top:86px 使数字行/标签行与主环几何居中的两行完全同 y；
+     focus-time 行盒统一 44px（主环数字自然 44px）消化 44/40px 字号差，第三行按钮主环留空 */
+  body.focus-mode .ring.focus-ring .center-txt{justify-content:flex-start; padding-top:86px}
+  body.focus-mode .ring .focus-time{height:44px; line-height:44px}
   .focus-btns{margin-top:12px}
   .focus-btns button{font-size:12px; font-weight:600; color:#fecaca; cursor:pointer;
     background:rgba(248,113,113,.14); border:1px solid rgba(248,113,113,.45);
@@ -239,7 +254,17 @@
   body.focus-mode .focus-row button{border-color:rgba(248,113,113,.45); color:#fecaca}
   body.focus-mode .focus-row button::after{opacity:0}
   body.focus-mode .focus-row button:hover{background:rgba(248,113,113,.38); border-color:rgba(248,113,113,.6); filter:none}
-  #focusToday{font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums; text-align:center}
+  .focus-goal{display:flex; align-items:center; justify-content:center; gap:6px;
+    font-size:12px; color:var(--muted)}
+  .focus-goal input{width:56px; padding:3px 6px; text-align:center;
+    font-size:12px; font-variant-numeric:tabular-nums; color:#dbe6ff;
+    background:rgba(0,0,0,.25); border:1px solid var(--border); border-radius:8px; outline:none;
+    transition:border-color .15s}
+  .focus-goal input:focus{border-color:var(--accent)}
+  /* 隐藏 number input 的上下箭头，保持行内简洁 */
+  .focus-goal input::-webkit-outer-spin-button,
+  .focus-goal input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+
 
   .stats{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; width:100%; max-width:680px; margin-top:6px}
   .stat{background:rgba(0,0,0,.18); border:1px solid var(--border); border-radius:12px; padding:14px 10px}
@@ -258,7 +283,12 @@
   /* 控制区（最后） */
   .control-panel{}
   .refresh-row{margin-bottom:16px}
-  .refresh-row button{width:100%}
+  .refresh-row button.primary{width:100%}
+  .btn-debug-est{display:block; width:auto; margin:8px auto 0; padding:6px 14px; font-size:12px;
+    color:var(--muted); background:rgba(110,168,255,.08); border:1px solid rgba(110,168,255,.25);
+    border-radius:8px; cursor:pointer; transition:background .15s}
+  .btn-debug-est:hover{background:rgba(110,168,255,.18)}
+  .btn-debug-est:active{transform:scale(.97)}
   .refresh-status{font-size:11.5px; color:var(--muted); text-align:center; min-height:16px;
     line-height:1.5; margin-top:9px; word-break:break-all}
   .refresh-status.err{color:var(--danger)} .refresh-status.ok{color:var(--ok)}
@@ -430,6 +460,22 @@
     background:linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent);
     animation:sheen .9s ease-out; pointer-events:none}
   @keyframes sheen{to{left:115%}}
+  /* 同步成功：进度环白光扫过（锥形渐变彗星：亮头引领、尾迹沿圆周衰减，与直线条渐变同款质感） */
+  .ring-sheen{position:absolute; inset:0; border-radius:50%; opacity:0; pointer-events:none;
+    background:conic-gradient(from 0deg,
+      transparent 0deg, transparent 300deg,
+      rgba(255,255,255,.06) 324deg,
+      rgba(255,255,255,.30) 346deg,
+      rgba(255,255,255,.85) 360deg);
+    -webkit-mask:radial-gradient(circle, transparent 98px, #000 99.5px, #000 111.5px, transparent 113px);
+            mask:radial-gradient(circle, transparent 98px, #000 99.5px, #000 111.5px, transparent 113px)}
+  .ring.sheen-on .ring-sheen{animation:ringSheen .48s linear}
+  @keyframes ringSheen{
+    0%{transform:rotate(0deg); opacity:0}
+    14%{opacity:1}
+    82%{opacity:1}
+    100%{transform:rotate(360deg); opacity:0}
+  }
 
   /* 100% 庆祝：进度环变金 + 纸屑 */
   .ring.celebrate .bar{stroke:#fbbf24; filter:drop-shadow(0 0 10px rgba(251,191,36,.55)); transition:stroke .4s}
@@ -449,6 +495,45 @@
   /* 窗口不可见时暂停循环动画，省 CPU */
   body.doc-hidden *{animation-play-state:paused !important}
 
+  /* ===== AI 估算模式：窗口四周蓝色扩散波纹（inset 内阴影，从边缘向内扩散） ===== */
+  .ai-ripple{position:fixed; inset:0; pointer-events:none; z-index:2999; border-radius:0;
+    opacity:1; transition:opacity .3s}
+  .ai-ripple span{position:absolute; inset:0; border-radius:8px; opacity:0;
+    box-shadow:inset 0 0 0 0 rgba(56,224,255,0)}
+  body.estimating:not(.est-closing) .ai-ripple span{animation:aiRippleOut 2.8s ease-out infinite}
+  body.estimating:not(.est-closing) .ai-ripple span:nth-child(2){animation-delay:.9s}
+  body.estimating:not(.est-closing) .ai-ripple span:nth-child(3){animation-delay:1.8s}
+  body.est-closing .ai-ripple{opacity:0}
+  @keyframes aiRippleOut{
+    0%{box-shadow:inset 0 0 0 1px rgba(56,224,255,.9); opacity:1}
+    100%{box-shadow:inset 0 0 26px 14px rgba(79,143,255,0); opacity:0}
+  }
+  /* 估算模式底部常驻文字 */
+  .ai-estimating-label{position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
+    font-size:12px; color:#6ea8ff; background:rgba(10,16,36,.7); padding:5px 14px;
+    border-radius:999px; border:1px solid rgba(110,168,255,.35); z-index:3000;
+    opacity:0; transition:opacity .3s; pointer-events:none; white-space:nowrap}
+  body.estimating:not(.est-closing) .ai-estimating-label{opacity:1}
+  /* 估算模式：青色覆盖层从 0 点增长到当前进度，逐渐"接管"替换原色条；
+     底层原条始终保持蓝紫并静默同步，退出时无缝露出 */
+  @property --pe{ syntax:'<percentage>'; inherits:false; initial-value:0% }
+  /* 进度环覆盖圆（SVG，叠在 #ringBar 之上） */
+  .ring .bar-est{fill:none; stroke:url(#gEst); stroke-width:14; stroke-linecap:round;
+    opacity:0; transition:opacity .2s}
+  body.estimating .ring .bar-est{opacity:1}
+  /* 总进度横条覆盖层 */
+  #overFillEst{position:absolute; top:0; left:0; bottom:0; width:0;
+    border-radius:999px; background:linear-gradient(90deg,#38e0ff,#4f8fff);
+    opacity:0; transition:opacity .2s}
+  body.estimating #overFillEst{opacity:1}
+  /* 集数滑块：青层(--pe) 覆盖在原色层(--p) 之上，随 @property --pe 过渡 */
+  body.estimating #posSlider{background:
+    linear-gradient(90deg,#38e0ff,#4f8fff) 0 0/var(--pe,0%) 100% no-repeat,
+    linear-gradient(90deg,var(--accent),var(--accent2)) 0 0/var(--p,0%) 100% no-repeat,
+    #243056}
+  body.estimating #posSlider::-webkit-slider-thumb{border-color:#4f8fff}
+  body.estimating #posSlider::-moz-range-thumb{border-color:#4f8fff}
+
   /* 尊重系统"减少动态效果"设置：全部动效停用 */
   @media (prefers-reduced-motion: reduce){
     *, *::before, *::after{
@@ -459,6 +544,8 @@
 </style>
 </head>
 <body tabindex="-1">
+<!-- AI 估算模式：窗口四周蓝色扩散波纹 -->
+<div class="ai-ripple" id="aiRipple"><span></span><span></span><span></span></div>
 <!-- 无边框窗口自定义标题栏（pywebview-drag-region 可拖动；按钮加 no-drag 避免误拖） -->
 <div class="titlebar pywebview-drag-region">
   <div class="t-title pywebview-drag-region">
@@ -518,15 +605,21 @@
               <stop offset="0" stop-color="#6ea8ff"/>
               <stop offset="1" stop-color="#8b5cf6"/>
             </linearGradient>
+            <linearGradient id="gEst" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#38e0ff"/>
+              <stop offset="1" stop-color="#4f8fff"/>
+            </linearGradient>
           </defs>
           <circle class="track" cx="120" cy="120" r="105"/>
           <circle class="bar" id="ringBar" cx="120" cy="120" r="105"
             stroke-dasharray="659.734" stroke-dashoffset="659.734"/>
+          <circle class="bar-est" id="ringBarEst" cx="120" cy="120" r="105"
+            stroke-dasharray="659.734" stroke-dashoffset="659.734"/>
         </svg>
+        <div class="ring-sheen" id="ringSheen"></div>
         <div class="center-txt">
           <div class="pct" id="bigPct">0<small>%</small></div>
           <div class="pct-label">总体播放进度</div>
-          <div class="played-time" id="bigPlayed">00:00:00 / 00:00:00</div>
         </div>
       </div>
 
@@ -539,7 +632,7 @@
         </svg>
         <div class="center-txt">
           <div class="focus-time" id="focusTime">00:00:00</div>
-          <div class="pct-label">本次专注</div>
+          <div class="pct-label">今日专注</div>
           <div class="focus-btns">
             <button id="btnFocusPause" type="button" tabindex="-1">暂停</button>
           </div>
@@ -560,14 +653,17 @@
 
     <div class="bar-over">
       <div class="top"><span id="epFrac">第 0 集 / 共 0 集</span><span id="epFracPct">0%</span></div>
-      <div class="bar-track"><div class="bar-fill" id="overFill" style="width:0%"></div></div>
+      <div class="bar-track"><div class="bar-fill" id="overFill" style="width:0%"></div><div id="overFillEst"></div></div>
       <div class="bot"><span id="overStart">00:00:00</span><span id="overEnd">00:00:00</span></div>
     </div>
 
     <!-- 番茄钟：开关按钮即开始/结束；按天累计只存数字 -->
     <div class="focus-row">
-      <button id="btnFocus" type="button">番茄钟</button>
-      <span id="focusToday">今日专注 00:00:00</span>
+      <button id="btnFocus" type="button">今日专注</button>
+      <div class="focus-goal">每日目标
+        <input id="focusGoal" type="number" min="0.5" step="0.5" inputmode="decimal" aria-label="每日专注目标小时数">
+        小时
+      </div>
     </div>
   </section>
 
@@ -577,6 +673,7 @@
 
     <div class="refresh-row">
       <button class="primary" id="btnRefresh">从B站读取进度</button>
+      <button class="btn-debug-est" id="btnDebugEst" type="button" title="强制开启AI估算模式，验证动效">调试：开启估算</button>
       <div class="refresh-status" id="refreshStatus">点击后从B站同步当前观看进度</div>
     </div>
 
@@ -727,6 +824,9 @@
 <!-- toast -->
 <div class="toast" id="toast"></div>
 
+<!-- AI 估算模式：底部居中常驻文字提示 -->
+<div class="ai-estimating-label" id="aiEstimatingLabel">AI 估测时间中</div>
+
 <script>
 (function(){
   "use strict";
@@ -739,6 +839,16 @@
   let cur = 1;
   let pos = 0;
   let saveTimer = null;
+  // AI 估算模式：用 view_at + 时间差推算集内进度，蓝色波纹 + 变蓝标识
+  let estimating = false;
+  let estTimer = null;
+  let prevViewAt = 0;      // 上一次刷新的 view_at，用于判断用户是否在连续观看
+  let forceEstimate = false; // 调试模式：强制开启估算，checkEstimate 不主动停止
+  let debugBasePos = null;   // 调试模式模拟的起始进度/时间（不篡改真实 lastProgress）
+  let debugBaseTime = 0;
+  let takeoverUntil = 0;    // 接管动画结束时间戳，期间覆盖层由 CSS 动画控制、数据同步不打断
+  let estClosing = false;   // 取消估算的回退动画进行中
+  let closingTimer = 0;     // 回退动画结束后的复位定时器
 
   const $ = id => document.getElementById(id);
   const fmt = s => { s=Math.max(0,Math.round(s)); const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60;
@@ -910,7 +1020,6 @@
     const doneCount = e ? ((cur-1) + (pos >= e.duration ? 1 : 0)) : 0;
 
     renderPct(pct);
-    $('bigPlayed').textContent = fmt(played)+' / '+fmt(TOTAL);
 
     $('stPlayed').textContent = fmt(played);
     $('stRemain').textContent = fmt(Math.max(0, TOTAL - played));
@@ -919,10 +1028,175 @@
     $('epFrac').textContent = e ? `第 ${cur} 集 / 共 ${active.totalEpisodes} 集（看到第 ${cur} 集）` : '集数信息加载中…';
     $('epFracPct').textContent = (cur/active.totalEpisodes*100).toFixed(1)+'%';
     $('overFill').style.width = Math.min(100, (cur/active.totalEpisodes*100))+'%';
+    if(estimating && !estClosing && Date.now() >= takeoverUntil){
+      $('overFillEst').style.width = Math.min(100, (cur/active.totalEpisodes*100))+'%';
+    }
     $('overStart').textContent = '第 1 集';
     $('overEnd').textContent = `第 ${active.totalEpisodes} 集`;
     $('tag-done').textContent = doneCount;
     maybeCelebrate();
+  }
+
+  // ===== AI 估算模式 =====
+  // 触发：上报进度 + 经过时间 < 该集时长 → 用户大概率还在看这集
+  function checkEstimate(){
+    if(!active || !active.lastProgress) return stopEstimate();
+    const lp = active.lastProgress;
+    if(!lp || typeof lp.progress !== 'number' || !lp.view_at) return stopEstimate();
+    const e = (active.episodes||[])[cur-1];
+    const dur = e ? e.duration : 0;
+    if(!dur) return stopEstimate();
+    // 只有两次刷新间 view_at 有更新（用户在观看）才估算；
+    // view_at 未变说明用户可能暂停了，停止估算（调试强制模式除外）
+    if(lp.view_at <= prevViewAt){
+      prevViewAt = lp.view_at;
+      if(!forceEstimate) return stopEstimate();
+    } else {
+      prevViewAt = lp.view_at;
+    }
+    const elapsed = Math.floor(Date.now()/1000 - lp.view_at);
+    const estPos = lp.progress + elapsed;
+    if(estPos < dur){
+      startEstimate();
+    } else {
+      if(!forceEstimate) stopEstimate();
+    }
+  }
+  function startEstimate(){
+    // 回退动画进行中又重新接管：取消回退，重播接管动画
+    const wasClosing = !!closingTimer;
+    if(wasClosing){ clearTimeout(closingTimer); closingTimer = 0; estClosing = false;
+      document.body.classList.remove('est-closing'); }
+    if(estimating && !wasClosing) return;
+    estimating = true;
+    document.body.classList.add('estimating');
+    playEstimateTakeover();
+    if(estTimer) clearInterval(estTimer);
+    estTimer = setInterval(()=>{
+      const e = active && (active.episodes||[])[cur-1];
+      if(!e){ if(!forceEstimate) stopEstimate(); return; }
+      // 调试模式用模拟基准，正常模式用 B站返回的 progress/view_at
+      let basePos, baseTime;
+      if(forceEstimate && debugBasePos !== null){
+        basePos = debugBasePos; baseTime = debugBaseTime;
+      } else {
+        const lp = active && active.lastProgress;
+        if(!lp || typeof lp.progress !== 'number' || !lp.view_at){ stopEstimate(); return; }
+        basePos = lp.progress; baseTime = lp.view_at;
+      }
+      const elapsed = Math.floor(Date.now()/1000 - baseTime);
+      pos = Math.min(basePos + elapsed, e.duration);
+      // 集数滑块与总体进度同步移动（接管动画期间交给动画，不打断）
+      const sl = $('posSlider');
+      sl.value = Math.round(pos);
+      sl.style.setProperty('--p', (pos/e.duration*100)+'%');
+      if(!estClosing && Date.now() >= takeoverUntil) sl.style.setProperty('--pe', (pos/e.duration*100)+'%');
+      render();
+    }, 1000);
+  }
+  // AI 接管动画：青色覆盖层从 0 点增长到当前进度位置，逐渐替换原色条
+  function playEstimateTakeover(){
+    if(!active) return;
+    const eps = active.episodes || [];
+    const e = eps[cur-1];
+    const TOTAL = active.totalDuration;
+    const played = e ? (e.cumulativeStart||0)+pos : pos;
+    const pct = TOTAL ? (played/TOTAL) : 0;
+    const C = 2*Math.PI*105;
+    const DUR = REDUCED_MOTION ? 0 : 900;
+    const EASE = 'cubic-bezier(.22,.9,.35,1)';
+    takeoverUntil = Date.now() + DUR;
+
+    // 进度环：覆盖圆从全空走到当前 pct
+    const ringEst = $('ringBarEst');
+    ringEst.style.transition = 'none';
+    ringEst.style.opacity = '';   // 清回退淡出，恢复 body.estimating 下 opacity:1
+    ringEst.style.strokeDashoffset = C.toFixed(2);
+    void ringEst.getBoundingClientRect();
+    ringEst.style.transition = DUR ? `stroke-dashoffset ${DUR}ms ${EASE}` : 'none';
+    ringEst.style.strokeDashoffset = (C*(1-pct)).toFixed(2);
+
+    // 总进度横条：覆盖层从 0 宽走到当前集数占比
+    const fe = $('overFillEst');
+    const overPct = Math.min(100, (cur/(active.totalEpisodes||1))*100);
+    fe.style.transition = 'opacity .2s';
+    fe.style.width = '0%';
+    void fe.offsetWidth;
+    fe.style.transition = DUR ? `width ${DUR}ms ${EASE}, opacity .2s` : 'opacity .2s';
+    fe.style.width = overPct + '%';
+
+    // 集数滑块：--pe 从 0% 走到当前 --p（@property 注册后可过渡）
+    const sl = $('posSlider');
+    const pcur = e ? (pos/e.duration*100) : 0;
+    sl.style.setProperty('--pe', '0%');
+    sl.style.transition = DUR ? `--pe ${DUR}ms ${EASE}` : 'none';
+    void sl.offsetWidth;
+    sl.style.setProperty('--pe', pcur + '%');
+
+    // 动画结束后解除过渡（之后每秒直跳跟随），并校准一次终点
+    setTimeout(()=>{
+      if(estClosing) return;              // 期间已取消，回退动画在控制覆盖层
+      if(Date.now() < takeoverUntil) return; // 新一轮接管正在播放，交给新一轮
+      takeoverUntil = 0;
+      if(!estimating || !active) return;
+      const e2 = (active.episodes||[])[cur-1];
+      ringEst.style.transition = 'opacity .2s';
+      ringEst.style.strokeDashoffset = (C*(1-pct)).toFixed(2);
+      sl.style.transition = '';
+      if(e2) sl.style.setProperty('--pe', (pos/e2.duration*100)+'%');
+      fe.style.transition = 'opacity .2s';
+      fe.style.width = Math.min(100, (cur/(active.totalEpisodes||1))*100) + '%';
+    }, DUR + 60);
+  }
+  function stopEstimate(){
+    if(!estimating || estClosing) return;
+    if(estTimer){ clearInterval(estTimer); estTimer = null; }
+    debugBasePos = null;
+    const DUR = REDUCED_MOTION ? 0 : 900;
+    if(!DUR){ _finishEstClose(); return; }
+    // 回退动画：青色覆盖层从当前位置缩回 0，底色条无缝露出（class 保留到缩完）
+    // 缓动用 ease-in——末端加速收走，避免青弧在终点附近慢速爬行形成"残留"
+    estClosing = true;
+    takeoverUntil = 0;
+    document.body.classList.add('est-closing');
+    const EASE = 'cubic-bezier(.42,0,1,1)';
+    const C = 2*Math.PI*105;
+    const ringEst = $('ringBarEst');
+    // stroke-linecap:round 在弧长收到 0 时两端圆头重合为一个圆点残留——
+    // opacity 延后到最后 140ms 快速淡出，正好盖住圆点出现的窗口
+    ringEst.style.transition = `stroke-dashoffset ${DUR}ms ${EASE}, opacity 140ms ease-in ${DUR-140}ms`;
+    ringEst.style.strokeDashoffset = C.toFixed(2);
+    ringEst.style.opacity = '0';
+    const fe = $('overFillEst');
+    fe.style.transition = `width ${DUR}ms ${EASE}, opacity .2s`;
+    fe.style.width = '0%';
+    const sl = $('posSlider');
+    sl.style.transition = `--pe ${DUR}ms ${EASE}`;
+    sl.style.setProperty('--pe', '0%');
+    closingTimer = setTimeout(_finishEstClose, DUR + 60);
+  }
+  function _finishEstClose(){
+    closingTimer = 0;
+    estClosing = false;
+    estimating = false;
+    takeoverUntil = 0;
+    document.body.classList.remove('estimating', 'est-closing');
+    // 覆盖层复位（此时已缩回 0 且随 class 淡出，复位不可见）
+    const C = 2*Math.PI*105;
+    const ringEst = $('ringBarEst');
+    ringEst.style.transition = 'opacity .2s';
+    ringEst.style.strokeDashoffset = C.toFixed(2);
+    ringEst.style.opacity = '';   // 交还 body.estimating class 控制，下次接管可见
+    const fe = $('overFillEst');
+    fe.style.transition = 'opacity .2s';
+    fe.style.width = '0%';
+    const sl = $('posSlider');
+    sl.style.transition = '';
+    sl.style.setProperty('--pe', '0%');
+    if(forceEstimate){
+      forceEstimate = false;
+      $('btnDebugEst').textContent = '调试：开启估算';
+    }
   }
 
   function renderAll(){
@@ -1055,6 +1329,7 @@
   // ===== 切换视频 =====
   async function switchVideo(bvid){
     if(active && active.bvid===bvid) return;
+    stopEstimate();
     await saveCurrentProgressNow();
     try{
       await fetch('/api/tracked/active', {method:'POST', headers:{'Content-Type':'application/json'},
@@ -1199,18 +1474,27 @@
   // 总百分比：老虎机数字滚动 + 进度环跟随（拖动滑块/减少动态时直接跳）
   function renderPct(pct){
     const ring = $('ringBar');
+    const ringEst = $('ringBarEst');
     const C = 2*Math.PI*105;
+    const off = (C*(1-pct/100)).toFixed(2);
+    // 估算运行期（接管/回退动画外）覆盖圆跟随最新进度
+    const syncEst = ()=>{ if(estimating && !estClosing && Date.now() >= takeoverUntil){
+      ringEst.style.transition = 'none';
+      ringEst.style.strokeDashoffset = off;
+    }};
     const str = pct.toFixed(1);
     const snap = REDUCED_MOTION || document.body.classList.contains('scrubbing');
     if(snap){
       ring.style.transition = 'none';
-      ring.style.strokeDashoffset = (C*(1-pct/100)).toFixed(2);
+      ring.style.strokeDashoffset = off;
+      syncEst();
       setPctInstant(str);
       pendingSpin = false;
       return;
     }
     ring.style.transition = 'stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1)';
-    ring.style.strokeDashoffset = (C*(1-pct/100)).toFixed(2);
+    ring.style.strokeDashoffset = off;
+    syncEst();
     if(pendingSpin){ spinPct(str, null, spinMinSteps); } else { setPctInstant(str); }
     pendingSpin = false;
     spinMinSteps = 0;
@@ -1227,7 +1511,7 @@
     });
   }
 
-  // 同步成功：总进度条流光一次性（圆环流光试验后取消，效果不理想）
+  // 同步成功：直线进度条 + 进度环白光扫过（均为一次性）
   function playSheen(){
     if(REDUCED_MOTION) return;
     const bt = document.querySelector('.bar-track');
@@ -1235,6 +1519,12 @@
       bt.classList.remove('sheen');
       void bt.offsetWidth;
       bt.classList.add('sheen');
+    }
+    const ring = document.querySelector('.ring');
+    if(ring){
+      ring.classList.remove('sheen-on');
+      void ring.getBoundingClientRect();
+      ring.classList.add('sheen-on');
     }
   }
 
@@ -1311,35 +1601,79 @@
   // ===================== 番茄钟（纯专注计时，按天累计只存数字） =====================
   // 与同步状态无关，独立于 AppStatus；计时基于时间戳（后台节流不丢秒），UI 每秒刷新。
   const FocusTimer = (()=>{
-    const PERIOD = 25 * 60;      // 弧线转一圈的周期（秒），纯视觉节奏，不到点提醒
+    const DEFAULT_GOAL = 8 * 3600;   // 默认每日目标 8 小时
     const CIRC = 659.734;        // r=105 周长，与总环一致
     let phase = 'idle';          // idle | running | paused
     let base = 0;                // 暂停前已累计秒数
     let startedAt = 0;           // 本段开始时间戳（秒）
     let todaySec = 0;            // 今日累计（服务端为准，离线时内存兜底）
+    let goalSec = DEFAULT_GOAL;  // 每日目标秒数（localStorage focusGoalSec）
     let timer = null;
+    let takeUntil = 0;          // 进入接管动画截止时间戳（期间 render 不写红环，交给 CSS 过渡）
+    let takeTimer = 0;
+    let closeTimer = 0;          // 退出回退动画结束后真正移除 focus-mode 的定时器
+    let focusLock = 0;           // 防连续点击：stop 后短暂禁止 start 的时间戳
 
     const $ = id => document.getElementById(id);
     const elapsed = () => base + (phase === 'running' ? Date.now()/1000 - startedAt : 0);
+    const barFrac = () => Math.max(0, Math.min(1, (todaySec + elapsed()) / goalSec));
 
     function render(){
       const e = elapsed();
-      const s = fmt(e);
+      const total = todaySec + e;           // 环内显示今日累计（含本次）
+      const s = fmt(total);
       if (REDUCED_MOTION) setRollInstant($('focusTime'), s);  // 减少动态：直接跳变不滚
       else spinPct(s, $('focusTime'), 0, false);              // 只滚变化的位（秒位），不全体联动
-      const frac = (e % PERIOD) / PERIOD;
-      $('focusBar').style.strokeDashoffset = CIRC * (1 - frac);
+      // 红环总量 = 每日目标；接管动画进行中不写，交给 CSS 过渡从 0 长到目标进度
+      if(Date.now() >= takeUntil)
+        $('focusBar').style.strokeDashoffset = (CIRC * (1 - barFrac())).toFixed(2);
     }
-    function renderToday(){ $('focusToday').textContent = '今日专注 ' + fmt(todaySec); }
+    function renderToday(){ /* focusToday 已移除，今日累计显示在环内 */ }
+
+    // 进入：红弧从 0 平滑长到当前进度（与 AI 估算接管同款 0.9s）
+    function playBarGrow(){
+      const bar = $('focusBar');
+      bar.style.opacity = '';
+      bar.style.transition = 'none';
+      bar.style.strokeDashoffset = CIRC.toFixed(2);
+      void bar.getBoundingClientRect();
+      if(REDUCED_MOTION){ bar.style.transition = ''; return; }
+      bar.style.transition = 'stroke-dashoffset .9s cubic-bezier(.22,.9,.35,1)';
+      bar.style.strokeDashoffset = (CIRC * (1 - barFrac())).toFixed(2);
+      takeUntil = Date.now() + 900;
+      takeTimer = setTimeout(()=>{
+        takeTimer = 0; takeUntil = 0;
+        bar.style.transition = '';
+        bar.style.strokeDashoffset = (CIRC * (1 - barFrac())).toFixed(2);
+      }, 920);
+    }
+    // 退出：红弧 ease-in 缩回 0（同款回退；末尾 opacity 淡出盖住 round 圆头重合的圆点残留）
+    function playBarShrink(){
+      const bar = $('focusBar');
+      if(takeTimer){ clearTimeout(takeTimer); takeTimer = 0; }
+      takeUntil = 0;
+      if(REDUCED_MOTION){
+        bar.style.transition = ''; bar.style.opacity = '';
+        bar.style.strokeDashoffset = CIRC.toFixed(2);
+        return;
+      }
+      bar.style.transition = 'stroke-dashoffset .9s cubic-bezier(.42,0,1,1), opacity 140ms ease-in 760ms';
+      bar.style.strokeDashoffset = CIRC.toFixed(2);
+      bar.style.opacity = '0';
+    }
 
     function start(){
       if (phase !== 'idle') return;
+      if (Date.now() < focusLock) return;  // 防连续点击：stop 后 300ms 内禁止 start
+      if(closeTimer){ clearTimeout(closeTimer); closeTimer = 0; }  // 回退中重新开始：取消隐藏
+      document.body.classList.remove('focus-closing');
       base = 0; startedAt = Date.now()/1000; phase = 'running';
       document.body.classList.add('focus-mode');
       $('focusRing').setAttribute('aria-hidden','false');
       $('btnFocus').textContent = '结束专注';
       $('btnFocusPause').textContent = '暂停';
-      $('focusTime').textContent = '00:00:00';  // 重置为纯文本，让 spinPct 重建滚轮并滚动（每次开启都有动画）
+      $('focusTime').textContent = fmt(todaySec);  // 重置为今日累计纯文本，让 spinPct 重建滚轮并滚动
+      playBarGrow();
       timer = setInterval(render, 1000);
       render();
     }
@@ -1359,14 +1693,41 @@
     }
     async function stop(){
       if (phase === 'idle') return;
+      focusLock = Date.now() + 300;  // 防连续点击：300ms 内禁止 start
       const e = Math.round(elapsed());
       clearInterval(timer); timer = null;
       phase = 'idle'; base = 0;
+      // 立刻移除 focus-mode 让按钮变回蓝色（focus-closing 接管动画，无 layout 跳变）
       document.body.classList.remove('focus-mode');
-      $('focusRing').setAttribute('aria-hidden','true');
-      $('btnFocus').textContent = '番茄钟';
-      $('focusBar').style.strokeDashoffset = CIRC;
-      setRollInstant($('focusTime'), '00:00:00');  // 保持滚轮结构，别用 textContent 打回纯文本
+      $('btnFocus').textContent = '今日专注';
+      setRollInstant($('focusTime'), fmt(todaySec));  // 停止后回显今日累计（已含本次）
+      const finishClose = ()=>{
+        closeTimer = 0;
+        const fr = document.querySelector('.ring.focus-ring');
+        if(fr) fr.style.transition = 'none';
+        document.body.classList.remove('focus-closing');
+        $('focusRing').setAttribute('aria-hidden','true');
+        requestAnimationFrame(()=>{ if(fr) fr.style.transition = ''; });
+      };
+      if(REDUCED_MOTION){ finishClose(); }
+      else{
+        // 滚轮静态时只有 1 行，需填满 0-9（从当前数字起循环排列）+ 复制一份=20 行，
+        // -10em 显示第 11 行=第 1 行副本，跳回 0 无缝循环
+        document.querySelectorAll('#focusTime .droll').forEach(r=>{
+          const cur = parseInt(r.firstElementChild?.textContent || '0', 10);
+          if(isNaN(cur)) return;
+          r.innerHTML = '';
+          for(let i=0;i<10;i++){
+            const ln = document.createElement('span'); ln.className='dline';
+            ln.textContent = (cur + i) % 10;
+            r.appendChild(ln);
+          }
+          r.innerHTML += r.innerHTML;
+        });
+        document.body.classList.add('focus-closing');
+        playBarShrink();  // 红弧缩回与环左移同时开始
+        closeTimer = setTimeout(finishClose, 950);
+      }
       if (e >= 5) {  // 不足 5 秒视为误触，不记录
         try{
           const r = await fetch('/api/focus', {method:'POST',
@@ -1378,6 +1739,10 @@
       }
     }
     async function init(){
+      // 每日目标：localStorage 持久化（纯本地偏好），非法值回落默认 8 小时
+      const saved = parseInt(localStorage.getItem('focusGoalSec') || '', 10);
+      if(saved && saved >= 300) goalSec = saved;
+      $('focusGoal').value = goalSec / 3600;
       try{
         const r = await fetch('/api/focus');
         const j = await r.json();
@@ -1388,8 +1753,22 @@
 
     $('btnFocus').addEventListener('click', ()=> phase === 'idle' ? start() : stop());
     $('btnFocusPause').addEventListener('click', ()=> phase === 'paused' ? resume() : pause());
-    // 回窗口补一帧：后台 timer 可能被节流，时间按时间戳算不会丢，只需刷新显示
-    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && phase !== 'idle') render(); });
+    $('focusGoal').addEventListener('change', ()=>{
+      let h = parseFloat($('focusGoal').value);
+      if(!isFinite(h) || h <= 0) h = DEFAULT_GOAL / 3600;
+      h = Math.round(Math.min(24, Math.max(0.5, h)) * 2) / 2;  // 0.5~24，0.5 步进
+      goalSec = Math.round(h * 3600);
+      localStorage.setItem('focusGoalSec', String(goalSec));
+      $('focusGoal').value = h;
+      render();  // 运行中改目标，红环立即按新总量重算
+    });
+    // 回窗口补一帧：后台 timer 可能被节流/挂起（系统休眠后 interval 可能已停），时间按时间戳算不会丢，重建 interval + 刷新显示
+    document.addEventListener('visibilitychange', ()=>{
+      if(!document.hidden && phase !== 'idle'){
+        if(phase === 'running'){ clearInterval(timer); timer = setInterval(render, 1000); }
+        render();
+      }
+    });
 
     return { init, phase: ()=>phase };
   })();
@@ -1631,6 +2010,8 @@
         const tb = document.querySelector(`.tab[data-bvid="${CSS.escape(active.bvid)}"] .tbadge`);
         if(tb){ tb.textContent = `${page}/${active.totalEpisodes||'?'}`; }
         active.lastProgress = lp;
+        // 同步成功后检测是否进入 AI 估算模式
+        checkEstimate();
         const t = j.view_at ? new Date(j.view_at*1000).toLocaleString('zh-CN') : '未知';
         reportSyncOk(`已同步：第 ${page} 集，集内 ${fmt(pos)}`);
         playSheen();
@@ -1766,6 +2147,7 @@
           spinMinSteps = 0;     // 首次加载：精确差值
           renderTabs();
           renderAll();
+          checkEstimate();
         } else {
           $('refreshStatus').textContent = '暂无追踪视频，点右上角 + 从B站历史添加';
         }
@@ -1778,8 +2160,9 @@
   }
 
   // ===== 事件绑定 =====
-  $('epSelect').addEventListener('change', ()=>{ selectEp(+$('epSelect').value, false); scheduleSave(); });
+  $('epSelect').addEventListener('change', ()=>{ stopEstimate(); selectEp(+$('epSelect').value, false); scheduleSave(); });
   $('posSlider').addEventListener('input', ev=>{
+    stopEstimate();
     document.body.classList.add('scrubbing');
     pos = +ev.target.value; render();
     ev.target.style.setProperty('--p', (pos/((active.episodes||[])[cur-1]||{duration:1}).duration*100)+'%');
@@ -1787,10 +2170,26 @@
   });
   $('posSlider').addEventListener('change', ()=> document.body.classList.remove('scrubbing'));
   $('posSlider').addEventListener('pointerup', ()=> document.body.classList.remove('scrubbing'));
-  $('btnPrev').addEventListener('click', ()=>{ selectEp(cur-1, false); scheduleSave(); });
-  $('btnDone').addEventListener('click', ()=>{ pos = ((active.episodes||[])[cur-1]||{}).duration||0; render();
+  $('btnPrev').addEventListener('click', ()=>{ stopEstimate(); selectEp(cur-1, false); scheduleSave(); });
+  $('btnDone').addEventListener('click', ()=>{ stopEstimate(); pos = ((active.episodes||[])[cur-1]||{}).duration||0; render();
     scheduleSave(); setTimeout(()=> selectEp(cur+1, false), 250); });
   $('btnRefresh').addEventListener('click', ()=> fetchProgress('manual'));
+  // 调试按钮：强制开启/关闭 AI 估算模式，验证动效用
+  $('btnDebugEst').addEventListener('click', ()=>{
+    if(forceEstimate){
+      forceEstimate = false;
+      stopEstimate();
+      $('btnDebugEst').textContent = '调试：开启估算';
+    } else {
+      forceEstimate = true;
+      // 以当前进度为起点、当前时间为基准，模拟连续观看（进度每秒 +1）
+      const e = active && (active.episodes||[])[cur-1];
+      debugBasePos = e ? Math.min(pos, e.duration) : pos;
+      debugBaseTime = Math.floor(Date.now()/1000);
+      startEstimate();
+      $('btnDebugEst').textContent = '调试：关闭估算';
+    }
+  });
 
   // 空状态引导按钮
   $('emptyAdd').addEventListener('click', ()=>{ historyCache = null; openAddModal(); });
@@ -2235,7 +2634,7 @@
   // ===== 无边框窗口控制（最小化/关闭） =====
   // 启动时 WebView2 会把初始焦点交给页面里第一个可聚焦元素（标题栏按钮/视频栏，
   // 出现焦点白框甚至 tooltip），统一把焦点锁回 body（body 无焦点轮廓）
-  const focusBody = ()=>{ try{ if(document.activeElement!==document.body) document.body.focus(); }catch(e){} };
+  const focusBody = ()=>{ try{ if(document.activeElement!==document.body) document.body.focus({preventScroll:true}); }catch(e){} };
   setTimeout(focusBody, 0);
   setTimeout(focusBody, 300);
   window.addEventListener('focus', focusBody);
@@ -2299,6 +2698,30 @@
       });
       document.body.appendChild(d);
     });
+  })();
+
+  // ===== 最小化恢复后保持滚动位置 =====
+  // WebView2 窗口最小化时，宿主会把控件视口高度压到接近 0，浏览器据此把 scrollTop
+  // 钳制/清零；恢复后原位置就丢了。这里在视口骤缩时记下 scrollTop，恢复时还原。
+  (function preserveScrollOnMinimize(){
+    const de = document.scrollingElement || document.documentElement;
+    const MIN_VH = 50;            // 视口高度低于此值视为已最小化
+    let saved = 0;
+    let minimized = false;
+    const onResize = ()=>{
+      const vh = de.clientHeight || window.innerHeight || 0;
+      if(vh < MIN_VH){
+        if(!minimized){
+          saved = de.scrollTop;
+          minimized = true;
+        }
+      } else if(minimized){
+        minimized = false;
+        // 等布局恢复稳定再还原，避免被 resize 期间的中间尺寸再次钳制
+        requestAnimationFrame(()=>{ de.scrollTop = saved; });
+      }
+    };
+    window.addEventListener('resize', onResize);
   })();
 
   // ===== 自定义悬浮滚动条（离窗口右缘 7px，不与边缘缩放热区冲突） =====
