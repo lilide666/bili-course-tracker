@@ -13,7 +13,7 @@
 说明：
   - 仅绑定 127.0.0.1，不对外暴露。
   - SESSDATA 只在本进程内存中用于请求B站API，不会写入日志、不会回显。
-  - SESSDATA 以 DPAPI 加密存于 .sessdata.bin；.sessdata* 与隐藏文件被静态服务拒绝访问。
+  - SESSDATA 存于系统密钥环（keyring，跨平台）；.sessdata* 与隐藏文件被静态服务拒绝访问。
   - 追踪视频列表与跳跃记录持久化到 tracked_videos.json，无网络也能加载。
 """
 import base64
@@ -73,38 +73,92 @@ def fmt_sec(sec):
     return f"{h:02d}:{m:02d}:{s:02d}"
 
 
-# ===================== SESSDATA 加密存储（Windows DPAPI） =====================
-# 凭据不再以明文落盘：写入 .sessdata.bin（DPAPI CurrentUser 加密 + base64），
-# 只有当前 Windows 账户能解出；旧明文 .sessdata.txt 在读取时自动迁移并删除。
-SESSDATA_BIN = os.path.join(ROOT, ".sessdata.bin")
+# ===================== SESSDATA 加密存储（跨平台 keyring） =====================
+# 凭据不落盘明文：优先用 keyring 库调系统密钥环（Windows DPAPI / macOS Keychain /
+# Linux Secret Service/libsecret）；keyring 不可用时回退到文件存储（chmod 600 仅当前用户可读）。
+# 旧版 Windows DPAPI 的 .sessdata.bin 与旧明文 .sessdata.txt 在读取时自动迁移。
+SESSDATA_BIN = os.path.join(ROOT, ".sessdata.bin")  # 旧 DPAPI 文件 / keyring 回退文件
+KEYRING_SERVICE = "bili-tracker"
+KEYRING_USER = "sessdata"
 
 
 def _sessdata_txt_path():
     return os.path.join(ROOT, ".sessdata.txt")
 
 
-def _dpapi_protect(data: bytes) -> bytes:
-    import ctypes
-    from ctypes import wintypes
-
-    class BLOB(ctypes.Structure):
-        _fields_ = [("cbData", wintypes.DWORD),
-                    ("pbData", ctypes.POINTER(ctypes.c_char))]
-
-    bin_ = BLOB(len(data), ctypes.cast(ctypes.create_string_buffer(data),
-                                       ctypes.POINTER(ctypes.c_char)))
-    out = BLOB()
-    ok = ctypes.windll.crypt32.CryptProtectData(
-        ctypes.byref(bin_), None, None, None, None, 0, ctypes.byref(out))
-    if not ok:
-        raise OSError("CryptProtectData 失败")
+def _kr_available():
+    """检测 keyring 是否可用（已装库 + 有可用后端）。"""
     try:
-        return ctypes.string_at(out.pbData, out.cbData)
-    finally:
-        ctypes.windll.kernel32.LocalFree(out.pbData)
+        import keyring
+        # get_keyring() 在无后端时抛 NoKeyringError，不抛即可用
+        keyring.get_keyring()
+        return True
+    except Exception:
+        return False
+
+
+def _kr_set(value):
+    import keyring
+    keyring.set_password(KEYRING_SERVICE, KEYRING_USER, value)
+
+
+def _kr_get():
+    import keyring
+    return keyring.get_password(KEYRING_SERVICE, KEYRING_USER) or ""
+
+
+def _kr_delete():
+    import keyring
+    try:
+        keyring.delete_password(KEYRING_SERVICE, KEYRING_USER)
+    except Exception:
+        pass
+
+
+def _file_set(value):
+    """keyring 不可用时的回退：明文写文件，chmod 600 仅当前用户可读。"""
+    tmp = SESSDATA_BIN + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write(value)
+    os.replace(tmp, SESSDATA_BIN)
+    try:
+        os.chmod(SESSDATA_BIN, 0o600)
+    except OSError:
+        pass
+
+
+def _file_get():
+    if not os.path.exists(SESSDATA_BIN):
+        return ""
+    with open(SESSDATA_BIN, "r", encoding="utf-8") as f:
+        return f.read().strip()
+
+
+def _store_set(value):
+    if _kr_available():
+        _kr_set(value)
+    else:
+        _file_set(value)
+
+
+def _store_get():
+    if _kr_available():
+        return _kr_get()
+    return _file_get()
+
+
+def _store_delete():
+    if _kr_available():
+        _kr_delete()
+    if os.path.exists(SESSDATA_BIN):
+        try:
+            os.remove(SESSDATA_BIN)
+        except OSError:
+            pass
 
 
 def _dpapi_unprotect(blob: bytes) -> bytes:
+    """旧版 Windows DPAPI 解密，仅用于迁移旧 .sessdata.bin。"""
     import ctypes
     from ctypes import wintypes
 
@@ -125,48 +179,46 @@ def _dpapi_unprotect(blob: bytes) -> bytes:
         ctypes.windll.kernel32.LocalFree(out.pbData)
 
 
-def _write_sessdata_bin(value):
-    """DPAPI 加密后原子写入 .sessdata.bin，并清理旧明文 .sessdata.txt。"""
-    blob = base64.b64encode(_dpapi_protect(value.encode("utf-8")))
-    tmp = SESSDATA_BIN + ".tmp"
-    with open(tmp, "wb") as f:
-        f.write(blob)
-    os.replace(tmp, SESSDATA_BIN)
-    try:
-        if os.path.exists(_sessdata_txt_path()):
-            os.remove(_sessdata_txt_path())
-    except OSError:
-        pass
+def _migrate_old():
+    """从旧 .sessdata.bin（DPAPI）或旧明文 .sessdata.txt 迁移到新存储。"""
+    # 优先 keyring 已有值，不迁移
+    if _store_get():
+        return
+    v = ""
+    if os.path.exists(SESSDATA_BIN):
+        try:
+            with open(SESSDATA_BIN, "rb") as f:
+                raw = base64.b64decode(f.read().strip())
+            v = _dpapi_unprotect(raw).decode("utf-8", "ignore").strip()
+            if v:
+                _store_set(v)
+                print("[凭据] 已将旧 DPAPI 的 .sessdata.bin 迁移到系统密钥环", flush=True)
+        except Exception as e:
+            print(f"[凭据] 读取旧 .sessdata.bin 失败（可能非 Windows 或换了账户）：{e}", flush=True)
+    if not v and os.path.exists(_sessdata_txt_path()):
+        try:
+            with open(_sessdata_txt_path(), "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        v = line
+                        break
+            if v:
+                _store_set(v)
+                print("[凭据] 已将明文 SESSDATA 迁移到系统密钥环，并删除明文文件", flush=True)
+        except Exception as e:
+            print(f"[凭据] 旧明文迁移失败：{e}", flush=True)
 
 
 def get_sessdata():
-    """优先环境变量 BILI_SESSDATA；其次 DPAPI 加密的 .sessdata.bin；
-    兼容旧明文 .sessdata.txt：读到后自动加密迁移并删除明文。"""
+    """优先环境变量 BILI_SESSDATA；其次系统密钥环（keyring）；
+    兼容旧 DPAPI 的 .sessdata.bin 与旧明文 .sessdata.txt：读到后自动迁移。"""
     s = os.environ.get("BILI_SESSDATA", "").strip()
     if s:
         v = s
     else:
-        v = ""
-        if os.path.exists(SESSDATA_BIN):
-            try:
-                with open(SESSDATA_BIN, "rb") as f:
-                    raw = base64.b64decode(f.read().strip())
-                v = _dpapi_unprotect(raw).decode("utf-8", "ignore").strip()
-            except Exception as e:
-                print(f"[凭据] 读取 .sessdata.bin 失败：{e}", flush=True)
-        elif os.path.exists(_sessdata_txt_path()):
-            try:
-                with open(_sessdata_txt_path(), "r", encoding="utf-8") as f:
-                    for line in f:
-                        line = line.strip()
-                        if line and not line.startswith("#"):
-                            v = line
-                            break
-                if v:
-                    _write_sessdata_bin(v)
-                    print("[凭据] 已将明文 SESSDATA 迁移为 DPAPI 加密存储，并删除明文文件", flush=True)
-            except Exception as e:
-                print(f"[凭据] 旧明文迁移失败：{e}", flush=True)
+        _migrate_old()
+        v = _store_get()
     if v.startswith("SESSDATA="):
         v = v[len("SESSDATA="):]
     v = v.rstrip(";").strip().strip('"').strip("'")
@@ -174,28 +226,38 @@ def get_sessdata():
 
 
 def write_sessdata(value):
-    """清洗并加密写入 .sessdata.bin。清洗规则与 get_sessdata() 一致。"""
+    """清洗并写入系统密钥环。清洗规则与 get_sessdata() 一致。"""
     v = (value or "").strip()
     if v.startswith("SESSDATA="):
         v = v[len("SESSDATA="):]
     v = v.rstrip(";").strip().strip('"').strip("'")
     if not v:
         return False
-    _write_sessdata_bin(v)
+    _store_set(v)
+    # keyring 可用时，旧 .sessdata.bin（DPAPI）和 .sessdata.txt 都可以删；
+    # keyring 不可用时 .sessdata.bin 就是回退存储本身，不能删，只删 .sessdata.txt。
+    old_files = [_sessdata_txt_path()]
+    if _kr_available():
+        old_files.append(SESSDATA_BIN)
+    for p in old_files:
+        try:
+            if os.path.exists(p):
+                os.remove(p)
+        except OSError:
+            pass
     return True
 
 
 def delete_sessdata():
-    """删除 .sessdata.bin（及旧明文 .sessdata.txt）。登出时调用。"""
-    removed = False
-    for p in (SESSDATA_BIN, _sessdata_txt_path()):
+    """删除密钥环中的 SESSDATA（及旧 .sessdata.bin / .sessdata.txt）。登出时调用。"""
+    _store_delete()
+    for p in (_sessdata_txt_path(),):
         try:
             if os.path.exists(p):
                 os.remove(p)
-                removed = True
         except OSError:
             pass
-    return removed
+    return True
 
 
 # 全局强制B站相关域名只走 IPv4（用户网络 IPv6 解析会让 Python 挂起几十秒）。
@@ -314,7 +376,7 @@ def bilibili_get_bounded(url, sessdata, timeout=15):
 # ===================== 扫码登录（B站官方 WEB 二维码通道） =====================
 # 流程：start 申请二维码内容（B站同时 Set-Cookie buvid3 等，用 cookiejar 保持）→
 # 前端渲染二维码、轮询 poll；手机 App 扫码确认后 poll 的 data.url 带 SESSDATA，
-# 复用 write_sessdata() 走 DPAPI 落盘——与手动粘贴殊途同归，凭据不回传前端、不落日志。
+# 复用 write_sessdata() 走系统密钥环落盘——与手动粘贴殊途同归，凭据不回传前端、不落日志。
 # 走 WEB 通道（非 TV 通道）：拿到的是网页端会话，不占 TV/手机端登录设备名额。
 # qrcode_key 只存进程内存（180 秒有效），进程退出即消失。
 _QR_BASE = "https://passport.bilibili.com/x/passport-login/web/qrcode"
@@ -1416,7 +1478,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json({"ok": True})
             return
 
-        # 保存 SESSDATA（DPAPI 加密存 .sessdata.bin，无需重启，下次请求即生效）
+        # 保存 SESSDATA（系统密钥环，无需重启，下次请求即生效）
         if path == "/api/sessdata":
             body, err = self._read_body_json()
             if err is not None:

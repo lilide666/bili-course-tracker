@@ -35,7 +35,7 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 
 | 文件 | 内容 | 隐私处理 |
 |---|---|---|
-| `.sessdata.bin` | B站 SESSDATA 凭据 | **Windows DPAPI（CurrentUser）加密 + base64**，仅当前 Windows 账户可解；旧明文 `.sessdata.txt` 读取时自动迁移并删除。也支持环境变量 `BILI_SESSDATA` |
+| `.sessdata.bin` | B站 SESSDATA 凭据 | **跨平台 keyring**（Windows DPAPI / macOS Keychain / Linux Secret Service）；keyring 不可用时回退到 `.sessdata.bin` 明文 + `chmod 600`。旧 DPAPI 的 `.sessdata.bin` 与旧明文 `.sessdata.txt` 在首次读取时自动迁移到 keyring。也支持环境变量 `BILI_SESSDATA` |
 | `tracked_videos.json` | 追踪列表 | **数据最小化**：落盘只存数字字段 `bvid/totalEpisodes/totalDuration/lastProgress/added_at/lastSynced/jumps`；标题、UP 主、封面、集数标题等描述性信息不落盘，每次启动实时从 B站拉取，内存 `_meta_cache` 缓存 |
 | `course_data.json` | 集数缓存 | 同上，仅作离线兜底 |
 | `focus.json` | 番茄钟专注统计 | **数据最小化**：只存 `{"date": "YYYY-MM-DD", "seconds": N}`，按天累计、跨天自动清零；已加入 .gitignore 与 pre-commit 拦截 |
@@ -48,7 +48,7 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 
 ## 隐私与安全红线（不可破坏）
 
-1. **凭据**：SESSDATA 只在进程内存中用于请求 B站 API，不写日志、不回显；落盘必须走 DPAPI（`_dpapi_protect/_dpapi_unprotect`，ctypes 调 crypt32）。
+1. **凭据**：SESSDATA 只在进程内存中用于请求 B站 API，不写日志、不回显；落盘走**跨平台 keyring**（`keyring` 库，自动适配 Windows DPAPI / macOS Keychain / Linux Secret Service），keyring 不可用时回退到 `.sessdata.bin` 明文 + `chmod 600`。旧版 DPAPI 的 `.sessdata.bin` 与旧明文 `.sessdata.txt` 在 `get_sessdata()` 首次调用时自动迁移到 keyring。`write_sessdata()` 写入后清理旧文件（keyring 可用时删 `.sessdata.bin`+`.sessdata.txt`，不可用时只删 `.sessdata.txt`）。
 2. **静态服务拒绝**：`.sessdata*`、点开头隐藏文件、含 `..` 的路径一律返回 **404**（不是 403——404 连"文件是否存在"都不暴露，更稳妥），HTTP 读不到凭据。
 3. **本地接口防护**：每个请求过 `_guard()`——校验 `Host` 必须为 127.0.0.1/localhost（防 DNS rebinding），`Origin`/`Sec-Fetch-Site` 非法则 403（防 CSRF）。
 4. **接口错误统一状态码**：`_err_result(kind, message)`，kind ∈ `network | sessdata | notfound | bili`，由 `_classify_err`/`_kind_from_msg` 自动归类。前端状态模块依赖此字段，新增接口错误必须带 kind。
