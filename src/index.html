@@ -1473,26 +1473,39 @@
         if(from !== to) hasAnySpin = true;
       });
     }
-    chars.forEach((ch, i) => {
+    // 第一遍：先算出每个数字位的滚动步数（不动 DOM）。
+    //   精确滚动：步数 = 数字差值（2→3 滚 1 格、4→8 滚 4 格；用户指定"精确滚动"）。
+    //   steps=0 时分三种情况：
+    //     ① 新建滚轮（!structureOk）→ 强制 10 步整圈（保证 0.0%、100.0% 有动画）
+    //     ② 位数不变且数字没变，但本次有其他位在转 → 强制 10 步（保持视觉协调）
+    //     ③ 位数不变、数字没变、本次无任何位变化 → 跳过（真静止）
+    const plan = chars.map((ch, i) => {
+      if(isSep(ch)) return null;
       const slot = slots[i];
-      if(isSep(ch)) return;
+      const to = parseInt(ch, 10);
+      const from = parseInt(slot.dataset.d ?? '0', 10);
+      let steps = ((to - from) + 10) % 10;
+      if(steps === 0){
+        if(!structureOk || hasAnySpin || minSteps > 0){ steps = 10; }
+        else { return null; }
+      } else if(steps < minSteps){
+        steps += 10;  // 切换视频时差值太小，多滚一圈
+      }
+      return steps;
+    });
+    // 错峰模式（stag>0）全体统一时长：停止顺序 = 启动顺序（左→右依次启停，波浪连贯）。
+    // 统一值按最大格数定速（每格速度仍接近机械翻页）；同时模式（stag=0，实时更新）维持各滚各的时长。
+    const spun = plan.filter(s => s !== null);
+    const uniDur = (stag > 0 && spun.length) ? Math.min(SLOT_DUR, 110 + Math.max(...spun) * 55) : null;
+    chars.forEach((ch, i) => {
+      const steps = plan[i];
+      if(steps === null) return;
+      const slot = slots[i];
       const to = parseInt(ch, 10);
       const from = parseInt(slot.dataset.d ?? '0', 10);
       slot.dataset.d = ch;
       const roll = slot.querySelector('.droll');
-      // 精确滚动：步数 = 数字差值（2→3 滚 1 格、4→8 滚 4 格；用户指定"精确滚动"）。
-      // steps=0 时分三种情况：
-      //   ① 新建滚轮（!structureOk）→ 强制 10 步整圈（保证 0.0%、100.0% 有动画）
-      //   ② 位数不变且数字没变，但本次有其他位在转 → 强制 10 步（保持视觉协调）
-      //   ③ 位数不变、数字没变、本次无任何位变化 → 跳过（真静止）
-      let steps = ((to - from) + 10) % 10;
-      if(steps === 0){
-        if(!structureOk || hasAnySpin || minSteps > 0){ steps = 10; }
-        else { return; }
-      } else if(steps < minSteps){
-        steps += 10;  // 切换视频时差值太小，多滚一圈
-      }
-      const dur = Math.min(SLOT_DUR, 110 + steps * 55);
+      const dur = uniDur ?? Math.min(SLOT_DUR, 110 + steps * 55);
       let html = '';
       for(let k = 0; k <= steps; k++) html += '<span class="dline">' + (((to - k) % 10) + 10) % 10 + '</span>';
       roll.style.transition = 'none';
