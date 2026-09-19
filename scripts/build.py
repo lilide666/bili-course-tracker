@@ -14,6 +14,7 @@ Linux 行为：
   - 依赖（python3-gi/gir1.2-webkit2 等）由 control 的 Depends 声明，apt 自动安装
   - 产出：build/bili-course-tracker_<版本>_<架构>.deb
 """
+import glob
 import os
 import shutil
 import subprocess
@@ -29,7 +30,28 @@ APP_DIR = os.path.join(ROOT, APP_NAME)
 BUILD_DIR = os.path.join(ROOT, "build")
 
 LINUX_BIN = "bili-course-tracker"
-DEB_VERSION = "1.0.0"
+BASE_VERSION = "1.0.0"   # 基础版本；实际 deb 版本自动追加构建号 1.0.0+N
+
+
+def next_deb_version():
+    """读取并递增构建号，返回实际 deb 版本号（如 1.0.0+3）。
+
+    构建号存 build/.buildnum。每次打包 +1，保证版本号严格递增——
+    apt 永远识别为"升级"，直接 apt install 即可覆盖旧版，
+    不会因版本号相同而跳过（也就不需要 --reinstall）。
+    """
+    os.makedirs(BUILD_DIR, exist_ok=True)
+    num_file = os.path.join(BUILD_DIR, ".buildnum")
+    n = 1
+    if os.path.exists(num_file):
+        try:
+            n = int(open(num_file, encoding="utf-8").read().strip()) + 1
+        except ValueError:
+            n = 1
+    with open(num_file, "w", encoding="utf-8") as f:
+        f.write(str(n))
+    return "%s+%d" % (BASE_VERSION, n)
+
 
 # Linux 下自动把项目内 .pydeps 加进路径（与 run.sh 同源，不污染系统 Python）
 _DEPS = os.path.join(ROOT, ".pydeps")
@@ -137,10 +159,15 @@ def build_linux():
 
     arch = subprocess.run(["dpkg", "--print-architecture"],
                           capture_output=True, text=True, check=True).stdout.strip()
+    version = next_deb_version()
 
     deb_root = os.path.join(BUILD_DIR, "deb-root")
     if os.path.exists(deb_root):
         shutil.rmtree(deb_root)
+
+    # 清掉历史 deb（避免 build/ 里堆积多个版本）
+    for old in glob.glob(os.path.join(BUILD_DIR, "%s_*_%s.deb" % (LINUX_BIN, arch))):
+        os.remove(old)
 
     # ---- /opt 源码 ----
     opt_dir = os.path.join(deb_root, "opt", LINUX_BIN)
@@ -198,20 +225,42 @@ Installed-Size: %d
 Description: B站课程观看进度追踪
   本地运行的 B站课程观看进度追踪应用。通过 B站历史接口实时读取观看进度，
   支持多课程追踪、跳跃/回看检测、合集合并、番茄钟等功能。
-""" % (LINUX_BIN, DEB_VERSION, arch, installed_kb))
+""" % (LINUX_BIN, version, arch, installed_kb))
 
     # ---- 构建 .deb（文件所有者归 root:root，无需 sudo 打包）----
     deb_file = os.path.join(BUILD_DIR,
-                            "%s_%s_%s.deb" % (LINUX_BIN, DEB_VERSION, arch))
-    if os.path.exists(deb_file):
-        os.remove(deb_file)
+                            "%s_%s_%s.deb" % (LINUX_BIN, version, arch))
     subprocess.run(["dpkg-deb", "--build", "--root-owner-group",
                     deb_root, deb_file], check=True)
 
+    # ---- 生成一键安装脚本（与 deb 同目录，可随 deb 一起发给别人）----
+    install_sh = os.path.join(BUILD_DIR, "install.sh")
+    with open(install_sh, "w", encoding="utf-8", newline="\n") as f:
+        f.write("""#!/bin/sh
+# 一键安装脚本：终端执行 ./install.sh（会提示输入 sudo 密码）
+cd "$(dirname "$0")" || exit 1
+DEB=$(ls -t %s_*_%s.deb 2>/dev/null | head -1)
+[ -z "$DEB" ] && { echo "未找到安装包 .deb"; exit 1; }
+echo "安装 $DEB ..."
+sudo apt install "./$DEB"
+""" % (LINUX_BIN, arch))
+    os.chmod(install_sh, 0o755)
+
     print("=" * 56)
     print(" 打包完成:", deb_file)
-    print(" 安装命令 : sudo apt install ./%s" % os.path.basename(deb_file))
     print("=" * 56)
+
+    # ---- 本机一键安装：交互式终端里按回车直接装（输 sudo 密码）----
+    if sys.stdin is not None and sys.stdin.isatty():
+        try:
+            ans = input("立即安装到本机？[Y/n] ").strip().lower()
+        except EOFError:
+            ans = "n"
+        if ans in ("", "y", "yes"):
+            subprocess.run(["sudo", "apt", "install", deb_file])
+            print("[*] 安装完成，从应用菜单启动即可")
+    else:
+        print(" 安装方式：双击 deb（软件安装器），或运行 build/install.sh")
 
 
 # ============================ 入口 ============================

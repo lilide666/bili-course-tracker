@@ -22,7 +22,7 @@ B站课程观看进度追踪桌面应用，纯本地运行，通过 B站历史�
 - Windows 打包：`scripts/build.py` + `scripts/build.bat`（PyInstaller **onedir**，`--noconsole`，index.html 内嵌进 `_internal`）。**禁止 onefile**（启动解压慢、退出清理慢，用户明确拒绝过）
 - Windows 开发启动：`scripts\run.bat`（`pyw -3 src\app.py`）；依赖安装：`scripts\install.bat`
 - **Linux 启动**：`bash scripts/run.sh`（原生无边框窗口）。系统库 `sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1`；Python 依赖（keyring pillow qrcode）缺失时自动装到项目内 `.pydeps/` 并设 `PYTHONPATH`（不污染系统 Python，规避 PEP 668）。**数据目录是 XDG `~/.local/share/bili-course-tracker/`**（不再是项目根下中文目录；/opt 与源码目录都不该写运行时数据）。`.pydeps/` 已加入 .gitignore。
-- **Linux 打包**：`python3 scripts/build.py` 产出**源码 deb**（不跑 PyInstaller，133K vs 42M）——源码装 `/opt/bili-course-tracker/`，`/usr/bin/bili-course-tracker` 为启动脚本，运行时依赖走 control 的 `Depends`（python3-gi、gir1.2-gtk-3.0、gir1.2-webkit2-4.1、python3-keyring、python3-pil、python3-qrcode），apt 自动配齐。
+- **Linux 打包**：`python3 scripts/build.py` 产出**源码 deb**（不跑 PyInstaller，133K vs 42M）——源码装 `/opt/bili-course-tracker/`，`/usr/bin/bili-course-tracker` 为启动脚本，运行时依赖走 control 的 `Depends`（python3-gi、gir1.2-gtk-3.0、gir1.2-webkit2-4.1、python3-keyring、python3-pil、python3-qrcode），apt 自动配齐。**版本号自动递增**：实际版本 = `1.0.0+N`（构建号存 build/.buildnum，每次打包 +1），apt 永远识别为升级、直接安装即覆盖——禁止再用固定版本号（会被 apt 判"已是最新"跳过，不得不 --reinstall）。打包同时生成 `build/install.sh` 一键脚本；交互终端打包后按回车即可本机安装。
 
 ## 目录结构
 
