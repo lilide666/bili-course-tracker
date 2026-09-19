@@ -824,7 +824,7 @@
           <input type="range" id="debugStagger" min="0" max="120" step="5" value="65" style="flex:1; accent-color:var(--accent)">
           <span id="debugStaggerVal" style="font-size:12px; color:var(--muted); flex:0 0 76px; text-align:right; font-variant-numeric:tabular-nums">65ms</span>
         </div>
-        <div style="font-size:11.5px; color:var(--muted); margin-top:-6px">0 = 所有数字位同时起跳；越大从左到右的波浪感越强（默认 65）</div>
+        <div style="font-size:11.5px; color:var(--muted); margin-top:-6px">切换视频/首次加载这类展示动画的数字错峰间隔：0 = 同时起跳，越大波浪感越强（默认 65）。实时更新（同步、计时）恒为同时</div>
         <div style="display:flex; align-items:center; gap:10px">
           <button class="btn-debug-est" id="btnDebugEst" type="button" title="强制开启AI估算模式，验证动效" style="margin:0">调试：开启估算</button>
           <span style="font-size:11.5px; color:var(--muted)">强制进入/退出 AI 估算动效（青色波纹），验证用</span>
@@ -1420,6 +1420,9 @@
   //   浏览器控制台 setSpinStagger(65) → 恢复左→右错峰
   // 选择经 localStorage 记忆（键 spinStagger），刷新/重开仍生效；定稿后可删此开关
   let spinStagger = SLOT_STAG;
+  // 一次性覆盖（2026-09 定稿规则）：实时数据更新（番茄钟每秒、同步成功进度有变）用"同时起跳"=0；
+  // 展示型开场（切换视频、首次加载）用 spinStagger 错峰。置 0 后由下一次 spinPct 消费并复位。
+  let nextSpinStagger = null;
   try{ const _s = localStorage.getItem('spinStagger'); if(_s !== null && _s !== '') spinStagger = Math.max(0, +_s || 0); }catch(e){}
   window.setSpinStagger = ms=>{
     spinStagger = Math.max(0, +ms || 0);
@@ -1447,7 +1450,11 @@
   }
   // el 缺省 = bigPct（自动补 % 后缀）；传入其他容器（如番茄钟时间）则只滚数字不加后缀
   // coordinated：是否"一位变、全体转"（百分比用 true，保证 44.0→45.0 时十分位也动；番茄钟用 false，只滚变化的位）
-  function spinPct(str, el, minSteps, coordinated){
+  function spinPct(str, el, minSteps, coordinated, staggerMs){
+    // staggerMs：显式错峰间隔（番茄钟 tick 传 0=同时）；否则用一次性覆盖 nextSpinStagger，再退回全局 spinStagger
+    const stag = (staggerMs !== undefined && staggerMs !== null) ? staggerMs
+               : (nextSpinStagger !== null ? nextSpinStagger : spinStagger);
+    nextSpinStagger = null;
     // minSteps：最小步数（仅切换视频时传 3）。当精确差值 < minSteps 时加 10 步多滚一圈，
     // 保证来回切换进度接近的视频时也有足够的动画时长；普通同步更新不传，保持精确差值。
     minSteps = minSteps || 0;
@@ -1509,7 +1516,7 @@
       roll.innerHTML = html;
       roll.style.transform = 'translateY(-' + steps + 'em)';
       void roll.offsetHeight;  // 强制重排，确保下面的 transition 生效
-      roll.style.transition = 'transform ' + dur + 'ms cubic-bezier(.22,.61,.36,1) ' + (i * spinStagger) + 'ms';
+      roll.style.transition = 'transform ' + dur + 'ms cubic-bezier(.22,.61,.36,1) ' + (i * stag) + 'ms';
       roll.style.transform = 'translateY(0)';
     });
   }
@@ -1665,7 +1672,7 @@
       const total = todaySec + e;           // 环内显示今日累计（含本次）
       const s = fmt(total);
       if (REDUCED_MOTION) setRollInstant($('focusTime'), s);  // 减少动态：直接跳变不滚
-      else spinPct(s, $('focusTime'), 0, false);              // 只滚变化的位（秒位），不全体联动
+      else spinPct(s, $('focusTime'), 0, false, 0);           // 只滚变化的位（秒位）、同时起跳（实时计时无波浪延迟）
       // 红环总量 = 每日目标；接管动画进行中不写，交给 CSS 过渡从 0 长到目标进度
       if(Date.now() >= takeUntil)
         $('focusBar').style.strokeDashoffset = (CIRC * (1 - barFrac())).toFixed(2);
@@ -2132,6 +2139,8 @@
         } else {
           pendingSpin = true;
           spinMinSteps = (context === 'switch') ? 3 : 0;
+          // 实时数据到手（手动/自动同步、首次拉取）→ 数字同时起跳；切换视频保持错峰波浪
+          if(context !== 'switch') nextSpinStagger = 0;
           selectEp(page, true);
         }
         // 更新 header 同步时间 + Tab 徽章 + 列表缓存
