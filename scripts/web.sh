@@ -19,7 +19,9 @@ if ! port_up; then
 fi
 
 if command -v microsoft-edge >/dev/null 2>&1; then
-  setsid microsoft-edge --app="$URL" >/dev/null 2>&1 &
+  # --window-size 每次强制尺寸（Edge 应用窗口会记忆上次大小，不传可能变成竖长条）
+  # --force-dark-mode 让 Edge 界面（含窗口标题栏）走深色，与页面风格一致
+  setsid microsoft-edge --app="$URL" --window-size=1100,760 --force-dark-mode >/dev/null 2>&1 &
 else
   setsid xdg-open "$URL" >/dev/null 2>&1 &
 fi
