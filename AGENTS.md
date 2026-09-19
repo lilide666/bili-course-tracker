@@ -8,7 +8,7 @@
 > 4. **隐私红线**：严禁把 SESSDATA、真实观看记录、真实课程标题/UP 主、cookie、个人路径等写进本文件或任何会提交的文件。举例一律用虚构数据（如"高等数学基础班 · BV1DemoMath01"）。
 > 5. **与用户沟通**：使用中文；先给方案/分析，用户确认后再动手；不要使用"（推荐）""最快上手（3 步）"这类营销腔。
 > 6. **bat 脚本必须纯 ASCII**（GBK cmd 下中文乱码）；中文文件名操作放 build.py。
-> 7. 打包命令：`py -3 build.py`（onedir + --noconsole；应用运行中自动关闭——先 taskkill 请求正常退出、卡住才强杀；打包完成后 `os.startfile` 自动启动新版本）。沙箱环境打包需 `PYTHONDONTWRITEBYTECODE=1`，`PYINSTALLER_CONFIG_DIR` 指向项目内 `build/pyi-cache`。
+> 7. 打包命令：`py -3 scripts\build.py`（onedir + --noconsole；应用运行中自动关闭——先 taskkill 请求正常退出、卡住才强杀；打包完成后 `os.startfile` 自动启动新版本）。沙箱环境打包需 `PYTHONDONTWRITEBYTECODE=1`，`PYINSTALLER_CONFIG_DIR` 指向项目内 `build/pyi-cache`。
 
 ---
 
@@ -19,17 +19,17 @@ B站课程观看进度追踪桌面应用，纯本地运行，通过 B站历史�
 - 后端：`src/server.py`（http.server，仅绑定 127.0.0.1，端口 8765，被占自动向后回退）
 - 前端：`src/index.html`（单文件，原生 JS + CSS，无框架）
 - **唯一桌面入口 `src/app.py`**：平台分支内聚在同一文件、注释分隔——Windows 走 pywebview(WebView2)（启动画面、Win32 边缘缩放），Linux 走 GTK3 + 系统 WebKit2GTK 4.1（详见下文「Linux 原生窗口」）
-- Windows 打包：`build.py` + `打包.bat`（PyInstaller **onedir**，`--noconsole`，index.html 内嵌进 `_internal`）。**禁止 onefile**（启动解压慢、退出清理慢，用户明确拒绝过）
-- Windows 开发启动：`启动.bat`（`pyw -3 src\app.py`）；依赖安装：`安装依赖.bat`
-- **Linux 启动**：`bash 启动.sh`（原生无边框窗口）。系统库 `sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1`；Python 依赖（keyring pillow qrcode）缺失时自动装到项目内 `.pydeps/` 并设 `PYTHONPATH`（不污染系统 Python，规避 PEP 668）。**数据目录是 XDG `~/.local/share/bili-course-tracker/`**（不再是项目根下中文目录；/opt 与源码目录都不该写运行时数据）。`.pydeps/` 已加入 .gitignore。
-- **Linux 打包**：`python3 build.py` 产出**源码 deb**（不跑 PyInstaller，133K vs 42M）——源码装 `/opt/bili-course-tracker/`，`/usr/bin/bili-course-tracker` 为启动脚本，运行时依赖走 control 的 `Depends`（python3-gi、gir1.2-gtk-3.0、gir1.2-webkit2-4.1、python3-keyring、python3-pil、python3-qrcode），apt 自动配齐。
+- Windows 打包：`scripts/build.py` + `scripts/打包.bat`（PyInstaller **onedir**，`--noconsole`，index.html 内嵌进 `_internal`）。**禁止 onefile**（启动解压慢、退出清理慢，用户明确拒绝过）
+- Windows 开发启动：`scripts\启动.bat`（`pyw -3 src\app.py`）；依赖安装：`scripts\安装依赖.bat`
+- **Linux 启动**：`bash scripts/启动.sh`（原生无边框窗口）。系统库 `sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1`；Python 依赖（keyring pillow qrcode）缺失时自动装到项目内 `.pydeps/` 并设 `PYTHONPATH`（不污染系统 Python，规避 PEP 668）。**数据目录是 XDG `~/.local/share/bili-course-tracker/`**（不再是项目根下中文目录；/opt 与源码目录都不该写运行时数据）。`.pydeps/` 已加入 .gitignore。
+- **Linux 打包**：`python3 scripts/build.py` 产出**源码 deb**（不跑 PyInstaller，133K vs 42M）——源码装 `/opt/bili-course-tracker/`，`/usr/bin/bili-course-tracker` 为启动脚本，运行时依赖走 control 的 `Depends`（python3-gi、gir1.2-gtk-3.0、gir1.2-webkit2-4.1、python3-keyring、python3-pil、python3-qrcode），apt 自动配齐。
 
 ## 目录结构
 
 - `src/`：app.py、server.py、index.html、make_icon.py
+- `scripts/`：build.py（一键打包）+ 启动/打包/安装依赖脚本（.bat/.sh）；脚本内先 `cd` 回项目根再执行
 - `assets/app_icon.ico`：打包图标
-- `B站课程进度追踪/`：成品应用（onedir 产物）+ 全部运行时数据
-- `build/`：打包中间产物（可删）
+- `build/`：打包中间产物（可删，最终 deb 也在此）
 - `docs/screenshot.png`：README 截图，**必须用虚构数据生成**，禁止真实课程信息
 - `hooks/pre-commit`：隐私拦截钩子（见下），已通过 `core.hooksPath` 启用
 

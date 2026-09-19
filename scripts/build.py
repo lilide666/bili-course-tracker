@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""一键打包脚本：在项目根目录运行
-  Windows : `py -3 build.py`（或双击 打包.bat）—— PyInstaller onedir + --noconsole
-  Linux   : `python3 build.py` —— 源码组装为 .deb（不打包解释器，依赖走 Depends）
+"""一键打包脚本（位于 scripts/，可从任意目录运行）
+  Windows : `py -3 scripts\build.py`（或双击 scripts\打包.bat）—— PyInstaller onedir + --noconsole
+  Linux   : `python3 scripts/build.py` —— 源码组装为 .deb（不打包解释器，依赖走 Depends）
 
 Windows 行为：
   - 应用正在运行时自动关闭（先请求正常退出，卡住才强杀）
@@ -20,7 +20,8 @@ import subprocess
 import sys
 import time
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+# 本文件在 scripts/ 下：项目根 = 上一级目录
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Windows 产物名（中文）；Linux 二进制/包名用英文，菜单显示名用中文
 APP_NAME = "B站课程进度追踪"

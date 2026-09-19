@@ -3,7 +3,8 @@ REM ====================================================================
 REM  Install dependencies: run ONCE on a new computer
 REM  Installs pywebview (desktop window) and Pillow (icon generation)
 REM ====================================================================
-cd /d "%~dp0"
+REM  Script lives in scripts\; switch to project root.
+cd /d "%~dp0.."
 echo.
 echo ==========================================================
 echo   Installing dependencies (first-time setup only)

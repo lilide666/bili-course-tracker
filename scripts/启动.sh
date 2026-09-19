@@ -3,7 +3,7 @@
 # 系统依赖（deb 名）：python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1
 # Python 依赖：keyring pillow qrcode（缺失自动装到项目内 .pydeps）
 set -e
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."   # scripts/ -> 项目根目录
 
 DEPS_DIR="$PWD/.pydeps"
 export PYTHONPATH="$DEPS_DIR${PYTHONPATH:+:$PYTHONPATH}"
