@@ -1654,6 +1654,7 @@
     let takeTimer = 0;
     let closeTimer = 0;          // 退出回退动画结束后真正移除 focus-mode 的定时器
     let focusLock = 0;           // 防连续点击：stop 后短暂禁止 start 的时间戳
+    let spinHoldUntil = 0;       // 开场整圈滚截止时间戳：期间 render() 跳过数字滚动，防止被秒位变化打断
 
     const $ = id => document.getElementById(id);
     const elapsed = () => base + (phase === 'running' ? Date.now()/1000 - startedAt : 0);
@@ -1667,7 +1668,9 @@
       const e = elapsed();
       const total = todaySec + e;           // 环内显示今日累计（含本次）
       const s = fmt(total);
-      if (REDUCED_MOTION) setRollInstant($('focusTime'), s);  // 减少动态：直接跳变不滚
+      if (Date.now() < spinHoldUntil){
+        // 开场整圈滚进行中：强制放完，本次跳过数字滚动（红环照常更新）
+      } else if (REDUCED_MOTION) setRollInstant($('focusTime'), s);  // 减少动态：直接跳变不滚
       else spinPct(s, $('focusTime'), 0, false, 0);           // 只滚变化的位（秒位）、同时起跳（实时计时无波浪延迟）
       // 红环总量 = 每日目标；接管动画进行中不写，交给 CSS 过渡从 0 长到目标进度
       if(Date.now() >= takeUntil)
@@ -1727,9 +1730,20 @@
       playBarGrow();
       timer = setInterval(render, 1000);
       hbTimer = setInterval(sendHeartbeat, 15000);  // 15s 心跳：崩溃恢复封口边界
-      // 开场整圈滚：错峰波浪（用户指定计时器进入用错峰；随后 render() 同帧 no-op，
-      // 每秒 tick 走 render 的 同时模式，不干扰本次 CSS 过渡）
-      spinPct(fmt(todaySec), $('focusTime'));
+      // 开场整圈滚：错峰波浪（用户指定计时器进入用错峰）。滚完算出实际总时长
+      // （最大 delay+duration）写入 spinHoldUntil，期间 render() 跳过数字滚动——
+      // 否则时钟偏差/秒位进位会让 start 里的首次 render 或第一秒 tick
+      // rebuild 滚轮，把开场动画拦腰打断（用户实测踩坑）
+      if(!REDUCED_MOTION){
+        spinPct(fmt(todaySec), $('focusTime'));
+        let hold = 0;
+        $('focusTime').querySelectorAll('.droll').forEach(r=>{
+          const d = parseFloat(r.style.transitionDelay) || 0;
+          const m = /(\d+)ms/.exec(r.style.transition || '');
+          if(m) hold = Math.max(hold, d + +m[1]);
+        });
+        spinHoldUntil = Date.now() + hold + 60;
+      }
       render();
     }
     async function pause(){
@@ -1761,6 +1775,7 @@
       const e = Math.round(elapsed());
       clearInterval(timer); timer = null;
       clearInterval(hbTimer); hbTimer = null;
+      spinHoldUntil = 0;   // 开场保持结束：收场/后续滚动不再受开场保护影响
       phase = 'idle'; base = 0;
       // 立刻移除 focus-mode 让按钮变回蓝色（focus-closing 接管动画，无 layout 跳变）
       document.body.classList.remove('focus-mode');
