@@ -14,13 +14,15 @@
 
 ## 项目概览
 
-B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内嵌 WebView2 窗口），纯本地运行，通过 B站历史接口实时读取观看进度，支持多课程追踪、跳跃/回看检测、100% 庆祝动效、App 扫码登录（官方 WEB 二维码通道，手动粘贴 SESSDATA 兜底）。
+B站课程观看进度追踪桌面应用，纯本地运行，通过 B站历史接口实时读取观看进度，支持多课程追踪、跳跃/回看检测、100% 庆祝动效、App 扫码登录（官方 WEB 二维码通道，手动粘贴 SESSDATA 兜底）。两端功能保持一致：无边框窗口 + 页面自绘深色标题栏 + 拖动 + 双击最大化 + 八向缩放。
 
-- 后端：`src/server.py`（http.server，仅绑定 127.0.0.1，端口 8765，被占自动回退 8775）
+- 后端：`src/server.py`（http.server，仅绑定 127.0.0.1，端口 8765，被占自动向后回退）
 - 前端：`src/index.html`（单文件，原生 JS + CSS，无框架）
-- 入口：`src/app.py`（pywebview 窗口、启动画面、八向缩放、托盘式关闭）
-- 打包：`build.py` + `打包.bat`（PyInstaller **onedir**，`--noconsole`，index.html 内嵌进 `_internal`）。**禁止 onefile**（启动解压慢、退出清理慢，用户明确拒绝过）
-- 开发启动：`启动.bat`（`pyw -3 src\app.py`）；依赖安装：`安装依赖.bat`
+- **唯一桌面入口 `src/app.py`**：平台分支内聚在同一文件、注释分隔——Windows 走 pywebview(WebView2)（启动画面、Win32 边缘缩放），Linux 走 GTK3 + 系统 WebKit2GTK 4.1（详见下文「Linux 原生窗口」）
+- Windows 打包：`build.py` + `打包.bat`（PyInstaller **onedir**，`--noconsole`，index.html 内嵌进 `_internal`）。**禁止 onefile**（启动解压慢、退出清理慢，用户明确拒绝过）
+- Windows 开发启动：`启动.bat`（`pyw -3 src\app.py`）；依赖安装：`安装依赖.bat`
+- **Linux 启动**：`bash 启动.sh`（原生无边框窗口）。系统库 `sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1`；Python 依赖（keyring pillow qrcode）缺失时自动装到项目内 `.pydeps/` 并设 `PYTHONPATH`（不污染系统 Python，规避 PEP 668）。**数据目录是 XDG `~/.local/share/bili-course-tracker/`**（不再是项目根下中文目录；/opt 与源码目录都不该写运行时数据）。`.pydeps/` 已加入 .gitignore。
+- **Linux 打包**：`python3 build.py` 产出**源码 deb**（不跑 PyInstaller，133K vs 42M）——源码装 `/opt/bili-course-tracker/`，`/usr/bin/bili-course-tracker` 为启动脚本，运行时依赖走 control 的 `Depends`（python3-gi、gir1.2-gtk-3.0、gir1.2-webkit2-4.1、python3-keyring、python3-pil、python3-qrcode），apt 自动配齐。
 
 ## 目录结构
 
@@ -36,19 +38,20 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 | 文件 | 内容 | 隐私处理 |
 |---|---|---|
 | `.sessdata.bin` | B站 SESSDATA 凭据 | **跨平台 keyring**（Windows DPAPI / macOS Keychain / Linux Secret Service）；keyring 不可用时回退到 `.sessdata.bin` 明文 + `chmod 600`。旧 DPAPI 的 `.sessdata.bin` 与旧明文 `.sessdata.txt` 在首次读取时自动迁移到 keyring。也支持环境变量 `BILI_SESSDATA` |
-| `tracked_videos.json` | 追踪列表 | **数据最小化**：落盘只存数字字段 `bvid/totalEpisodes/totalDuration/lastProgress/added_at/lastSynced/jumps`；标题、UP 主、封面、集数标题等描述性信息不落盘，每次启动实时从 B站拉取，内存 `_meta_cache` 缓存 |
+| `tracked_videos.json` | 追踪列表 | **数据最小化**：落盘只存数字字段 `bvid/totalEpisodes/totalDuration/lastProgress/added_at/lastSynced/jumps/is_season/season_id`；标题、UP 主、封面、集数标题等描述性信息不落盘，每次启动实时从 B站拉取，内存 `_meta_cache` 缓存 |
 | `course_data.json` | 集数缓存 | 同上，仅作离线兜底 |
 | `focus.json` | 番茄钟专注统计 | **数据最小化**：只存 `{"date": "YYYY-MM-DD", "seconds": N}`，按天累计、跨天自动清零；已加入 .gitignore 与 pre-commit 拦截 |
 | `covers/` | 封面图缓存 | 可删，会重新拉取 |
 
 路径约定（server.py 顶部）：
-- **ROOT**：frozen 时 = exe 所在目录；源码运行时 = `../B站课程进度追踪`（与打包版共用同一份数据）
+- **ROOT**：优先级 = 环境变量 `BILI_TRACKER_ROOT`（Linux app.py 在 import server 前设置为 XDG 目录）> Windows frozen 时 exe 所在目录 > Windows 源码运行时 `../B站课程进度追踪`（与打包版共用同一份数据）> Linux frozen 且 exe 目录不可写时 XDG 回退
 - **FRONTEND_DIR**：frozen 时 = `sys._MEIPASS`（_internal）；源码时 = `src/`
+- `/api/icon/file`：先读 ROOT 下 `app_icon_preview.png`（用户换过的图标），无则回退 `<项目根>/assets/app_icon.ico`（PIL 转 PNG）——数据目录迁移后 XDG ROOT 里没有 preview 文件，不回退就会 404 变黑
 - PyInstaller `--add-data`/`--icon` 相对路径是相对 `--specpath` 解析的，build.py 一律用绝对路径
 
 ## 隐私与安全红线（不可破坏）
 
-1. **凭据**：SESSDATA 只在进程内存中用于请求 B站 API，不写日志、不回显；落盘走**跨平台 keyring**（`keyring` 库，自动适配 Windows DPAPI / macOS Keychain / Linux Secret Service），keyring 不可用时回退到 `.sessdata.bin` 明文 + `chmod 600`。旧版 DPAPI 的 `.sessdata.bin` 与旧明文 `.sessdata.txt` 在 `get_sessdata()` 首次调用时自动迁移到 keyring。`write_sessdata()` 写入后清理旧文件（keyring 可用时删 `.sessdata.bin`+`.sessdata.txt`，不可用时只删 `.sessdata.txt`）。
+1. **凭据**：SESSDATA 只在进程内存中用于请求 B站 API，不写日志、不回显；落盘走**跨平台 keyring**（`keyring` 库，自动适配 Windows DPAPI / macOS Keychain / Linux Secret Service），keyring 不可用时回退到 `.sessdata.bin` 明文 + `chmod 600`。`_kr_available()` 只检测库和后端是否存在，**实际读写 `_store_get`/`_store_set` 必须 try-except**——Linux 无 D-Bus/Secret Service 时 `keyring.get_password` 会抛 `InitError`，必须回退明文文件。**Linux 必须复用持久 SecretService 客户端**（`_get_kr_persistent()` 全局单例）+ 凭据值缓存（`_sessdata_cache`）：keyring SecretService 后端每次调用都新建并立即销毁 D-Bus 连接，gnome-keyring 在异步属性读取途中遇客户端断开会触发 GIO 断言（`gdbusconnection.c invoke_get_property_in_idle_cb: error != NULL`）SIGABRT，表现为每次启动都弹"内部错误"。旧版 DPAPI 的 `.sessdata.bin` 与旧明文 `.sessdata.txt` 在 `get_sessdata()` 首次调用时自动迁移到 keyring。`write_sessdata()` 写入后清理旧文件（keyring 可用时删 `.sessdata.bin`+`.sessdata.txt`，不可用时只删 `.sessdata.txt`）。
 2. **静态服务拒绝**：`.sessdata*`、点开头隐藏文件、含 `..` 的路径一律返回 **404**（不是 403——404 连"文件是否存在"都不暴露，更稳妥），HTTP 读不到凭据。
 3. **本地接口防护**：每个请求过 `_guard()`——校验 `Host` 必须为 127.0.0.1/localhost（防 DNS rebinding），`Origin`/`Sec-Fetch-Site` 非法则 403（防 CSRF）。
 4. **接口错误统一状态码**：`_err_result(kind, message)`，kind ∈ `network | sessdata | notfound | bili`，由 `_classify_err`/`_kind_from_msg` 自动归类。前端状态模块依赖此字段，新增接口错误必须带 kind。
@@ -85,7 +88,7 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 - 钩子：`window.startConfettiRain/stopConfettiRain/spinPct/setPctInstant`。
 
 ### 其他动效（只动 transform/opacity）
-- 同步呼吸灯 syncDot（tag-sync 内，文案 #tagSyncTxt）；切换视频 `.swap-in` 180ms 淡入；跳跃列表 `.stagger` 20ms 错开；同步成功 `playSheen()` 一次性流光——**直线条 `.bar-track.sheen`（::after 白色渐变高光从左扫到右）和进度环 `.ring.sheen-on` 都有**。圆环扫光实现（**必须用锥形渐变彗星，不要用实心白弧**——单段白色 stroke 短弧会是"一根白柱子"，SVG stroke 无法沿弧线方向做线性渐变）：`.ring-sheen` 是 `.ring`（relative,240×240）内绝对定位的 div（不是 SVG 元素），`conic-gradient` 在 300°→360° 区间从透明渐变到白色（.06@324°/.30@346°/.85@360°，亮头在 0°、尾迹沿运动反方向衰减），再用 `radial-gradient` mask 只留半径 98~112px 的 14px 环带（与 stroke-width 14 对齐），`@keyframes ringSheen` rotate 0→360° 扫一周，opacity 0→1(14%)→1(82%)→0。**时长 0.48s linear（必须与直线条线速度统一，不要 0.9s）**：直线条 0.9s ease-out 走 1.6 倍条宽（默认 1120 窗条约 775px，亮头过条约 0.56s），圆环周长 660px，0.48s 对应 ~1375px/s 与直线条平均速度一致；0.9s 会让圆环慢一倍。直线条同款 0.9s ease-out。旧记录里"圆环流光取消、不要再加"已过时（2026-09 用户要求恢复为与直线条同款）。
+- 同步呼吸灯 syncDot（tag-sync 内，文案 #tagSyncTxt）；切换视频 `.swap-in` 180ms 淡入；跳跃列表 `.stagger` 20ms 错开；同步成功 `playSheen()` 一次性流光——**只有直线条 `.bar-track.sheen`**（::after 白色渐变高光从左扫到右，0.9s ease-out）；`fetchProgress` 的 `switch` 上下文不播流光（切换已有 .swap-in 淡入，紧跟流光杂乱）。**圆环流光已彻底移除（2026-09 最终决定，不要再加）**：先后尝试实心白弧（"一根白柱子"）、锥形渐变彗星、90° 长尾多级渐变，均达不到预期——conic 亮区无论怎么调，运动时要么像方块、要么尾迹不可见。`.ring-sheen` / `@keyframes ringSheen` / `#ringSheen` 元素 / playSheen 圆环分支均已删除。
 - Tab 栏悬停上浮：`.tabs` 需 `padding:8px 2px 12px` 留白，否则被 `overflow-x:auto` 容器裁切。
 - 红线：`@media (prefers-reduced-motion: reduce)` 全停用；`body.doc-hidden`（visibilitychange）暂停循环动画。
 - 标题栏按钮 `tabindex="-1"` + 无 `:focus` outline，启动/聚焦时 `document.body.focus({preventScroll:true})`，防白框且避免聚焦把页面拉回顶部；用 `aria-label` 不用 `title`。
@@ -95,6 +98,7 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 ### AI 估算模式（集内进度时间差推算）
 - **背景**：B站历史接口的 `progress` 有上报延迟（心跳15秒/次，聚合可能更久），无法拿到实时播放进度。用 `view_at`（上报时间戳）+ 时间差推算当前集内进度。
 - **触发条件**：`progress + (now - view_at) < 当前集时长` → 上报时的进度 + 过去了多久，还没超过这集总时长，认为用户大概率还在看这集。不依赖跨集检测，单集即可判断。**额外限制：必须两次刷新间 `view_at` 有更新**（`lp.view_at > prevViewAt`）才进入估算——若 `view_at` 不变说明用户可能暂停了，此时不估算（避免进度虚涨）。`prevViewAt` 变量记录上一次的 view_at。
+- **切换/添加视频后误触发估算坑（已修，勿回退）**：`prevViewAt` 是视频级状态，**切换视频时必须重置为 0**（`switchVideo` 里 `stopEstimate()` 后紧跟 `prevViewAt = 0`），否则新视频的 `view_at` 会和上一个视频（或初始 0）比较，只要新视频近期看过就被判为"连续观看"而误开估算。`checkEstimate` 中 `prevViewAt === 0` 表示"切换后第一次刷新/首次加载"，只记录基准 `prevViewAt = lp.view_at` 不启动估算（`forceEstimate` 调试模式除外），等下一次刷新 `view_at` 真正变大才估算。`bootstrap` 首次加载也走此分支（初始 `prevViewAt = 0`），避免打开应用即误开。
 - **调试按钮**：`#btnDebugEst`（"从B站读取进度"按钮下方），点击强制切换 `forceEstimate` 标志并 `startEstimate()/stopEstimate()`，绕过 `view_at` 更新检查，用于验证动效。`stopEstimate()` 时会重置 `forceEstimate` 并恢复按钮文字。调试开启时用 `debugBasePos`（当前 pos）/`debugBaseTime`（当前时间戳）作模拟基准，进度从当前位置每秒 +1 往前走（不篡改真实 `lastProgress`）；直接用真实 `view_at` 会因上报时间过旧直接顶到集末尾，看不出走动效果。
 - **运行逻辑**：进入估算模式后每秒 `pos = min(baseProgress + (now - baseViewAt), 该集时长)`，同时更新集数滑块（`posSlider.value` + `--p`）并 `render()`——`render()` 本身不更新滑块（滑块只在 `selectEp` 时同步），必须在 timer 里手动同步，否则估算时只有总百分比/环在动、滑块不动。总百分比/进度环/总进度条/集数滑块四处数据同源、每秒一起走。
 - **退出条件**：切换视频、手动拖动进度条、手动切集（上一集/下一集/选集）时 `stopEstimate()`。
@@ -106,6 +110,16 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
   - 估算色调 = 青蓝渐变 `#38e0ff → #4f8fff`（原色是蓝紫 `#6ea8ff → #8b5cf6`，方向/结构相同只换色调，禁止用纯色覆盖；渐变定义在 SVG `<defs>` 的 `#gEst`，与 `#g` 同结构）。估算时底色条不再换色，青色只存在于覆盖层；thumb 只换边框色，保持白底细边原样。注意不要给"今日专注"按钮变色——它是 primary 渐变按钮不是进度条。
   - 窗口底部居中常驻文字"AI 估测时间中"（`.ai-estimating-label`，圆角胶囊，蓝色）。
 - **关键函数**：`checkEstimate()` / `startEstimate()` / `playEstimateTakeover()` / `stopEstimate()` / `_finishEstClose()`，变量 `estimating` / `estTimer` / `prevViewAt` / `forceEstimate` / `debugBasePos` / `debugBaseTime` / `takeoverUntil` / `estClosing` / `closingTimer`。
+
+### B站合集（ugc_season）合并追踪
+- **背景**：B站"合集"是 UP 主将多个**独立 BV** 视频整理成的一组（区别于同一 BV 的多P）。原程序把每个 BV 当独立追踪条目，无法统一算总进度/切集。
+- **交互流程**：添加视频时，`fetch_video_info` 检测 B站 view 接口返回的 `ugc_season` 字段；若存在，`/api/tracked/add` 返回 `{ok:true, need_confirm:true, season:{season_id,title,ep_count}}`，前端在该历史条目行内展开两个按钮"仅追踪此视频"/"合并合集(N集)"由用户选择（**不再弹二次确认框**，避免打断浏览历史列表）。选合并→ `merge_season:true`；选仅追踪→ `merge_season:false`。
+- **合并实现**：`fetch_season_archives(season_id, sessdata, ref_bvid)` 调 view 接口取 `ugc_season.sections[].episodes` 展平为合集的 episodes（**不调额外合集接口**，season/info 接口 404 且 wbi 签名不必要）。每集带自己的 `bvid`，条目标识 bvid 用首集 bvid。**合集封面用首集视频的 `pic` 字段**（`ugc_season.cover` 常为纯黑合集封面图，体验差）。
+- **episodes 结构统一**：多P视频和合集的 episodes 每集都有 `bvid` 字段——多P视频所有集 bvid 相同；合集每集 bvid 不同。**合集每集的 `page` 是合集内集序号（1,2,3...），不是视频内部分P page**（合集每集都是独立视频，内部 page 恒为 1，直接用会导致下拉框全显示"第1集"）。前端 `curBvid()` 取当前集的 bvid 用于跳转/打开B站。
+- **进度同步**：`fetch_progress(sessdata, bvid, episode_bvids)` 对合集传入所有集的 bvid 列表，在历史里搜索任一命中（不设 stop_bvid），取 view_at 最新的，再把命中的 bvid 映射回合集内集序号作为 `page` 返回。
+- **合并冲突处理**：合并时若合集内某些视频已被单独追踪，自动移除这些单视频条目，并迁移最新一条的 `lastProgress`（page 映射为合集集序号）。
+- **落盘字段**：`is_season`（bool）和 `season_id` 落盘；`_enrich_video` 对合集条目调 `fetch_season_archives` 而非 `fetch_video_info`。
+- **wbi 签名**（已实现但当前未使用）：`wbi_sign()` + `_get_wbi_keys()` 从 nav 接口取 img/sub_key，固定重排表混 mixin_key，md5 签 w_rid。后续若需调 wbi 接口（如 seasons_archives_list）可直接用。
 
 ### 跳跃/回看记录（server.py `record_jump_if_needed`）
 - 三类判定：跨集向后 gap≥3、跨集向前 gap≥5、**集内同集进度倒退≥180 秒**（kind="time"）。
@@ -147,23 +161,37 @@ B站课程观看进度追踪桌面应用：pywebview（本地 HTTP 服务 + 内�
 ### 同步与轮询
 - B站请求走 `_https_get` 连接复用（threading.local 每线程每域名一条 HTTPSConnection，出错 drop 重建重试一次）；错误文案 `_friendly_err`（DNS/超时/证书）；code=-101 → needSessdata。
 - **历史翻页协议**：游标在 `data.cursor.view_at`（秒级时间戳），下一页传 `view_at=<上页 view_at>`；旧 `max`/`data.page` 已失效（传了返回首页，曾导致只扫 60 条）。`fetch_progress` 必传 stop_bvid，命中即停（通常 1 页）。
-- 自动同步间隔可配（localStorage `autoSyncMin`，5/10/15/30 分钟）；`fetchProgress` 有 `fpInFlight` 互斥防并发。
+- 自动同步间隔可配（localStorage `autoSyncMin`，5/10/15/30 分钟）。
+- **同步代次 `syncGen`（并发防重，勿回退）**：`switchVideo` 开始时和每次 `fetchProgress` 进入时 `++syncGen`；响应解析后先比 `gen !== syncGen`，落后即整响应作废（成功/失败/异常三个分支都守；finally 里 `resetAutoSync` 也只许最新请求执行）。`switchVideo` 还必须立即清 `autoSyncTimer` + `stopSyncRetry()`。旧坑：无此机制时旧视频的自动同步/重试与切换请求并发、乱序返回，每次成功都 `playSheen()`，表现为"来回切换多次流光"；旧记录里"fpInFlight 互斥"并不存在，以此条为准。
 - 全量轮询 `pollAllVideos` 每 15 分钟刷非当前视频徽章（间隔 1.2s，needSessdata 时 break）；visibilitychange 回窗口距 lastSyncAt>10min 静默补同步。
 - 启动静默同步失败退避重试 5/15/30s×5（needSessdata 除外），监听 window online 即时重试。开机横幅根因多为开机瞬间网络未就绪，属正常，会自动恢复。
 
 ### 窗口与交互（app.py）
-- tkinter 独立线程启动画面（stop_evt 轮询关闭）；主窗口 `hidden=True` + `events.loaded` 后 show()；关 X 先 `api.hide_window` 再 `/api/quit`；`webview.start()` 后 `os._exit(0)` 秒关。
-- **八向缩放**：JS 边缘热区 `.rz` setPointerCapture 只报方向 → `api.resize_edge(edge)` → Python 端 GetCursorPos+GetWindowRect（物理像素同坐标系）算"边缘=鼠标" → SetWindowPos 一次完成位置+尺寸。**严禁在 JS 端用 window.screenX/innerWidth 算目标尺寸**（几何滞后一帧，拖 w/n 边误差正反馈发散，窗口飞出屏幕）；pywebview 的 win.resize+FixPoint 同样不可用。hwnd 取法：`self._win.native.Handle.ToInt32()`（.NET IntPtr 不能直接 int()）。最小尺寸由 pywebview MinimumSize 在 WM_WINDOWPOSCHANGING 兜底。
+- **统一入口**：app.py 内 `run_windows()`（pywebview）与 `run_linux()`（GTK+WebKit）两个分支，共用 `start_http_server()`（端口 8765 起向后回退 10 个、回写 srv.PORT）与常量；改窗口行为必须两端同步。
+- Windows：tkinter 独立线程启动画面（stop_evt 轮询关闭）；主窗口 `hidden=True` + `events.loaded` 后 show()；关 X 先 `api.hide_window` 再 `/api/quit`；`webview.start()` 后 `os._exit(0)` 秒关。
+- **Windows 八向缩放**：JS 边缘热区 `.rz` setPointerCapture 只报方向 → `api.resize_edge(edge)` → Python 端 GetCursorPos+GetWindowRect（物理像素同坐标系）算"边缘=鼠标" → SetWindowPos 一次完成位置+尺寸。**严禁在 JS 端用 window.screenX/innerWidth 算目标尺寸**（几何滞后一帧，拖 w/n 边误差正反馈发散，窗口飞出屏幕）；pywebview 的 win.resize+FixPoint 同样不可用。hwnd 取法：`self._win.native.Handle.ToInt32()`（.NET IntPtr 不能直接 int()）。最小尺寸由 pywebview MinimumSize 在 WM_WINDOWPOSCHANGING 兜底。
 - 空状态引导页：`body.empty` 隐藏 header/panel/footer。
 - 弹窗打开锁定主界面滚动；toast 底部居中、z-index 3001、宽度 `min(62vw,520px)`；Tab 栏悬停滚轮可左右滚。
 - 快捷键：← 上一集；→ "本集看完，跳下一集"（控制区只有"上一集"和"本集看完，跳下一集"两个按钮，原重复的"下一集"已删）。
 
+### Linux 原生窗口（app.py `run_linux`，GTK3 + WebKit2GTK 4.1）
+- **无边框**：`Gtk.Window.set_decorated(False)`；窗口 RGBA + `set_app_paintable`，标题栏完全由页面 `.titlebar` 承担（页面 bootstrap 检测到注入的 `window.pywebview` 即不加 `browser-mode`，标题栏保留）。
+- **pywebview shim 必须 DOCUMENT_START 注入**（`WebKit.UserScript` + `UserContentManager`）：页面启动早期就判断 `window.pywebview`；shim 的 `minimize`/`hide_window` 通过 `webkit.messageHandlers.native.postMessage` 发消息（`register_script_message_handler("native")`），`resize_edge` 留空。
+- **拖动/缩放必须走原生事件，不能走 JS 消息**：Wayland 下 `begin_move_drag`/`begin_resize_drag` 要合成器接管且需要按下事件的 serial/time，JS 异步桥拿不到。在 WebView 的 `button-press-event` 里用事件坐标判断：①边缘 7px 边带 → 四角/四边 `begin_resize_drag`；②标题栏 38px 高、且不在右侧 92px 按钮区 → 单击 `begin_move_drag`、双击切换最大化。按钮区点击 return False 照常下发，页面按钮才能收到。
+- **PyGObject 的 drag API 是老签名**：`begin_resize_drag(edge, button, root_x, root_y, time)`（5 参，**没有 device**）、`begin_move_drag(button, root_x, root_y, time)`（4 参）。多传 device 会静默失败（旧坑：拖不动窗口）。
+- **圆角只能由页面自绘**：Wayland 下 WebKit 内容在独立矩形 subsurface，GTK 层 CSS `border-radius` 裁不到（旧坑：四角全直）。做法：WebView `set_background_color(透明 RGBA)` + GTK 窗口透明 + 注入脚本给 `<html>` 加 `linux-native` 类，CSS 里 `html.linux-native body{border-radius:12px}`；最大化时由 `window-state-event` 经 `run_javascript` 切 `native-maximized` 类取消圆角。加载真实页面前先 `load_html` 一帧深色圆角占位，防透明穿帮。
+- 窗口尺寸/最大化状态存 ROOT 下 `ui_state.json`（非追踪数据，不进 .gitignore 拦截名单但也无需提交——在 XDG 数据目录里）。
+
 ## 环境教训
 
 - Windows 11，Python 3.14（`py -3`），PyInstaller 6.22.2，pywebview/Pillow 已装。
+- **Linux（Ubuntu 26.04 / Wayland）桌面方案定为 GTK3 + 系统 WebKit2GTK 源码 deb**：不要在 Linux 上用 PyInstaller（包大、且要处理显卡/keyring 一堆打包问题），也不要用 Edge `--app`（标题栏跟 GTK 主题、无法可靠去掉，PWA window-controls-overlay 在 --app 下不生效）。改窗口逻辑时 app.py 两个平台分支一起改。
 - **改动后必须 grep 自查关键声明已落盘**——"已改"的口头/摘要声明不可信（出现过摘要说已改、实际漏改的情况）；接手会话或恢复上下文时先以代码实际状态为准再动手。
+- **推送规则（2026-09 用户确认，勿违反）**：日常改动只在**本地保存（commit），不主动 `git push`**；一批功能告一段落、**经用户确认后**才推送（大版本号提升时同理）。推送前必须把累积改动整理进 CHANGELOG.md，与代码一起提交——禁止只推代码不带日志，也禁止未经用户确认自行推送。
 - 沙箱禁止 Python 往安装目录写 `__pycache__/*.pyc`（PyInstaller 报 "hit restricted"）：`PYTHONDONTWRITEBYTECODE=1` + `py -3 -B` + `PYINSTALLER_CONFIG_DIR` 指项目内。
 - PowerShell 执行策略可能禁止 .ps1；复杂文件操作用 Python 脚本而非内联 PowerShell（引号嵌套易出错）。
-- 修改 index.html 后验证：提取 `<script>` 内容 `node --check` 语法；**动效类改动必须调用工作区 skill `ui-motion-verify`**（`.trae/skills/ui-motion-verify/SKILL.md`：pywebview 真实窗口 + PrintWindow 截图 + evaluate_js 采样 transform/opacity，含可复用脚本骨架和采样踩坑），不要只靠静态分析或"代码看起来对"——本项目动效坑（数字落位错、动画被中间帧打断）全是实测才发现的。
+- 修改 index.html 后验证：提取 `<script>` 内容 `node --check` 语法；**动效类改动必须实测**，不要只靠静态分析或"代码看起来对"——本项目动效坑（数字落位错、动画被中间帧打断、渐变退化成方块）全是实测才发现的。平台分工：
+  - Windows：工作区 skill `ui-motion-verify`（`.trae/skills/ui-motion-verify/SKILL.md`：pywebview 真实窗口 + PrintWindow 截图 + evaluate_js 采样）
+  - Linux：工作区 skill `linux-ui-motion-verify`（`.trae/skills/linux-ui-motion-verify/SKILL.md`：GTK 离屏窗口 + 系统 WebKit 加载真实页面 + 定时 pixbuf 截图，含 scripts/check_js.py 语法校验与 scripts/verify_motion.py 多帧采样）
 - 工作区 skill 目录 `.trae/skills/`：若提交 GitHub 共享则保留；不共享则将 `.trae/` 加入 .gitignore。
 - **复现验证的边界**：用户对现象描述清晰、无歧义时，直接读代码定位并修复，不要先花一轮操作去"复现确认"用户说的现象（无信息增量）。实测验证只用于两类场景：① 修复后确认修复生效；② 现象描述模糊/有多种可能根因时，缩小排查范围。

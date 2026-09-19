@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
-"""桌面应用入口：pywebview 窗口 + 内嵌本地服务。
+"""桌面应用唯一入口（Windows / Linux 共用本文件）。
 
 【AI 助手注意】开发前必读项目根目录 AGENTS.md（架构约定、窗口缩放方案、踩坑记录）；
 改动架构/约定后必须同步更新 AGENTS.md，它是随仓库转移的项目记忆。
 
-用法：
-  - 双击 B站课程进度追踪\\B站课程进度追踪.exe（免装环境）
-  - 或开发模式：py -3 src\\app.py
+平台分支（功能与交互保持一致：无边框 + 深色自绘标题栏 + 拖动 + 双击最大化
++ 八向缩放 + 最小化/关闭）：
+  - Windows：pywebview(WebView2) + Win32 —— 见本文件「Windows」节
+  - Linux  ：GTK3 + WebKit2GTK 4.1（系统库，源码直跑，不打包解释器）
+             —— 见本文件「Linux」节
+共用部分：本地 HTTP 服务（server.py）、界面（index.html）、启动常量。
 
-体验设计：
-  - 启动：先弹出原生「正在启动」小窗，主窗口加载完成后无缝切换
-  - 关闭：点击 X 先立即隐藏窗口再退出进程（视觉秒关，不受退出清理影响）
-  - 缩放：窗口八条边/角可自由拉伸（JS 边缘热区只报方向 -> Python 端让边缘贴合鼠标）
-若未安装 pywebview，回退用默认浏览器打开。
+用法：
+  - Windows：双击打包后的 exe；或开发模式 py -3 src\\app.py
+  - Linux  ：bash 启动.sh；或 python3 src/app.py
 """
 import http.server
 import os
+import sys
 import threading
 import time
 import urllib.request
-
-import server as srv  # 复用同目录 server.py 的 Handler / HOST / PORT
 
 APP_TITLE = "B站课程进度追踪"
 BG = "#0b1020"  # 与 index.html 的 --bg 一致，避免启动期白闪
@@ -28,20 +28,38 @@ WIN_SIZE = (1120, 840)
 WIN_MIN = (720, 560)
 
 
-def start_server():
-    """在后台线程启动本地 HTTP 服务；端口被占（如双开）时自动向后回退。"""
+# ===================== Linux：数据目录环境（必须在 import server 前完成） =====================
+# /opt 系统级安装普通用户无写权限，运行时数据统一放用户 XDG 数据目录；
+# server.py 在 import 时计算 ROOT，所以 BILI_TRACKER_ROOT 必须先就位。
+def _linux_data_root():
+    _xdg = os.environ.get("XDG_DATA_HOME", "").strip() or \
+        os.path.join(os.path.expanduser("~"), ".local", "share")
+    root = os.path.join(_xdg, "bili-course-tracker")
+    os.makedirs(root, exist_ok=True)
+    return root
+
+
+if sys.platform.startswith("linux"):
+    os.environ["BILI_TRACKER_ROOT"] = _linux_data_root()
+
+import server as srv  # 复用同目录 server.py 的 Handler / HOST / PORT
+
+
+# ===================== 共用：本地 HTTP 服务 =====================
+def start_http_server():
+    """后台线程用：绑定本地服务，端口被占（双开）时自动向后回退。
+
+    回写 srv.PORT 为实际端口，界面加载/健康检查都用它。
+    """
     srv.migrate_from_course_data()
-    httpd = None
     for port in range(srv.PORT, srv.PORT + 10):
         try:
             httpd = http.server.ThreadingHTTPServer((srv.HOST, port), srv.Handler)
-            srv.PORT = port  # 回写实际端口，wait_ready / 浏览器回退都用它
-            break
+            srv.PORT = port
+            return httpd
         except OSError:
             continue
-    if httpd is None:
-        raise OSError(f"无法绑定本地端口 {srv.PORT}-{srv.PORT + 9}（可能已有实例在运行）")
-    httpd.serve_forever()
+    raise OSError(f"无法绑定本地端口 {srv.PORT}-{srv.PORT + 9}（可能已有实例在运行）")
 
 
 def wait_ready(timeout=6.0):
@@ -57,8 +75,14 @@ def wait_ready(timeout=6.0):
     return False
 
 
+# #########################################################################
+# ##############################  Windows  ################################
+# #########################################################################
+# 技术栈：pywebview 承载 WebView2，frameless 无边框；边缘缩放走 Win32。
+# #########################################################################
+
 def open_in_browser():
-    """回退方案：用默认浏览器打开并保持服务运行。"""
+    """Windows 回退方案：未装 pywebview 时用默认浏览器打开并保持服务运行。"""
     import webbrowser
     url = f"http://{srv.HOST}:{srv.PORT}/"
     webbrowser.open(url)
@@ -71,7 +95,7 @@ def open_in_browser():
         print("\n已退出")
 
 
-# ===================== 启动画面（原生小窗，主窗口就绪后自动关闭） =====================
+# ---- Windows 启动画面（原生小窗，主窗口就绪后自动关闭） ----
 
 def _run_splash(stop_evt):
     """在独立线程运行 tkinter 启动画面；stop_evt 置位或超时后自动关闭。"""
@@ -111,10 +135,10 @@ def show_splash():
     return stop
 
 
-# ===================== JS API：窗口最小化 / 隐藏 / 边缘缩放 =====================
+# ---- Windows JS API：窗口最小化 / 隐藏 / 边缘缩放 ----
 
-class Api:
-    """暴露给前端 window.pywebview.api 的窗口控制接口。"""
+class WinApi:
+    """暴露给前端 window.pywebview.api 的窗口控制接口（Windows）。"""
 
     def __init__(self):
         self._win = None
@@ -182,9 +206,10 @@ class Api:
         return None
 
 
-def main():
+def run_windows():
     splash_stop = show_splash()
-    threading.Thread(target=start_server, daemon=True).start()
+    httpd = start_http_server()
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
     ready = wait_ready()
     try:
         import webview  # 需 pywebview
@@ -196,7 +221,7 @@ def main():
             open_in_browser()
         return
 
-    api = Api()
+    api = WinApi()
     # hidden=True：等页面加载完成再显示，避免出现空白窗口；
     # frameless=True：去掉系统标题栏与边框，由页面内自定义标题栏接管拖动/按钮；
     # easy_drag=False：仅带 pywebview-drag-region 类的元素可拖动，避免误选文字
@@ -239,6 +264,236 @@ def main():
     # 窗口关闭后主线程退出。立即结束进程（_exit 跳过解释器清理），保证秒关
     webview.start()
     os._exit(0)
+
+
+# #########################################################################
+# ###############################   Linux   ###############################
+# #########################################################################
+# 技术栈：GTK3 无边框窗口 + 系统 WebKit2GTK；Wayland 下交互移动/缩放必须由
+# 合成器接管且需要按下事件的 serial（JS 异步消息拿不到），所以边缘热区命中
+# 判断全部在原生 button-press-event 中用事件坐标完成，不走 JS。
+# #########################################################################
+
+LX_TITLEBAR_H = 38    # 与页面 .titlebar 高度一致
+LX_EDGE = 7           # 边缘缩放热区宽度（px）
+LX_BTN_ZONE_W = 92    # 标题栏右侧按钮区宽度（最小化/关闭），区内不拖动
+
+# 注入到页面的 pywebview shim：必须在文档最开始注入，
+# 页面 bootstrap 据 window.pywebview 是否存在判断"原生/浏览器"环境
+_LX_SHIM_JS = r"""
+document.documentElement.classList.add('linux-native');
+window.pywebview = window.pywebview || {};
+window.pywebview.api = {
+  minimize: function () {
+    try { webkit.messageHandlers.native.postMessage('minimize'); } catch (e) {}
+  },
+  hide_window: function () {
+    try { webkit.messageHandlers.native.postMessage('close'); } catch (e) {}
+  },
+  resize_edge: function () { /* 边缘缩放由原生 button-press 统一处理 */ }
+};
+"""
+
+# 首帧占位：WebView 透明，真实页面首帧绘制前避免露出桌面
+_LX_PLACEHOLDER_HTML = (
+    '<html><body style="margin:0;height:100vh;background:#0a1024;'
+    'border-radius:12px"></body></html>')
+
+
+def _lx_state_path():
+    return os.path.join(srv.ROOT, "ui_state.json")
+
+
+def _lx_load_state():
+    import json
+    try:
+        with open(_lx_state_path(), "r", encoding="utf-8") as f:
+            s = json.load(f)
+        if isinstance(s, dict):
+            return s
+    except (OSError, ValueError):
+        pass
+    return {}
+
+
+def _lx_save_state(state):
+    import json
+    try:
+        with open(_lx_state_path(), "w", encoding="utf-8") as f:
+            json.dump(state, f)
+    except OSError:
+        pass
+
+
+def _lx_close_app(win, state):
+    """统一退出路径：保存窗口状态后进程退出（HTTP 服务随进程结束）。"""
+    if win.is_maximized():
+        state["maximized"] = True
+    else:
+        w, h = win.get_size()
+        state["w"] = w
+        state["h"] = h
+        state["maximized"] = False
+    _lx_save_state(state)
+    os._exit(0)
+
+
+def _lx_on_message(um, result, ctx):
+    win, state = ctx
+    val = result.get_js_value()
+    msg = val.to_string() if val else ""
+    if msg == "minimize":
+        win.iconify()
+    elif msg == "close":
+        _lx_close_app(win, state)
+
+
+def _lx_on_button_press(view, ev, win):
+    import gi
+    gi.require_version("Gdk", "3.0")
+    from gi.repository import Gdk
+    if ev.button != 1:
+        return False
+    ww, wh = win.get_size()
+    x, y = ev.x, ev.y
+
+    # 1) 边缘缩放（7px 边带优先；同时靠边时取角）
+    left = x <= LX_EDGE
+    right = x >= ww - LX_EDGE - 1
+    top = y <= LX_EDGE
+    bottom = y >= wh - LX_EDGE - 1
+    edge = None
+    if top and left:
+        edge = Gdk.WindowEdge.NORTH_WEST
+    elif top and right:
+        edge = Gdk.WindowEdge.NORTH_EAST
+    elif bottom and left:
+        edge = Gdk.WindowEdge.SOUTH_WEST
+    elif bottom and right:
+        edge = Gdk.WindowEdge.SOUTH_EAST
+    elif top:
+        edge = Gdk.WindowEdge.NORTH
+    elif bottom:
+        edge = Gdk.WindowEdge.SOUTH
+    elif left:
+        edge = Gdk.WindowEdge.WEST
+    elif right:
+        edge = Gdk.WindowEdge.EAST
+    if edge is not None:
+        # PyGObject 暴露的是 5 参数老 API：(edge, button, root_x, root_y, time)
+        win.begin_resize_drag(edge, ev.button,
+                              int(ev.x_root), int(ev.y_root), ev.time)
+        return False
+
+    # 2) 标题栏区域：右侧按钮区不处理，点击照常下发给按钮
+    if y < LX_TITLEBAR_H and x < ww - LX_BTN_ZONE_W:
+        if ev.type == Gdk.EventType._2BUTTON_PRESS:
+            if win.is_maximized():
+                win.unmaximize()
+            else:
+                win.maximize()
+            return False
+        if ev.type == Gdk.EventType.BUTTON_PRESS:
+            # 4 参数老 API：(button, root_x, root_y, time)
+            win.begin_move_drag(ev.button,
+                                int(ev.x_root), int(ev.y_root), ev.time)
+    return False
+
+
+def _lx_on_window_state(win, ev, view):
+    """最大化时通知页面取消圆角（铺满屏幕），还原后恢复。"""
+    import gi
+    gi.require_version("Gdk", "3.0")
+    from gi.repository import Gdk
+    if ev.new_window_state & Gdk.WindowState.MAXIMIZED:
+        view.run_javascript(
+            "document.body.classList.add('native-maximized')", None, None, None)
+    else:
+        view.run_javascript(
+            "document.body.classList.remove('native-maximized')", None, None, None)
+
+
+def run_linux():
+    import gi
+    gi.require_version("Gdk", "3.0")
+    gi.require_version("Gtk", "3.0")
+    gi.require_version("WebKit2", "4.1")
+    from gi.repository import Gdk, GLib, Gtk, WebKit2
+
+    os.makedirs(srv.ROOT, exist_ok=True)
+    httpd = start_http_server()
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+
+    win = Gtk.Window()
+    win.set_decorated(False)
+    win.set_title(APP_TITLE)
+
+    # RGBA 视觉：圆角外侧透明，露出桌面
+    screen = win.get_screen()
+    visual = screen.get_rgba_visual()
+    if visual:
+        win.set_visual(visual)
+    win.set_app_paintable(True)
+
+    state = _lx_load_state()
+    if state.get("maximized"):
+        win.maximize()
+    else:
+        win.set_default_size(int(state.get("w", 1100)),
+                             int(state.get("h", 760)))
+
+    # 最小尺寸
+    geo = Gdk.Geometry()
+    geo.min_width = 860
+    geo.min_height = 560
+    win.set_geometry_hints(None, geo, Gdk.WindowHints.MIN_SIZE)
+
+    um = WebKit2.UserContentManager()
+    um.add_script(WebKit2.UserScript(
+        _LX_SHIM_JS,
+        WebKit2.UserContentInjectedFrames.TOP_FRAME,
+        WebKit2.UserScriptInjectionTime.START,
+        None, None))
+    um.register_script_message_handler("native")
+    um.connect("script-message-received::native", _lx_on_message,
+               (win, state))
+
+    view = WebKit2.WebView.new_with_user_content_manager(um)
+    view.set_name("mainview")
+    # WebView 背景透明：圆角由页面 body 自身绘制，角外像素透出桌面
+    view.set_background_color(Gdk.RGBA(0, 0, 0, 0))
+    win.add(view)
+
+    # GTK 窗口整体透明，不画任何矩形底（底色全部来自页面）
+    provider = Gtk.CssProvider()
+    provider.load_from_data(b"window, #mainview { background: transparent; }")
+    Gtk.StyleContext.add_provider_for_screen(
+        screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+    view.connect("button-press-event", _lx_on_button_press, win)
+    win.connect("window-state-event", _lx_on_window_state, view)
+    win.connect("destroy", lambda w: _lx_close_app(w, state))
+
+    # 先上深色占位（避免透明穿帮），再加载真实页面
+    view.load_html(_LX_PLACEHOLDER_HTML, None)
+    url = "http://%s:%d/" % (srv.HOST, srv.PORT)
+    GLib.timeout_add(80, lambda: (view.load_uri(url), False)[1])
+    win.show_all()
+    Gtk.main()
+
+
+# ===================== 平台分发 =====================
+def main():
+    if sys.platform.startswith("win"):
+        run_windows()
+    elif sys.platform.startswith("linux"):
+        run_linux()
+    else:
+        # 其他系统兜底：仅启动服务并提示浏览器访问
+        os.makedirs(srv.ROOT, exist_ok=True)
+        httpd = start_http_server()
+        print(f"请用浏览器打开 http://{srv.HOST}:{srv.PORT}/，Ctrl+C 退出")
+        httpd.serve_forever()
 
 
 if __name__ == "__main__":

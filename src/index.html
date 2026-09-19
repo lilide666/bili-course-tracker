@@ -6,6 +6,10 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<!-- 系统标题栏配色（Chrome/Edge --app 独立窗口据此给标题栏染色，消除白条） -->
+<meta name="theme-color" content="#0a1024">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="/manifest.webmanifest">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>多视频进度追踪 · B站课程</title>
 <style>
@@ -56,6 +60,15 @@
     background:#0e1530;
   }
   .titlebar .t-btns{display:flex; gap:2px}
+  /* 浏览器模式（Linux 独立窗口/普通浏览器）：隐藏页面内标题栏，
+     由系统标题栏承担标题与最小化/关闭，避免双标题栏 */
+  body.browser-mode{padding-top:0 !important}
+  body.browser-mode .titlebar{display:none}
+  /* Linux 原生无边框窗口（GTK+WebKit）：Wayland 下页面内容渲染在独立的矩形
+     subsurface 上，GTK 层的圆角裁不到，只能由 body 自绘圆角、角外像素透明。
+     最大化铺满屏幕时由 body.native-maximized 取消圆角 */
+  html.linux-native body{border-radius:12px}
+  html.linux-native body.native-maximized{border-radius:0}
   .tbtn{
     width:34px; height:30px; display:flex; align-items:center; justify-content:center;
     cursor:pointer; border-radius:6px; font-size:15px; color:var(--muted);
@@ -401,6 +414,9 @@
     background:transparent; border-radius:8px; padding:6px 14px; font-size:12px}
   .modal-item .mbtn:hover{background:var(--accent); color:#0a1024}
   .modal-item .mbtn:disabled{opacity:.5; cursor:not-allowed; border-color:var(--dim); color:var(--dim)}
+  .modal-item .mbtn.primary{background:var(--accent); color:#0a1024}
+  .modal-item .mbtn.primary:hover{filter:brightness(1.08)}
+  .modal-item .mbtn-box{flex:0 0 auto; display:flex; gap:8px; align-items:center}
   .modal-status{padding:40px; text-align:center; color:var(--muted); font-size:13px}
 
   /* toast：底部居中，完整可见，不与顶部标题栏/滚动条/缩放热区冲突 */
@@ -460,22 +476,6 @@
     background:linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent);
     animation:sheen .9s ease-out; pointer-events:none}
   @keyframes sheen{to{left:115%}}
-  /* 同步成功：进度环白光扫过（锥形渐变彗星：亮头引领、尾迹沿圆周衰减，与直线条渐变同款质感） */
-  .ring-sheen{position:absolute; inset:0; border-radius:50%; opacity:0; pointer-events:none;
-    background:conic-gradient(from 0deg,
-      transparent 0deg, transparent 300deg,
-      rgba(255,255,255,.06) 324deg,
-      rgba(255,255,255,.30) 346deg,
-      rgba(255,255,255,.85) 360deg);
-    -webkit-mask:radial-gradient(circle, transparent 98px, #000 99.5px, #000 111.5px, transparent 113px);
-            mask:radial-gradient(circle, transparent 98px, #000 99.5px, #000 111.5px, transparent 113px)}
-  .ring.sheen-on .ring-sheen{animation:ringSheen .48s linear}
-  @keyframes ringSheen{
-    0%{transform:rotate(0deg); opacity:0}
-    14%{opacity:1}
-    82%{opacity:1}
-    100%{transform:rotate(360deg); opacity:0}
-  }
 
   /* 100% 庆祝：进度环变金 + 纸屑 */
   .ring.celebrate .bar{stroke:#fbbf24; filter:drop-shadow(0 0 10px rgba(251,191,36,.55)); transition:stroke .4s}
@@ -616,7 +616,6 @@
           <circle class="bar-est" id="ringBarEst" cx="120" cy="120" r="105"
             stroke-dasharray="659.734" stroke-dashoffset="659.734"/>
         </svg>
-        <div class="ring-sheen" id="ringSheen"></div>
         <div class="center-txt">
           <div class="pct" id="bigPct">0<small>%</small></div>
           <div class="pct-label">总体播放进度</div>
@@ -831,6 +830,10 @@
 (function(){
   "use strict";
 
+  // 无 pywebview API 即浏览器环境（Linux 独立窗口/普通浏览器）：
+  // 隐藏页面内自定义标题栏，避免与系统标题栏重复
+  if(!window.pywebview) document.body.classList.add('browser-mode');
+
   // ===== 运行时状态 =====
   let videos = [];
   let active = null;
@@ -865,6 +868,8 @@
     if(params.length) u += '?' + params.join('&');
     return u;
   };
+  // 当前集的 bvid：多P视频所有集同 bvid；合集每集 bvid 不同，取当前集的
+  const curBvid = () => (active && (active.episodes||[])[cur-1] && (active.episodes[cur-1]).bvid) || (active && active.bvid);
 
   function showToast(msg, dur=3500){
     const el = $('toast'); el.textContent = msg; el.classList.add('show');
@@ -952,12 +957,12 @@
     // 点击封面 → B站打开当前集当前位置
     cv.onclick = ()=>{
       if(!active) return;
-      window.open(biliUrl(active.bvid, cur, pos), '_blank', 'noopener');
+      window.open(biliUrl(curBvid(), cur, pos), '_blank', 'noopener');
     };
     $('title').textContent = active.title || ('BV…' + (active.bvid||'').slice(-4));
     $('owner').textContent = active.owner || '—';
-    // url 不再落盘，用 bvid 现算（旧数据字段缺失也能跳转）
-    const pageUrl = active.url || biliUrl(active.bvid, cur, pos);
+    // url 不再落盘，用当前集 bvid 现算（合集每集 bvid 不同）
+    const pageUrl = biliUrl(curBvid(), cur, pos);
     const urlEl = $('url'); urlEl.href = pageUrl; urlEl.textContent = pageUrl;
     $('tag-ep').textContent = active.totalEpisodes;
     $('tag-dur').textContent = active.totalDurationText;
@@ -1048,7 +1053,12 @@
     if(!dur) return stopEstimate();
     // 只有两次刷新间 view_at 有更新（用户在观看）才估算；
     // view_at 未变说明用户可能暂停了，停止估算（调试强制模式除外）
-    if(lp.view_at <= prevViewAt){
+    // prevViewAt===0：切换视频/首次加载后第一次刷新，只有基准没有"上次"，
+    // 无法判断是否连续观看，只记录基准、不启动估算（避免添加/切视频后误开）
+    if(prevViewAt === 0){
+      prevViewAt = lp.view_at;
+      if(!forceEstimate) return;
+    } else if(lp.view_at <= prevViewAt){
       prevViewAt = lp.view_at;
       if(!forceEstimate) return stopEstimate();
     } else {
@@ -1284,7 +1294,10 @@
       bili.textContent = '↗B站';
       bili.target = '_blank';
       bili.rel = 'noopener';
-      bili.href = biliUrl(j.bvid, j.from_page, j.from_progress||0);
+      // 合集：用该集自己的 bvid（j.bvid 是条目标识 bvid，不是集的 bvid）
+      const jEp = (active && active.episodes||[])[(j.from_page||1)-1];
+      const jBv = (jEp && jEp.bvid) || j.bvid;
+      bili.href = biliUrl(jBv, 1, j.from_progress||0);
       bili.title = `在B站打开第${j.from_page}集 ${(j.from_progress||0)}秒`;
       bili.addEventListener('click', ev=> ev.stopPropagation());
       it.appendChild(jmain);
@@ -1329,7 +1342,12 @@
   // ===== 切换视频 =====
   async function switchVideo(bvid){
     if(active && active.bvid===bvid) return;
+    // 作废一切在途/待发的旧视频同步：旧响应不再允许改状态、播流光、排重试
+    syncGen++;
+    clearTimeout(autoSyncTimer); autoSyncTimer = 0;
+    stopSyncRetry();
     stopEstimate();
+    prevViewAt = 0;   // 切换视频后清空上次 view_at，避免用旧视频的时间戳误判"连续观看"
     await saveCurrentProgressNow();
     try{
       await fetch('/api/tracked/active', {method:'POST', headers:{'Content-Type':'application/json'},
@@ -1511,7 +1529,7 @@
     });
   }
 
-  // 同步成功：直线进度条 + 进度环白光扫过（均为一次性）
+  // 同步成功：直线进度条白光扫过（一次性；圆环流光已移除）
   function playSheen(){
     if(REDUCED_MOTION) return;
     const bt = document.querySelector('.bar-track');
@@ -1519,12 +1537,6 @@
       bt.classList.remove('sheen');
       void bt.offsetWidth;
       bt.classList.add('sheen');
-    }
-    const ring = document.querySelector('.ring');
-    if(ring){
-      ring.classList.remove('sheen-on');
-      void ring.getBoundingClientRect();
-      ring.classList.add('sheen-on');
     }
   }
 
@@ -1914,6 +1926,10 @@
     el.className = 'refresh-status' + (cls ? ' '+cls : '');
   }
 
+  // 同步代次：每次切视频/新发请求 +1。响应回来时代次已落后说明被更新的同步
+  // （或用户再次切换）取代——整个响应作废，不更新进度/不报状态/不播流光/不排重试
+  let syncGen = 0;
+
   // 同步失败自动重试：开机时网络可能尚未就绪（如 WiFi 未连），成功/网络恢复后停止
   let syncRetryTimer = 0, syncRetryCount = 0;
   function stopSyncRetry(){
@@ -1966,6 +1982,7 @@
   // context: init(开机) | switch(切视频) | auto(定时) | manual(手动刷新) | online-wake(网络恢复)
   async function fetchProgress(context){
     context = context || 'manual';
+    const gen = ++syncGen;   // 本次请求的代次；返回前若有更新的同步/切换则作废
     const silent = context !== 'manual';
     if(!active){ setRefresh('请先选择一个追踪视频','err'); return; }
     reportSyncStart(context);
@@ -1978,6 +1995,8 @@
     try{
       const r = await fetch('/api/progress?bvid=' + encodeURIComponent(active.bvid), {cache:'no-store', signal: ctrl.signal});
       const j = await r.json();
+      // 已被更新的同步/再次切换取代：整个响应作废（含流光）
+      if(gen !== syncGen) return;
       if(j.ok){
         stopSyncRetry();
         const page = j.page || 1;
@@ -2014,7 +2033,8 @@
         checkEstimate();
         const t = j.view_at ? new Date(j.view_at*1000).toLocaleString('zh-CN') : '未知';
         reportSyncOk(`已同步：第 ${page} 集，集内 ${fmt(pos)}`);
-        playSheen();
+        // 切换视频刚播放过 .swap-in，立刻流光显得杂乱；只在手动/自动/初始化等同步播
+        if(context !== 'switch') playSheen();
         // 断网首启时集数列表暂缺，联网同步成功后静默补齐
         if(!AppStatus.metaReady){ loadActiveDetail(active.bvid).then(()=>renderAll()); }
         if(j.jump){
@@ -2023,6 +2043,7 @@
           jumpToast(j.jump);
         }
       } else {
+        if(gen !== syncGen) return;  // 旧请求失败：不回退/不报错/不排队重试
         const kind = j.kind || (j.needSessdata ? 'sessdata' : 'bili');
         // init/switch 上下文：renderAll 已用本地缓存渲染，_restoreLocalProgress 会用 setPctInstant 打断动画
         if(context !== 'switch' && context !== 'init') _restoreLocalProgress();
@@ -2031,13 +2052,15 @@
         if(kind === 'network' && silent) scheduleSyncRetry();
       }
     }catch(e){
+      if(gen !== syncGen) return;  // 旧请求异常：静默作废
       // fetch 异常/超时一律视为网络问题：回退本地缓存，静默场景排队重试
       if(context !== 'switch' && context !== 'init') _restoreLocalProgress();
       reportSyncFail('network');
       if(silent) scheduleSyncRetry();
     }finally{
       clearTimeout(slow); clearTimeout(tmo);
-      resetAutoSync();
+      // 仅最新请求可重排自动同步，避免旧请求的 finally 顶掉新请求的定时器
+      if(gen === syncGen) resetAutoSync();
     }
   }
 
@@ -2097,35 +2120,64 @@
       const tm = it.view_at ? new Date(it.view_at*1000).toLocaleString('zh-CN') : '';
       s.textContent = `${tp}UP: ${it.owner||'—'} · ${pg} · ${tm}`;
       info.appendChild(t); info.appendChild(s);
-      const btn = document.createElement('button');
-      btn.className = 'mbtn';
+      const btnBox = document.createElement('div');
+      btnBox.className = 'mbtn-box';
+      const makeBtn = (label, cls, handler) => {
+        const b = document.createElement('button');
+        b.className = 'mbtn' + (cls ? ' ' + cls : '');
+        b.textContent = label;
+        b.addEventListener('click', handler);
+        return b;
+      };
+      const finishAdd = async (j, bvid) => {
+        if(j.ok){
+          showToast('已添加：' + (j.video.title||bvid).slice(0,30));
+          $('addModal').classList.remove('show');
+          updateModalLock();
+          await bootstrap();
+          await switchVideo(j.video.bvid || bvid);
+        } else {
+          showToast(j.message || '添加失败');
+        }
+      };
       if(trackedSet.has(it.bvid)){
-        btn.textContent = '已追踪'; btn.disabled = true;
+        const b = makeBtn('已追踪', '', ()=>{}); b.disabled = true; btnBox.appendChild(b);
       } else {
-        btn.textContent = '追踪';
-        btn.addEventListener('click', async ()=>{
-          btn.disabled = true; btn.textContent = '添加中…';
+        const trackBtn = makeBtn('追踪', '', async ()=>{
+          trackBtn.disabled = true; trackBtn.textContent = '添加中…';
           try{
             const r = await fetch('/api/tracked/add', {method:'POST', headers:{'Content-Type':'application/json'},
               body: JSON.stringify({bvid:it.bvid})});
             const j = await r.json();
-            if(j.ok){
-              showToast('已添加：' + (j.video.title||it.bvid).slice(0,30));
-              $('addModal').classList.remove('show');
-              updateModalLock();
-              await bootstrap();
-              await switchVideo(it.bvid);
+            if(j.ok && j.need_confirm){
+              // 属于 B站合集：行内展开两个选项，由用户决定
+              btnBox.innerHTML = '';
+              const season = j.season;
+              const cnt = season.ep_count || '?';
+              const singleBtn = makeBtn('仅追踪此视频', '', async ()=>{
+                singleBtn.disabled = true; singleBtn.textContent = '添加中…';
+                const r2 = await fetch('/api/tracked/add', {method:'POST', headers:{'Content-Type':'application/json'},
+                  body: JSON.stringify({bvid:it.bvid, merge_season:false})});
+                await finishAdd(await r2.json(), it.bvid);
+              });
+              const mergeBtn = makeBtn(`合并合集(${cnt}集)`, 'primary', async ()=>{
+                mergeBtn.disabled = true; mergeBtn.textContent = '合并中…';
+                const r2 = await fetch('/api/tracked/add', {method:'POST', headers:{'Content-Type':'application/json'},
+                  body: JSON.stringify({bvid:it.bvid, merge_season:true, season_id:season.season_id})});
+                await finishAdd(await r2.json(), it.bvid);
+              });
+              btnBox.appendChild(singleBtn); btnBox.appendChild(mergeBtn);
             } else {
-              btn.disabled = false; btn.textContent = '追踪';
-              showToast(j.message || '添加失败');
+              await finishAdd(j, it.bvid);
             }
           }catch(e){
-            btn.disabled = false; btn.textContent = '追踪';
+            trackBtn.disabled = false; trackBtn.textContent = '追踪';
             showToast('添加失败：'+e.message);
           }
         });
+        btnBox.appendChild(trackBtn);
       }
-      row.appendChild(img); row.appendChild(info); row.appendChild(btn);
+      row.appendChild(img); row.appendChild(info); row.appendChild(btnBox);
       list.appendChild(row);
     });
   }
@@ -2788,6 +2840,8 @@
         showToast('请先在设置中配置 B站账号 SESSDATA');
       }
     }catch(e){}
+    // 心跳：Linux 兜底标签页模式下宿主据此判断页面是否全部关闭（其他平台无副作用）
+    setInterval(()=>{ fetch('/api/ping', {cache:'no-store'}).catch(()=>{}); }, 15000);
   })();
 })();
 </script>
