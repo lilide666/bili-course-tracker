@@ -1400,7 +1400,18 @@
   // 时长按格数缩放（110+55*格数，封顶 SLOT_DUR）：1 格 165ms 利落翻页、多格保持动感，
   // 每格速度接近机械翻页钟。拖动滑块/开启"减少动态"时直接跳变不滚动。
   const SLOT_DUR = 460;   // 单个滚轮滚动时长 ms（不能太长也不能看不出）
-  const SLOT_STAG = 65;   // 相邻位启动间隔 ms（左→右错峰）
+  const SLOT_STAG = 65;   // 相邻位启动间隔 ms（左→右错峰）——默认值，实际间隔见 spinStagger
+  // 错峰间隔运行时可调（对比两种方案用）：
+  //   浏览器控制台 setSpinStagger(0)  → 所有位同时起跳
+  //   浏览器控制台 setSpinStagger(65) → 恢复左→右错峰
+  // 选择经 localStorage 记忆（键 spinStagger），刷新/重开仍生效；定稿后可删此开关
+  let spinStagger = SLOT_STAG;
+  try{ const _s = localStorage.getItem('spinStagger'); if(_s !== null && _s !== '') spinStagger = Math.max(0, +_s || 0); }catch(e){}
+  window.setSpinStagger = ms=>{
+    spinStagger = Math.max(0, +ms || 0);
+    try{ localStorage.setItem('spinStagger', String(spinStagger)); }catch(e){}
+    return spinStagger;
+  };
   function pctSlotNode(ch){
     const s = document.createElement('span');
     if(ch === '.' || ch === ':'){ s.className = 'dslot ddot'; s.textContent = ch; }  // 分隔符静止（时间用 ':'）
@@ -1484,7 +1495,7 @@
       roll.innerHTML = html;
       roll.style.transform = 'translateY(-' + steps + 'em)';
       void roll.offsetHeight;  // 强制重排，确保下面的 transition 生效
-      roll.style.transition = 'transform ' + dur + 'ms cubic-bezier(.22,.61,.36,1) ' + (i * SLOT_STAG) + 'ms';
+      roll.style.transition = 'transform ' + dur + 'ms cubic-bezier(.22,.61,.36,1) ' + (i * spinStagger) + 'ms';
       roll.style.transform = 'translateY(0)';
     });
   }
