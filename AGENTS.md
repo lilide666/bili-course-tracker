@@ -163,9 +163,10 @@ B站课程观看进度追踪桌面应用，纯本地运行，通过 B站历史�
 ### 同步与轮询
 - B站请求走 `_https_get` 连接复用（threading.local 每线程每域名一条 HTTPSConnection，出错 drop 重建重试一次）；错误文案 `_friendly_err`（DNS/超时/证书）；code=-101 → needSessdata。
 - **历史翻页协议**：游标在 `data.cursor.view_at`（秒级时间戳），下一页传 `view_at=<上页 view_at>`；旧 `max`/`data.page` 已失效（传了返回首页，曾导致只扫 60 条）。`fetch_progress` 必传 stop_bvid，命中即停（通常 1 页）。
-- 自动同步间隔可配（localStorage `autoSyncMin`，5/10/15/30 分钟）。
+- 自动同步：当前视频每 60 秒（`AUTO_SYNC_MS`；设置面板仅总开关，localStorage `autoSync`，关闭时全量轮询一并停）。
+- 回窗口/获得焦点补同步（`wakeSyncCheck`）：visibilitychange 变可见或 window focus 时，距上次同步（`lastSyncAt`，fetchProgress 进入时刷新，任何上下文都算）超 60s 就静默 `fetchProgress('auto')`。
+- 全量轮询 `pollAllVideos` 每 2 分钟（`POLL_ALL_MS`）静默刷非当前视频徽章（条目间隔 1.2s，needSessdata/断网即停本轮，notfound 保留旧徽章；`resetPollAll` 自续且幂等，bootstrap 时启动）。历史注：此功能 2026-09 前只存在于旧版 AGENTS.md 记载，代码中从未落地，现已实现。
 - **同步代次 `syncGen`（并发防重，勿回退）**：`switchVideo` 开始时和每次 `fetchProgress` 进入时 `++syncGen`；响应解析后先比 `gen !== syncGen`，落后即整响应作废（成功/失败/异常三个分支都守；finally 里 `resetAutoSync` 也只许最新请求执行）。`switchVideo` 还必须立即清 `autoSyncTimer` + `stopSyncRetry()`。旧坑：无此机制时旧视频的自动同步/重试与切换请求并发、乱序返回，每次成功都 `playSheen()`，表现为"来回切换多次流光"；旧记录里"fpInFlight 互斥"并不存在，以此条为准。
-- 全量轮询 `pollAllVideos` 每 15 分钟刷非当前视频徽章（间隔 1.2s，needSessdata 时 break）；visibilitychange 回窗口距 lastSyncAt>10min 静默补同步。
 - 启动静默同步失败退避重试 5/15/30s×5（needSessdata 除外），监听 window online 即时重试。开机横幅根因多为开机瞬间网络未就绪，属正常，会自动恢复。
 
 ### 窗口与交互（app.py）

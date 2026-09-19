@@ -794,7 +794,7 @@
       <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 14px; background:rgba(0,0,0,.2); border:1px solid var(--border); border-radius:10px">
         <div>
           <div style="font-size:13px; font-weight:600">自动同步B站进度</div>
-          <div style="font-size:11.5px; color:var(--muted); margin-top:2px">每 5 分钟自动从B站读取一次当前视频进度</div>
+          <div style="font-size:11.5px; color:var(--muted); margin-top:2px">每 1 分钟自动从B站读取当前视频进度；列表其他视频每 2 分钟刷新徽章</div>
         </div>
         <label class="tswitch-wrap" title="开启/关闭自动同步">
           <input type="checkbox" id="autoSyncChk">
@@ -2000,8 +2000,8 @@
     fetchProgress('online-wake');
   });
 
-  // ===== 自动同步（每 5 分钟，设置面板可开关，localStorage 记忆） =====
-  const AUTO_SYNC_MS = 5*60*1000;
+  // ===== 自动同步（当前视频每 60 秒，设置面板可开关，localStorage 记忆） =====
+  const AUTO_SYNC_MS = 60*1000;
   let autoSyncTimer = 0;
   const isAutoSyncOn = ()=>{
     try{ return localStorage.getItem('autoSync') !== '0'; }catch(e){ return true; }
@@ -2010,6 +2010,48 @@
     clearTimeout(autoSyncTimer);
     if(!isAutoSyncOn() || !active) return;
     autoSyncTimer = setTimeout(()=>{ autoSyncTimer = 0; if(active) fetchProgress('auto'); }, AUTO_SYNC_MS);
+  }
+
+  // 最近一次对当前视频发起同步的时间（ms），回窗口补同步用它与 60s 判距
+  let lastSyncAt = 0;
+
+  // ===== 回窗口/获得焦点补同步：最小化恢复或切回窗口时，距上次同步超 60s 就静默刷新当前视频 =====
+  function wakeSyncCheck(){
+    if(document.hidden || !active) return;
+    if(Date.now() - lastSyncAt > 60*1000) fetchProgress('auto');
+  }
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) wakeSyncCheck(); });
+  window.addEventListener('focus', wakeSyncCheck);
+
+  // ===== 全量轮询：每 2 分钟静默刷新列表里所有非当前视频的徽章 =====
+  // 条目间隔 1.2s；未登录（sessdata）/断网即停本轮；notfound 保留旧徽章继续
+  const POLL_ALL_MS = 2*60*1000;
+  let pollAllTimer = 0;
+  async function pollAllVideos(){
+    for(const v of videos){
+      if(active && v.bvid === active.bvid) continue;  // 当前视频由自动同步/回窗口补同步负责
+      try{
+        const r = await fetch('/api/progress?bvid=' + encodeURIComponent(v.bvid), {cache:'no-store'});
+        const j = await r.json();
+        if(j && j.ok){
+          v.lastProgress = {page:j.page||1, progress:j.progress||0, view_at:j.view_at, synced_at:Date.now()/1000|0};
+          const tb = document.querySelector(`.tab[data-bvid="${CSS.escape(v.bvid)}"] .tbadge`);
+          if(tb) tb.textContent = `${v.lastProgress.page}/${v.totalEpisodes||'?'}`;
+        }else if(j && (j.needSessdata || j.kind === 'sessdata')){
+          break;
+        }
+      }catch(e){ break; }
+      await new Promise(res=>setTimeout(res, 1200));
+    }
+  }
+  function resetPollAll(){
+    clearTimeout(pollAllTimer);
+    if(!isAutoSyncOn()) return;   // 总开关关闭时全量轮询一并停
+    pollAllTimer = setTimeout(async ()=>{
+      pollAllTimer = 0;
+      await pollAllVideos();
+      resetPollAll();
+    }, POLL_ALL_MS);
   }
 
   // 失败/未找到时回退到本地缓存进度，保证界面始终可读
@@ -2032,6 +2074,7 @@
     const silent = context !== 'manual';
     if(!active){ setRefresh('请先选择一个追踪视频','err'); return; }
     reportSyncStart(context);
+    lastSyncAt = Date.now();   // 任何上下文的同步都算"刚同步过"，供回窗口补同步判距
     const slow = setTimeout(()=>{
       if(context === 'manual' && AppStatus.syncPhase === 'syncing')
         setRefresh('仍在读取B站历史记录…（记录较多或网络慢时可能需要数十秒，请看终端日志）','spin');
@@ -2238,6 +2281,7 @@
         jumps = j.jumps || [];
         renderTabs();
         renderJumps();
+        resetPollAll();   // 启动全量轮询（重复调用会先清旧定时器，幂等）
         const activeBvid = j.active_bvid || (videos[0] && videos[0].bvid);
         if(activeBvid){
           await loadActiveDetail(activeBvid);
@@ -2296,8 +2340,9 @@
   $('autoSyncChk').checked = isAutoSyncOn();
   $('autoSyncChk').addEventListener('change', ev=>{
     try{ localStorage.setItem('autoSync', ev.target.checked ? '1' : '0'); }catch(e){}
-    showToast(ev.target.checked ? '已开启自动同步：每 5 分钟同步一次' : '已关闭自动同步');
+    showToast(ev.target.checked ? '已开启自动同步：当前视频每 1 分钟、列表每 2 分钟' : '已关闭自动同步');
     resetAutoSync();
+    resetPollAll();   // 开关同步同时接管全量轮询的启停
   });
 
   // 键盘快捷键：← 上一集，→ 下一集（输入框/弹窗打开时忽略）
