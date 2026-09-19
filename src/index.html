@@ -1474,19 +1474,26 @@
       });
     }
     // 第一遍：先算出每个数字位的滚动步数（不动 DOM）。
+    //   新建滚轮（!structureOk）→ 整圈滚（见下方 plan 内注释）；
     //   精确滚动：步数 = 数字差值（2→3 滚 1 格、4→8 滚 4 格；用户指定"精确滚动"）。
-    //   steps=0 时分三种情况：
-    //     ① 新建滚轮（!structureOk）→ 强制 10 步整圈（保证 0.0%、100.0% 有动画）
-    //     ② 位数不变且数字没变，但本次有其他位在转 → 强制 10 步（保持视觉协调）
-    //     ③ 位数不变、数字没变、本次无任何位变化 → 跳过（真静止）
+    //   steps=0 时分两种情况：
+    //     ① 有其他位在转（hasAnySpin，仅 coordinated=true 预检）或 minSteps>0 → 强制 10 步
+    //     ② 真静止 → 跳过
     const plan = chars.map((ch, i) => {
       if(isSep(ch)) return null;
-      const slot = slots[i];
       const to = parseInt(ch, 10);
+      if(!structureOk){
+        // 新建滚轮=开场整圈滚（用户要求"滚满"，勿回退成按差值滚几格）：
+        //   大百分比（开机/位数变化）：滚轮条 0 起显，滚 to+10 格=整圈+差值落位；
+        //   其他容器（番茄钟进入）：textContent 已是真实值，每位滚 10 格=从当前数字
+        //   起无跳变整圈落位
+        return bigPctMode ? (to + 10) : 10;
+      }
+      const slot = slots[i];
       const from = parseInt(slot.dataset.d ?? '0', 10);
       let steps = ((to - from) + 10) % 10;
       if(steps === 0){
-        if(!structureOk || hasAnySpin || minSteps > 0){ steps = 10; }
+        if(hasAnySpin || minSteps > 0){ steps = 10; }
         else { return null; }
       } else if(steps < minSteps){
         steps += 10;  // 切换视频时差值太小，多滚一圈
