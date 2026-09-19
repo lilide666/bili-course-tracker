@@ -672,7 +672,6 @@
 
     <div class="refresh-row">
       <button class="primary" id="btnRefresh">从B站读取进度</button>
-      <button class="btn-debug-est" id="btnDebugEst" type="button" title="强制开启AI估算模式，验证动效">调试：开启估算</button>
       <div class="refresh-status" id="refreshStatus">点击后从B站同步当前观看进度</div>
     </div>
 
@@ -816,6 +815,21 @@
         </div>
       </div>
       <input type="file" id="iconFile" accept="image/png,image/jpeg,image/webp,image/bmp,image/gif" style="display:none">
+
+      <!-- ===== 分区：调试 ===== -->
+      <div class="set-sec"><span class="sbar"></span><span class="stxt">调试</span><span class="sline"></span></div>
+      <div style="display:flex; flex-direction:column; gap:12px; padding:12px 14px; background:rgba(0,0,0,.2); border:1px solid var(--border); border-radius:10px">
+        <div style="display:flex; align-items:center; gap:10px">
+          <span style="font-size:12.5px; flex:0 0 auto">数字滚动错峰</span>
+          <input type="range" id="debugStagger" min="0" max="120" step="5" value="65" style="flex:1; accent-color:var(--accent)">
+          <span id="debugStaggerVal" style="font-size:12px; color:var(--muted); flex:0 0 76px; text-align:right; font-variant-numeric:tabular-nums">65ms</span>
+        </div>
+        <div style="font-size:11.5px; color:var(--muted); margin-top:-6px">0 = 所有数字位同时起跳；越大从左到右的波浪感越强（默认 65）</div>
+        <div style="display:flex; align-items:center; gap:10px">
+          <button class="btn-debug-est" id="btnDebugEst" type="button" title="强制开启AI估算模式，验证动效" style="margin:0">调试：开启估算</button>
+          <span style="font-size:11.5px; color:var(--muted)">强制进入/退出 AI 估算动效（青色波纹），验证用</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -2327,7 +2341,17 @@
   $('btnDone').addEventListener('click', ()=>{ stopEstimate(); pos = ((active.episodes||[])[cur-1]||{}).duration||0; render();
     scheduleSave(); setTimeout(()=> selectEp(cur+1, false), 250); });
   $('btnRefresh').addEventListener('click', ()=> fetchProgress('manual'));
-  // 调试按钮：强制开启/关闭 AI 估算模式，验证动效用
+  // 调试：数字滚动错峰间隔滑块（0=同时起跳；经 setSpinStagger 实时生效并持久化）
+  {
+    const stagSlider = $('debugStagger'), stagVal = $('debugStaggerVal');
+    stagSlider.value = spinStagger;
+    stagVal.textContent = spinStagger + 'ms';
+    stagSlider.addEventListener('input', ()=>{
+      const v = setSpinStagger(+stagSlider.value);
+      stagVal.textContent = v + 'ms';
+    });
+  }
+  // 调试按钮：强制开启/关闭 AI 估算模式，验证动效用（现居设置弹窗"调试"分区）
   $('btnDebugEst').addEventListener('click', ()=>{
     if(forceEstimate){
       forceEstimate = false;
