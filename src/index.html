@@ -1727,6 +1727,9 @@
       playBarGrow();
       timer = setInterval(render, 1000);
       hbTimer = setInterval(sendHeartbeat, 15000);  // 15s 心跳：崩溃恢复封口边界
+      // 开场整圈滚：错峰波浪（用户指定计时器进入用错峰；随后 render() 同帧 no-op，
+      // 每秒 tick 走 render 的 同时模式，不干扰本次 CSS 过渡）
+      spinPct(fmt(todaySec), $('focusTime'));
       render();
     }
     async function pause(){
@@ -1774,8 +1777,10 @@
       if(REDUCED_MOTION){ finishClose(); }
       else{
         // 滚轮静态时只有 1 行，需填满 0-9（从当前数字起循环排列）+ 复制一份=20 行，
-        // -10em 显示第 11 行=第 1 行副本，跳回 0 无缝循环
-        document.querySelectorAll('#focusTime .droll').forEach(r=>{
+        // -10em 显示第 11 行=第 1 行副本，跳回 0 无缝循环。
+        // 数字位左→右依次起滚（animation-delay 65ms 递增，与进入时的错峰波浪对称，
+        // 用户指定进入/退出都要错峰）：延迟期间滚轮停在基础态显示当前数字，无跳变
+        document.querySelectorAll('#focusTime .droll').forEach((r, idx)=>{
           const cur = parseInt(r.firstElementChild?.textContent || '0', 10);
           if(isNaN(cur)) return;
           r.innerHTML = '';
@@ -1785,6 +1790,7 @@
             r.appendChild(ln);
           }
           r.innerHTML += r.innerHTML;
+          r.style.animationDelay = (idx * 65) + 'ms';
         });
         document.body.classList.add('focus-closing');
         playBarShrink();  // 红弧缩回与环左移同时开始
