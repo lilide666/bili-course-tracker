@@ -61,6 +61,7 @@ else:
     FRONTEND_DIR = os.path.dirname(os.path.abspath(__file__))
 TRACKED_FILE = os.path.join(ROOT, "tracked_videos.json")
 FOCUS_FILE = os.path.join(ROOT, "focus.json")  # 番茄钟专注统计（按天累计，只存数字）
+FOCUS_SESSION_FILE = os.path.join(ROOT, ".focus_session.json")  # 番茄钟运行态（开始/暂停/心跳持久化，防退出丢失；点开头 HTTP 404）
 COURSE_FILE = os.path.join(ROOT, "course_data.json")
 COVER_CACHE_DIR = os.path.join(ROOT, "covers")  # 封面图本地缓存目录
 
@@ -786,6 +787,132 @@ def add_focus(seconds):
             json.dump({"date": today, "seconds": cur + seconds}, f)
         os.replace(tmp, FOCUS_FILE)
     return cur + seconds
+
+
+# ---------- 番茄钟运行态持久化（关闭/崩溃/断电不丢时间，服务端时钟为权威） ----------
+# 会话模型与前端 base/startedAt 一致：state=running 时秒数=base+(now-started_at)；
+# paused 时秒数=base（已固化）。心跳 updated_at 是异常退出后封口的时间边界。
+
+FOCUS_HEARTBEAT_GRACE = 60  # 崩溃恢复：最后心跳后最多再认 60 秒（心跳间隔 15s，崩溃最多损失约 15s）
+
+
+def _load_focus_session():
+    try:
+        with open(FOCUS_SESSION_FILE, "r", encoding="utf-8") as f:
+            d = json.load(f)
+        if isinstance(d, dict) and d.get("state") in ("running", "paused"):
+            return d
+    except Exception:
+        pass
+    return None
+
+
+def _save_focus_session(d):
+    tmp = FOCUS_SESSION_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(d, f)
+    os.replace(tmp, FOCUS_SESSION_FILE)
+
+
+def _clear_focus_session():
+    for p in (FOCUS_SESSION_FILE, FOCUS_SESSION_FILE + ".tmp"):
+        try:
+            os.remove(p)
+        except OSError:
+            pass
+
+
+def _settle_focus_seconds(d, now):
+    """按会话状态算本轮秒数；running 以 now 封口（调用方负责崩溃恢复时钳制 now）。"""
+    secs = max(0, int(d.get("base") or 0))
+    if d.get("state") == "running":
+        start = float(d.get("started_at") or now)
+        secs += max(0, int(now - start))
+    return secs
+
+
+def start_focus_session():
+    """开始一轮：新建运行态会话。返回服务端当前时间戳（前端据此对齐时钟）。"""
+    now = int(time.time())
+    d = {"state": "running", "base": 0, "started_at": now, "updated_at": now}
+    with _wlock:
+        _save_focus_session(d)
+    return now
+
+
+def pause_focus_session():
+    """暂停：把当前运行段折算进 base 并固化。"""
+    with _wlock:
+        d = _load_focus_session()
+        if d and d.get("state") == "running":
+            now = time.time()
+            d["base"] = max(0, int(d.get("base") or 0)) + max(
+                0, int(now - float(d["started_at"])))
+            d["state"] = "paused"
+            _save_focus_session(d)
+            return True
+    return False
+
+
+def resume_focus_session():
+    """继续：重开运行段。返回服务端时间戳。"""
+    with _wlock:
+        d = _load_focus_session()
+        if d and d.get("state") == "paused":
+            now = int(time.time())
+            d["state"] = "running"
+            d["started_at"] = now
+            d["updated_at"] = now
+            _save_focus_session(d)
+            return now
+    return None
+
+
+def heartbeat_focus_session():
+    """心跳：仅更新 updated_at，作为崩溃恢复的封口边界。"""
+    with _wlock:
+        d = _load_focus_session()
+        if d and d.get("state") == "running":
+            d["updated_at"] = int(time.time())
+            _save_focus_session(d)
+            return True
+    return False
+
+
+def stop_focus_session():
+    """正常结束（含关闭软件时自动结算）：摘走会话→结算入账→删除。
+    返回 (今日累计, 本轮入账秒数)。摘走在锁内原子完成，重复/并发请求不会重复入账。"""
+    with _wlock:
+        d = _load_focus_session()
+        if not d:
+            return load_focus(), 0
+        credited = _settle_focus_seconds(d, time.time())
+        _clear_focus_session()
+    if credited > 0:  # 任何正数时长都入账（2026-09 取消"不足5秒不记录"门槛）
+        total = add_focus(credited)
+    else:
+        total = load_focus()
+    return total, credited
+
+
+def recover_focus_session():
+    """启动时恢复异常退出残留的会话（kill/崩溃/断电/关机）：
+    running 封口不晚于最后心跳+宽限，避免几天后才打开却凭空计入数天；
+    paused 按已固化的 base 结算。返回恢复入账的秒数。"""
+    with _wlock:
+        d = _load_focus_session()
+        if not d:
+            return 0
+        now = time.time()
+        if d.get("state") == "running":
+            cap = float(d.get("updated_at") or d.get("started_at") or now) + FOCUS_HEARTBEAT_GRACE
+            if now > cap:
+                now = cap
+        credited = _settle_focus_seconds(d, now)
+        _clear_focus_session()
+    if credited > 0:
+        add_focus(credited)
+    return credited
 
 
 def _video_summary(v):
@@ -1538,10 +1665,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json(res)
             return
 
-        # 番茄钟：读今日专注秒数（按天累计，只存数字，无描述性信息）
+        # 番茄钟：读今日专注秒数；先恢复异常退出残留的会话并自动入账
         if path == "/api/focus":
+            recovered = recover_focus_session()
             self._send_json({"ok": True, "date": time.strftime("%Y-%m-%d"),
-                             "seconds": load_focus()})
+                             "seconds": load_focus(), "recovered": recovered})
             return
 
         # 连通性诊断
@@ -1867,7 +1995,29 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json({"ok": True, "jump": None})
             return
 
-        # 番茄钟：结束一轮专注，把秒数累加到今天（跨天自动清零）
+        # 番茄钟：开始 / 暂停 / 继续 / 心跳 / 结束（运行态全程持久化，防退出丢失）
+        if path == "/api/focus/start":
+            now = start_focus_session()
+            self._send_json({"ok": True, "now": now})
+            return
+        if path == "/api/focus/pause":
+            ok = pause_focus_session()
+            self._send_json({"ok": ok})
+            return
+        if path == "/api/focus/resume":
+            now = resume_focus_session()
+            self._send_json({"ok": now is not None, "now": now})
+            return
+        if path == "/api/focus/heartbeat":
+            heartbeat_focus_session()
+            self._send_json({"ok": True})
+            return
+        if path == "/api/focus/stop":
+            total, credited = stop_focus_session()
+            self._send_json({"ok": True, "date": time.strftime("%Y-%m-%d"),
+                             "seconds": total, "credited": credited})
+            return
+        # 兼容旧版：直接累加指定秒数
         if path == "/api/focus":
             body, err = self._read_body_json()
             if err is not None:

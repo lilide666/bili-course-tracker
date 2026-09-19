@@ -1621,6 +1621,7 @@
     let todaySec = 0;            // 今日累计（服务端为准，离线时内存兜底）
     let goalSec = DEFAULT_GOAL;  // 每日目标秒数（localStorage focusGoalSec）
     let timer = null;
+    let hbTimer = null;         // 15s 心跳定时器（崩溃恢复的封口边界）
     let takeUntil = 0;          // 进入接管动画截止时间戳（期间 render 不写红环，交给 CSS 过渡）
     let takeTimer = 0;
     let closeTimer = 0;          // 退出回退动画结束后真正移除 focus-mode 的定时器
@@ -1629,6 +1630,10 @@
     const $ = id => document.getElementById(id);
     const elapsed = () => base + (phase === 'running' ? Date.now()/1000 - startedAt : 0);
     const barFrac = () => Math.max(0, Math.min(1, (todaySec + elapsed()) / goalSec));
+    // 15s 心跳：只更新服务端 updated_at，异常退出后恢复时作为封口时间（失败静默）
+    const sendHeartbeat = ()=>{
+      fetch('/api/focus/heartbeat', {method:'POST'}).catch(()=>{});
+    };
 
     function render(){
       const e = elapsed();
@@ -1674,12 +1679,18 @@
       bar.style.opacity = '0';
     }
 
-    function start(){
+    async function start(){
       if (phase !== 'idle') return;
       if (Date.now() < focusLock) return;  // 防连续点击：stop 后 300ms 内禁止 start
       if(closeTimer){ clearTimeout(closeTimer); closeTimer = 0; }  // 回退中重新开始：取消隐藏
       document.body.classList.remove('focus-closing');
+      // 服务端先落盘运行态（服务端时钟为权威）；极端请求失败才用本地时钟兜底
       base = 0; startedAt = Date.now()/1000; phase = 'running';
+      try{
+        const r = await fetch('/api/focus/start', {method:'POST'});
+        const j = await r.json();
+        if(j && j.ok && j.now) startedAt = j.now;
+      }catch(_){}
       document.body.classList.add('focus-mode');
       $('focusRing').setAttribute('aria-hidden','false');
       $('btnFocus').textContent = '结束专注';
@@ -1687,20 +1698,30 @@
       $('focusTime').textContent = fmt(todaySec);  // 重置为今日累计纯文本，让 spinPct 重建滚轮并滚动
       playBarGrow();
       timer = setInterval(render, 1000);
+      hbTimer = setInterval(sendHeartbeat, 15000);  // 15s 心跳：崩溃恢复封口边界
       render();
     }
-    function pause(){
+    async function pause(){
       if (phase !== 'running') return;
+      try{ await fetch('/api/focus/pause', {method:'POST'}); }catch(_){}
       base = elapsed(); phase = 'paused';
       clearInterval(timer); timer = null;
+      clearInterval(hbTimer); hbTimer = null;
       $('btnFocusPause').textContent = '继续';
       render();
     }
-    function resume(){
+    async function resume(){
       if (phase !== 'paused') return;
-      startedAt = Date.now()/1000; phase = 'running';
+      let now = Date.now()/1000;
+      try{
+        const r = await fetch('/api/focus/resume', {method:'POST'});
+        const j = await r.json();
+        if(j && j.ok && j.now) now = j.now;
+      }catch(_){}
+      startedAt = now; phase = 'running';
       $('btnFocusPause').textContent = '暂停';
       timer = setInterval(render, 1000);
+      hbTimer = setInterval(sendHeartbeat, 15000);
       render();
     }
     async function stop(){
@@ -1708,6 +1729,7 @@
       focusLock = Date.now() + 300;  // 防连续点击：300ms 内禁止 start
       const e = Math.round(elapsed());
       clearInterval(timer); timer = null;
+      clearInterval(hbTimer); hbTimer = null;
       phase = 'idle'; base = 0;
       // 立刻移除 focus-mode 让按钮变回蓝色（focus-closing 接管动画，无 layout 跳变）
       document.body.classList.remove('focus-mode');
@@ -1740,15 +1762,27 @@
         playBarShrink();  // 红弧缩回与环左移同时开始
         closeTimer = setTimeout(finishClose, 950);
       }
-      if (e >= 5) {  // 不足 5 秒视为误触，不记录
-        try{
-          const r = await fetch('/api/focus', {method:'POST',
-            headers:{'Content-Type':'application/json'}, body: JSON.stringify({add:e})});
-          const j = await r.json();
-          if (j && j.ok) todaySec = j.seconds; else todaySec += e;
-        }catch(_){ todaySec += e; }  // 离线兜底：只记内存，下次成功以服务端为准
-        renderToday();
-      }
+      // 无条件结算：服务端原子地"算本轮→入账（任何正数秒都记录）→删会话"，重复请求不会重复入账
+      try{
+        const r = await fetch('/api/focus/stop', {method:'POST'});
+        const j = await r.json();
+        if (j && j.ok) todaySec = j.seconds; else if(e > 0) todaySec += e;
+      }catch(_){ if(e > 0) todaySec += e; }
+      // 请求失败：内存兜底；服务端实际已处理则下次以服务端为准，未处理则会话残留、启动时恢复
+      renderToday();
+    }
+    // 关闭软件时由关闭按钮调用：自动结算本轮（不播退出动画，进程马上结束）；
+    // 即使请求失败也无妨——心跳已持续落盘，下次启动服务端自动恢复
+    async function flushOnExit(){
+      if (phase === 'idle') return;
+      clearInterval(timer); timer = null;
+      clearInterval(hbTimer); hbTimer = null;
+      phase = 'idle'; base = 0;
+      try{
+        const r = await fetch('/api/focus/stop', {method:'POST'});
+        const j = await r.json();
+        if(j && j.ok) todaySec = j.seconds;
+      }catch(_){}
     }
     async function init(){
       // 每日目标：localStorage 持久化（纯本地偏好），非法值回落默认 8 小时
@@ -1758,7 +1792,11 @@
       try{
         const r = await fetch('/api/focus');
         const j = await r.json();
-        if (j && j.ok) todaySec = j.seconds || 0;
+        if (j && j.ok){
+          todaySec = j.seconds || 0;
+          // 异常退出残留的会话已被服务端自动结算入账，提示补回的时长
+          if(j.recovered > 0) showToast('已恢复上次未保存的专注 ' + fmt(j.recovered));
+        }
       }catch(_){}
       renderToday();
     }
@@ -1777,12 +1815,20 @@
     // 回窗口补一帧：后台 timer 可能被节流/挂起（系统休眠后 interval 可能已停），时间按时间戳算不会丢，重建 interval + 刷新显示
     document.addEventListener('visibilitychange', ()=>{
       if(!document.hidden && phase !== 'idle'){
-        if(phase === 'running'){ clearInterval(timer); timer = setInterval(render, 1000); }
+        if(phase === 'running'){
+          clearInterval(timer); timer = setInterval(render, 1000);
+          clearInterval(hbTimer); hbTimer = setInterval(sendHeartbeat, 15000);
+        }
         render();
       }
     });
+    // 页面卸载兜底（浏览器模式 / edge --app / F5）：通知服务端结算；
+    // 桌面点关闭已先 await flushOnExit（phase=idle），不会重复发送
+    window.addEventListener('pagehide', ()=>{
+      if(phase !== 'idle'){ try{ navigator.sendBeacon('/api/focus/stop'); }catch(_){} }
+    });
 
-    return { init, phase: ()=>phase };
+    return { init, phase: ()=>phase, flushOnExit };
   })();
   FocusTimer.init();
 
@@ -2691,7 +2737,9 @@
   setTimeout(focusBody, 300);
   window.addEventListener('focus', focusBody);
   $('winClose').addEventListener('click', async ()=>{
-    // 先立即隐藏原生窗口与界面（视觉秒关），再请求服务端退出进程
+    // 计时中（含暂停）先结算落盘再退出，避免本次专注时间丢失
+    try{ await FocusTimer.flushOnExit(); }catch(e){}
+    // 再立即隐藏原生窗口与界面（视觉秒关），然后请求服务端退出进程
     try{
       if(window.pywebview && window.pywebview.api && window.pywebview.api.hide_window){
         window.pywebview.api.hide_window();
