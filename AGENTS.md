@@ -19,15 +19,15 @@ B站课程观看进度追踪桌面应用，纯本地运行，通过 B站历史�
 - 后端：`src/server.py`（http.server，仅绑定 127.0.0.1，端口 8765，被占自动向后回退）
 - 前端：`src/index.html`（单文件，原生 JS + CSS，无框架）
 - **唯一桌面入口 `src/app.py`**：平台分支内聚在同一文件、注释分隔——Windows 走 pywebview(WebView2)（启动画面、Win32 边缘缩放），Linux 走 GTK3 + 系统 WebKit2GTK 4.1（详见下文「Linux 原生窗口」）
-- Windows 打包：`scripts/build.py` + `scripts/打包.bat`（PyInstaller **onedir**，`--noconsole`，index.html 内嵌进 `_internal`）。**禁止 onefile**（启动解压慢、退出清理慢，用户明确拒绝过）
-- Windows 开发启动：`scripts\启动.bat`（`pyw -3 src\app.py`）；依赖安装：`scripts\安装依赖.bat`
-- **Linux 启动**：`bash scripts/启动.sh`（原生无边框窗口）。系统库 `sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1`；Python 依赖（keyring pillow qrcode）缺失时自动装到项目内 `.pydeps/` 并设 `PYTHONPATH`（不污染系统 Python，规避 PEP 668）。**数据目录是 XDG `~/.local/share/bili-course-tracker/`**（不再是项目根下中文目录；/opt 与源码目录都不该写运行时数据）。`.pydeps/` 已加入 .gitignore。
+- Windows 打包：`scripts/build.py` + `scripts/build.bat`（PyInstaller **onedir**，`--noconsole`，index.html 内嵌进 `_internal`）。**禁止 onefile**（启动解压慢、退出清理慢，用户明确拒绝过）
+- Windows 开发启动：`scripts\run.bat`（`pyw -3 src\app.py`）；依赖安装：`scripts\install.bat`
+- **Linux 启动**：`bash scripts/run.sh`（原生无边框窗口）。系统库 `sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1`；Python 依赖（keyring pillow qrcode）缺失时自动装到项目内 `.pydeps/` 并设 `PYTHONPATH`（不污染系统 Python，规避 PEP 668）。**数据目录是 XDG `~/.local/share/bili-course-tracker/`**（不再是项目根下中文目录；/opt 与源码目录都不该写运行时数据）。`.pydeps/` 已加入 .gitignore。
 - **Linux 打包**：`python3 scripts/build.py` 产出**源码 deb**（不跑 PyInstaller，133K vs 42M）——源码装 `/opt/bili-course-tracker/`，`/usr/bin/bili-course-tracker` 为启动脚本，运行时依赖走 control 的 `Depends`（python3-gi、gir1.2-gtk-3.0、gir1.2-webkit2-4.1、python3-keyring、python3-pil、python3-qrcode），apt 自动配齐。
 
 ## 目录结构
 
 - `src/`：app.py、server.py、index.html、make_icon.py
-- `scripts/`：build.py（一键打包）+ 启动/打包/安装依赖脚本（.bat/.sh）；脚本内先 `cd` 回项目根再执行
+- `scripts/`：build.py（一键打包）+ run/build/install（.bat/.sh），全部 ASCII 文件名；脚本内先 `cd` 回项目根再执行
 - `assets/app_icon.ico`：打包图标
 - `build/`：打包中间产物（可删，最终 deb 也在此）
 - `docs/screenshot.png`：README 截图，**必须用虚构数据生成**，禁止真实课程信息
@@ -186,6 +186,7 @@ B站课程观看进度追踪桌面应用，纯本地运行，通过 B站历史�
 
 - Windows 11，Python 3.14（`py -3`），PyInstaller 6.22.2，pywebview/Pillow 已装。
 - **Linux（Ubuntu 26.04 / Wayland）桌面方案定为 GTK3 + 系统 WebKit2GTK 源码 deb**：不要在 Linux 上用 PyInstaller（包大、且要处理显卡/keyring 一堆打包问题），也不要用 Edge `--app`（标题栏跟 GTK 主题、无法可靠去掉，PWA window-controls-overlay 在 --app 下不生效）。改窗口逻辑时 app.py 两个平台分支一起改。
+- **源码文件名一律英文 ASCII**（2026-09 用户明确要求）：目录与文件名全部英文（src/scripts/build/run/install…），禁止中英混杂。中文只允许出现在：注释文案、应用产品名/运行时数据目录（Windows 下 `B站课程进度追踪/` 是成品应用名）。bat 脚本本来就要纯 ASCII，此规则对所有源码文件生效。
 - **改动后必须 grep 自查关键声明已落盘**——"已改"的口头/摘要声明不可信（出现过摘要说已改、实际漏改的情况）；接手会话或恢复上下文时先以代码实际状态为准再动手。
 - **推送规则（2026-09 用户确认，勿违反）**：日常改动只在**本地保存（commit），不主动 `git push`**；一批功能告一段落、**经用户确认后**才推送（大版本号提升时同理）。推送前必须把累积改动整理进 CHANGELOG.md，与代码一起提交——禁止只推代码不带日志，也禁止未经用户确认自行推送。
 - 沙箱禁止 Python 往安装目录写 `__pycache__/*.pyc`（PyInstaller 报 "hit restricted"）：`PYTHONDONTWRITEBYTECODE=1` + `py -3 -B` + `PYINSTALLER_CONFIG_DIR` 指项目内。

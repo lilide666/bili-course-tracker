@@ -30,7 +30,7 @@ py -3 -m pip install pyinstaller
 echo.
 echo ==========================================================
 echo   Done! Daily use: double-click the exe in the app folder.
-echo   Dev mode: double-click start.bat
+echo   Dev mode: double-click run.bat
 echo ==========================================================
 echo.
 pause

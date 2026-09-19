@@ -64,7 +64,7 @@
 
 ```powershell
 # 首次先安装依赖
-安装依赖.bat          # pywebview / Pillow / PyInstaller / qrcode
+scripts\install.bat   # pywebview / Pillow / PyInstaller / qrcode
 
 # 源码启动（数据目录与打包版共用）
 py -3 src\app.py
@@ -72,7 +72,7 @@ py -3 src\app.py
 
 ### 方式三：自己打包
 
-代码改动后双击 `scripts/打包.bat`（等价 `py -3 scripts/build.py`）。应用正在运行会自动帮你关掉，打包完自动启动新版，数据不受影响。采用 `--onedir + --noconsole`：启动快、无黑窗口、前端单文件内嵌。
+代码改动后双击 `scripts/build.bat`（等价 `py -3 scripts/build.py`）。应用正在运行会自动帮你关掉，打包完自动启动新版，数据不受影响。采用 `--onedir + --noconsole`：启动快、无黑窗口、前端单文件内嵌。
 
 ## 工作原理
 
@@ -108,10 +108,10 @@ bili-course-tracker/
 ├── docs/                     ← README 截图
 ├── hooks/                    ← pre-commit 隐私拦截钩子（core.hooksPath 已指向这里）
 ├── scripts/
-│   ├── build.py + 打包.bat    ← 一键打包
-│   ├── 启动.bat               ← 开发模式启动
-│   ├── 启动.sh                ← Linux 启动
-│   └── 安装依赖.bat           ← 安装 Python 依赖
+│   ├── build.py + build.bat   ← 一键打包
+│   ├── run.bat                ← Windows 开发模式启动
+│   ├── run.sh                 ← Linux 启动
+│   └── install.bat            ← 安装 Python 依赖
 ```
 
 本机运行/打包后还会生成 `B站课程进度追踪/`（成品应用 + 全部数据，已被 `.gitignore` 排除，不会上传）：

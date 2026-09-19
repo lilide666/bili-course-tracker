@@ -2,11 +2,12 @@
 
 ## 2026-09-19 — 项目文件整理
 
-- 根目录散落脚本（build.py、启动/打包/安装依赖 .bat、启动.sh）统一收进 `scripts/`
+- 根目录散落脚本统一收进 `scripts/`，并全部改为英文 ASCII 文件名：
+  - 启动.bat → run.bat、打包.bat → build.bat、安装依赖.bat → install.bat、启动.sh → run.sh
 - 各脚本内先 `cd` 回项目根再执行，双击/命令行使用方式不变
 - 清理运行时垃圾：build 中间残留、旧中文数据目录、.venv、__pycache__（释放约 250M）
-- 同步更新 README 目录树、AGENTS.md 与 ui-motion-verify skill 中的路径
-- 验证：scripts/build.py 打包正常、scripts/启动.sh 启动正常、JS 语法校验通过
+- 同步更新 README 目录树、AGENTS.md、app.py 与 ui-motion-verify skill 中的路径
+- 验证：scripts/build.py 打包正常、scripts/run.sh 启动正常、JS 语法校验通过
 
 ## 2026-09-19 — 移除圆环流光
 

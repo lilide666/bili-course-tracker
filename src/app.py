@@ -13,7 +13,7 @@
 
 用法：
   - Windows：双击打包后的 exe；或开发模式 py -3 src\\app.py
-  - Linux  ：bash 启动.sh；或 python3 src/app.py
+  - Linux  ：bash scripts/run.sh；或 python3 src/app.py
 """
 import http.server
 import os

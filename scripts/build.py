@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """一键打包脚本（位于 scripts/，可从任意目录运行）
-  Windows : `py -3 scripts\build.py`（或双击 scripts\打包.bat）—— PyInstaller onedir + --noconsole
+  Windows : `py -3 scripts\build.py`（或双击 scripts\build.bat）—— PyInstaller onedir + --noconsole
   Linux   : `python3 scripts/build.py` —— 源码组装为 .deb（不打包解释器，依赖走 Depends）
 
 Windows 行为：
@@ -31,7 +31,7 @@ BUILD_DIR = os.path.join(ROOT, "build")
 LINUX_BIN = "bili-course-tracker"
 DEB_VERSION = "1.0.0"
 
-# Linux 下自动把项目内 .pydeps 加进路径（与 启动.sh 同源，不污染系统 Python）
+# Linux 下自动把项目内 .pydeps 加进路径（与 run.sh 同源，不污染系统 Python）
 _DEPS = os.path.join(ROOT, ".pydeps")
 if os.path.isdir(_DEPS) and _DEPS not in sys.path:
     sys.path.insert(0, _DEPS)
