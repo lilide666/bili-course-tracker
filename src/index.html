@@ -1497,6 +1497,9 @@
     // 统一值按最大格数定速（每格速度仍接近机械翻页）；同时模式（stag=0，实时更新）维持各滚各的时长。
     const spun = plan.filter(s => s !== null);
     const uniDur = (stag > 0 && spun.length) ? Math.min(SLOT_DUR, 110 + Math.max(...spun) * 55) : null;
+    // 延迟按"数字位序号"（rollIdx）而非字符序号：冒号/小数点不占拍，
+    // 波浪间隔均匀 65ms（字符序号会在分隔符处产生 130ms 停顿，波浪断续——用户实测踩坑）
+    let rollIdx = 0;
     chars.forEach((ch, i) => {
       const steps = plan[i];
       if(steps === null) return;
@@ -1512,7 +1515,7 @@
       roll.innerHTML = html;
       roll.style.transform = 'translateY(-' + steps + 'em)';
       void roll.offsetHeight;  // 强制重排，确保下面的 transition 生效
-      roll.style.transition = 'transform ' + dur + 'ms cubic-bezier(.22,.61,.36,1) ' + (i * stag) + 'ms';
+      roll.style.transition = 'transform ' + dur + 'ms cubic-bezier(.22,.61,.36,1) ' + (rollIdx++ * stag) + 'ms';
       roll.style.transform = 'translateY(0)';
     });
   }
@@ -1742,7 +1745,7 @@
           const m = /(\d+)ms/.exec(r.style.transition || '');
           if(m) hold = Math.max(hold, d + +m[1]);
         });
-        spinHoldUntil = Date.now() + hold + 60;
+        spinHoldUntil = Date.now() + hold + 100;  // 100ms 缓冲：防止调度抖动让 tick 抢在收尾前打断
       }
       render();
     }
