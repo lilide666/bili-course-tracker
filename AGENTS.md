@@ -90,7 +90,7 @@ B站课程观看进度追踪桌面应用，纯本地运行，通过 B站历史�
 - 钩子：`window.startConfettiRain/stopConfettiRain/spinPct/setPctInstant`。
 
 ### 其他动效（只动 transform/opacity）
-- 同步呼吸灯 syncDot（tag-sync 内，文案 #tagSyncTxt）；切换视频 `.swap-in` 180ms 淡入；跳跃列表 `.stagger` 20ms 错开；同步成功 `playSheen()` 一次性流光——**只有直线条 `.bar-track.sheen`**（::after 白色渐变高光从左扫到右，0.9s ease-out）；`fetchProgress` 的 `switch` 上下文不播流光（切换已有 .swap-in 淡入，紧跟流光杂乱）。**圆环流光已彻底移除（2026-09 最终决定，不要再加）**：先后尝试实心白弧（"一根白柱子"）、锥形渐变彗星、90° 长尾多级渐变，均达不到预期——conic 亮区无论怎么调，运动时要么像方块、要么尾迹不可见。`.ring-sheen` / `@keyframes ringSheen` / `#ringSheen` 元素 / playSheen 圆环分支均已删除。
+- 同步呼吸灯 syncDot（tag-sync 内，文案 #tagSyncTxt）；切换视频 `.swap-in` 180ms 淡入；跳跃列表 `.stagger` 20ms 错开；同步成功 `playSheen()` 一次性流光——**直线条 + 圆环两处同时播**。直线条 `.bar-track.sheen`（::after 白色渐变高光从左扫到右，0.9s ease-out）；圆环 `.ring-sheen`（`.ring` 内独立 div，非 SVG circle——SVG stroke 无法沿弧渐变，只能画实心弧=白柱）：`conic-gradient` 彗星（亮头 rgba(255,255,255,.85) 在 360°、尾迹沿 346°/.30→324°/.06→300° 全透明衰减）+ `radial-gradient mask` 只留 98~113px 的 14px 环带（对齐 r=105 进度弧），`@keyframes ringSheen` rotate 0→360° 0.48s linear（与直线条亮头平均线速度一致）、头尾 opacity 淡变、无 fill forwards，结束归 opacity:0。`.ring.sheen-on` 触发，重播靠 remove class→强制重排→add class。历史注：2026-09 曾短暂决定移除圆环流光，后用户要求恢复并保留此 conic 彗星版（实心白弧/三段台阶/12 段 WAAPI 尾迹均被否，勿回退）。`fetchProgress` 的 `switch` 上下文不播流光（切换已有 .swap-in 淡入，紧跟流光杂乱）。
 - Tab 栏悬停上浮：`.tabs` 需 `padding:8px 2px 12px` 留白，否则被 `overflow-x:auto` 容器裁切。
 - 红线：`@media (prefers-reduced-motion: reduce)` 全停用；`body.doc-hidden`（visibilitychange）暂停循环动画。
 - 标题栏按钮 `tabindex="-1"` + 无 `:focus` outline，启动/聚焦时 `document.body.focus({preventScroll:true})`，防白框且避免聚焦把页面拉回顶部；用 `aria-label` 不用 `title`。

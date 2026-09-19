@@ -476,6 +476,22 @@
     background:linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent);
     animation:sheen .9s ease-out; pointer-events:none}
   @keyframes sheen{to{left:115%}}
+  /* 同步成功：进度环白光扫过（锥形渐变彗星：亮头引领、尾迹沿圆周衰减，与直线条渐变同款质感） */
+  .ring-sheen{position:absolute; inset:0; border-radius:50%; opacity:0; pointer-events:none;
+    background:conic-gradient(from 0deg,
+      transparent 0deg, transparent 300deg,
+      rgba(255,255,255,.06) 324deg,
+      rgba(255,255,255,.30) 346deg,
+      rgba(255,255,255,.85) 360deg);
+    -webkit-mask:radial-gradient(circle, transparent 98px, #000 99.5px, #000 111.5px, transparent 113px);
+            mask:radial-gradient(circle, transparent 98px, #000 99.5px, #000 111.5px, transparent 113px)}
+  .ring.sheen-on .ring-sheen{animation:ringSheen .48s linear}
+  @keyframes ringSheen{
+    0%{transform:rotate(0deg); opacity:0}
+    14%{opacity:1}
+    82%{opacity:1}
+    100%{transform:rotate(360deg); opacity:0}
+  }
 
   /* 100% 庆祝：进度环变金 + 纸屑 */
   .ring.celebrate .bar{stroke:#fbbf24; filter:drop-shadow(0 0 10px rgba(251,191,36,.55)); transition:stroke .4s}
@@ -616,6 +632,7 @@
           <circle class="bar-est" id="ringBarEst" cx="120" cy="120" r="105"
             stroke-dasharray="659.734" stroke-dashoffset="659.734"/>
         </svg>
+        <div class="ring-sheen" id="ringSheen"></div>
         <div class="center-txt">
           <div class="pct" id="bigPct">0<small>%</small></div>
           <div class="pct-label">总体播放进度</div>
@@ -1567,7 +1584,7 @@
     });
   }
 
-  // 同步成功：直线进度条白光扫过（一次性；圆环流光已移除）
+  // 同步成功：直线进度条 + 进度环白光扫过（均为一次性）
   function playSheen(){
     if(REDUCED_MOTION) return;
     const bt = document.querySelector('.bar-track');
@@ -1575,6 +1592,12 @@
       bt.classList.remove('sheen');
       void bt.offsetWidth;
       bt.classList.add('sheen');
+    }
+    const ring = document.querySelector('.ring');
+    if(ring){
+      ring.classList.remove('sheen-on');
+      void ring.getBoundingClientRect();
+      ring.classList.add('sheen-on');
     }
   }
 
